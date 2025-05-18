@@ -34,7 +34,7 @@ if (keystorePropertiesFile.exists()) {
 }
 
 android {
-    namespace = "net.examnet.semo"
+    namespace = "com.vailot.index"
     compileSdk = flutter.compileSdkVersion
     ndkVersion = flutter.ndkVersion
 
