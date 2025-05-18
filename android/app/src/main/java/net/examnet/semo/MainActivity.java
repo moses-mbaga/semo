@@ -1,4 +1,4 @@
-package net.examnet.semo;
+package com.vailot.index;
 
 import io.flutter.embedding.android.FlutterActivity;
 
