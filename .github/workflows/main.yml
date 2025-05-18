@@ -1,4 +1,4 @@
-name: Build Flutter App
+name: Build Flutter APK
 
 on:
   push:
@@ -25,8 +25,13 @@ jobs:
       - name: Build APK
         run: flutter build apk --debug
 
+      - name: Copy APK to artifacts folder
+        run: |
+          mkdir -p artifacts
+          cp build/app/outputs/flutter-apk/app-debug.apk artifacts/
+
       - name: Upload APK artifact
         uses: actions/upload-artifact@v2
         with:
           name: app-debug.apk
-          path: build/app/outputs/flutter-apk/app-debug.apk
+          path: artifacts/app-debug.apk
