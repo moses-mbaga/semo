@@ -1,15 +1,15 @@
 import "dart:math" as math;
 
 import "package:logger/logger.dart";
-import "package:semo/models/episode.dart";
-import "package:semo/models/movie.dart";
-import "package:semo/models/stream_extractor_options.dart";
-import "package:semo/models/streaming_server.dart";
-import "package:semo/models/media_stream.dart";
-import "package:semo/models/tv_show.dart";
-import "package:semo/services/stream_extractor/extractors/base_stream_extractor.dart";
-import "package:semo/services/stream_extractor/extractors/kiss_kh_extractor.dart";
-import "package:semo/services/preferences.dart";
+import "package:index/models/episode.dart";
+import "package:index/models/movie.dart";
+import "package:index/models/stream_extractor_options.dart";
+import "package:index/models/streaming_server.dart";
+import "package:index/models/media_stream.dart";
+import "package:index/models/tv_show.dart";
+import "package:index/services/stream_extractor/extractors/base_stream_extractor.dart";
+import "package:index/services/stream_extractor/extractors/kiss_kh_extractor.dart";
+import "package:index/services/preferences.dart";
 
 class StreamExtractor {
   static final Logger _logger = Logger();

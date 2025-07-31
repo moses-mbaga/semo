@@ -3,10 +3,10 @@ import "dart:async";
 import "package:audio_video_progress_bar/audio_video_progress_bar.dart";
 import "package:flutter/material.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
-import "package:semo/models/media_progress.dart";
-import "package:semo/models/media_stream.dart";
-import "package:semo/services/preferences.dart";
-import "package:semo/models/subtitle_style.dart" as local;
+import "package:index/models/media_progress.dart";
+import "package:index/models/media_stream.dart";
+import "package:index/services/preferences.dart";
+import "package:index/models/subtitle_style.dart" as local;
 import "package:subtitle_wrapper_package/subtitle_wrapper_package.dart";
 import "package:video_player/video_player.dart";
 
@@ -15,8 +15,8 @@ typedef OnProgressCallback = void Function(Duration progress, Duration total);
 typedef OnErrorCallback = void Function(dynamic error);
 typedef OnSeekCallback = Future<void> Function(Duration target);
 
-class SemoPlayer extends StatefulWidget {
-  const SemoPlayer({
+class IndexPlayer extends StatefulWidget {
+  const IndexPlayer({
     super.key,
     required this.stream,
     required this.title,
@@ -42,10 +42,10 @@ class SemoPlayer extends StatefulWidget {
   final Duration autoHideControlsDelay;
 
   @override
-  State<SemoPlayer> createState() => _SemoPlayerState();
+  State<IndexPlayer> createState() => _IndexPlayerState();
 }
 
-class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
+class _IndexPlayerState extends State<IndexPlayer> with TickerProviderStateMixin {
   late final VideoPlayerController _videoPlayerController;
   SubtitleController _subtitleController = SubtitleController(
     subtitleType: SubtitleType.srt,

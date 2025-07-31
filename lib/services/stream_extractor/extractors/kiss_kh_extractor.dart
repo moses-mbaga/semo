@@ -4,10 +4,10 @@ import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
-import "package:semo/models/media_stream.dart";
-import "package:semo/models/stream_extractor_options.dart";
-import "package:semo/services/stream_extractor/extractors/base_stream_extractor.dart";
-import "package:semo/services/streaming_server_base_url_service.dart";
+import "package:index/models/media_stream.dart";
+import "package:index/models/stream_extractor_options.dart";
+import "package:index/services/stream_extractor/extractors/base_stream_extractor.dart";
+import "package:index/services/streaming_server_base_url_service.dart";
 
 class KissKhExtractor implements BaseStreamExtractor {
   KissKhExtractor() {

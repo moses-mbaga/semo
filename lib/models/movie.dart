@@ -1,4 +1,4 @@
-import "package:semo/models/genre.dart";
+import "package:index/models/genre.dart";
 
 class Movie {
   Movie({

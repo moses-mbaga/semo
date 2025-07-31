@@ -2,14 +2,14 @@ import "dart:async";
 
 import "package:flutter/material.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
-import "package:semo/components/media_card.dart";
-import "package:semo/components/vertical_media_list.dart";
-import "package:semo/models/movie.dart";
-import "package:semo/models/tv_show.dart";
-import "package:semo/screens/base_screen.dart";
-import "package:semo/screens/movie_screen.dart";
-import "package:semo/screens/tv_show_screen.dart";
-import "package:semo/enums/media_type.dart";
+import "package:index/components/media_card.dart";
+import "package:index/components/vertical_media_list.dart";
+import "package:index/models/movie.dart";
+import "package:index/models/tv_show.dart";
+import "package:index/screens/base_screen.dart";
+import "package:index/screens/movie_screen.dart";
+import "package:index/screens/tv_show_screen.dart";
+import "package:index/enums/media_type.dart";
 
 class ViewAllScreen extends BaseScreen {
   const ViewAllScreen({

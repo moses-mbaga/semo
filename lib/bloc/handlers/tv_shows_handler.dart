@@ -3,11 +3,11 @@ import "dart:async";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:logger/logger.dart";
-import "package:semo/bloc/app_event.dart";
-import "package:semo/bloc/app_state.dart";
-import "package:semo/models/search_results.dart";
-import "package:semo/models/tv_show.dart";
-import "package:semo/services/tmdb_service.dart";
+import "package:index/bloc/app_event.dart";
+import "package:index/bloc/app_state.dart";
+import "package:index/models/search_results.dart";
+import "package:index/models/tv_show.dart";
+import "package:index/services/tmdb_service.dart";
 
 mixin TvShowsHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();

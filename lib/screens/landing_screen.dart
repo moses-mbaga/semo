@@ -1,13 +1,13 @@
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
-import "package:semo/bloc/app_bloc.dart";
-import "package:semo/bloc/app_event.dart";
-import "package:semo/components/snack_bar.dart";
-import "package:semo/gen/assets.gen.dart";
-import "package:semo/screens/base_screen.dart";
-import "package:semo/screens/fragments_screen.dart";
-import "package:semo/services/auth_service.dart";
+import "package:index/bloc/app_bloc.dart";
+import "package:index/bloc/app_event.dart";
+import "package:index/components/snack_bar.dart";
+import "package:index/gen/assets.gen.dart";
+import "package:index/screens/base_screen.dart";
+import "package:index/screens/fragments_screen.dart";
+import "package:index/services/auth_service.dart";
 import "package:video_player/video_player.dart";
 
 class LandingScreen extends BaseScreen {

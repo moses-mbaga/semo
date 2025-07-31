@@ -1,8 +1,8 @@
 import "package:cached_network_image/cached_network_image.dart";
 import "package:flutter/material.dart";
-import "package:semo/components/snack_bar.dart";
+import "package:index/components/snack_bar.dart";
 import "package:url_launcher/url_launcher.dart";
-import "package:semo/utils/urls.dart";
+import "package:index/utils/urls.dart";
 
 class MediaPoster extends StatelessWidget {
   const MediaPoster({

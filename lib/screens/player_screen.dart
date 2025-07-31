@@ -3,15 +3,15 @@ import "dart:async";
 import "package:flutter/material.dart";
 import "package:flutter/services.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
-import "package:semo/bloc/app_bloc.dart";
-import "package:semo/bloc/app_event.dart";
-import "package:semo/bloc/app_state.dart";
-import "package:semo/components/semo_player.dart";
-import "package:semo/components/snack_bar.dart";
-import "package:semo/models/media_stream.dart";
-import "package:semo/screens/base_screen.dart";
-import "package:semo/services/recently_watched_service.dart";
-import "package:semo/enums/media_type.dart";
+import "package:index/bloc/app_bloc.dart";
+import "package:index/bloc/app_event.dart";
+import "package:index/bloc/app_state.dart";
+import "package:index/components/index_player.dart";
+import "package:index/components/snack_bar.dart";
+import "package:index/models/media_stream.dart";
+import "package:index/screens/base_screen.dart";
+import "package:index/services/recently_watched_service.dart";
+import "package:index/enums/media_type.dart";
 import "package:wakelock_plus/wakelock_plus.dart";
 
 class PlayerScreen extends BaseScreen {
@@ -143,7 +143,7 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
       }
 
       return Scaffold(
-        body: SemoPlayer(
+        body: IndexPlayer(
           stream: widget.stream,
           title: widget.title,
           initialProgress: progressSeconds,

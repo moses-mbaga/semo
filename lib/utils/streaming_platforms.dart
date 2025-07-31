@@ -1,5 +1,5 @@
-import "package:semo/gen/assets.gen.dart";
-import "package:semo/models/streaming_platform.dart";
+import "package:index/gen/assets.gen.dart";
+import "package:index/models/streaming_platform.dart";
 
 final List<StreamingPlatform> streamingPlatforms = <StreamingPlatform>[
   StreamingPlatform(

@@ -2,10 +2,10 @@ import "dart:async";
 
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:logger/logger.dart";
-import "package:semo/bloc/app_event.dart";
-import "package:semo/bloc/app_state.dart";
-import "package:semo/enums/media_type.dart";
-import "package:semo/services/recent_searches_service.dart";
+import "package:index/bloc/app_event.dart";
+import "package:index/bloc/app_state.dart";
+import "package:index/enums/media_type.dart";
+import "package:index/services/recent_searches_service.dart";
 
 mixin RecentSearchesHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();

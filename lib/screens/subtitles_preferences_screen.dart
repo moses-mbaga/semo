@@ -2,11 +2,11 @@ import "dart:io";
 
 import "package:flutter/material.dart";
 import "package:flutter_settings_ui/flutter_settings_ui.dart";
-import "package:semo/gen/assets.gen.dart";
-import "package:semo/models/subtitle_style.dart";
-import "package:semo/screens/base_screen.dart";
-import "package:semo/services/preferences.dart";
-import "package:semo/utils/string_extension.dart";
+import "package:index/gen/assets.gen.dart";
+import "package:index/models/subtitle_style.dart";
+import "package:index/screens/base_screen.dart";
+import "package:index/services/preferences.dart";
+import "package:index/utils/string_extension.dart";
 
 class SubtitlesPreferencesScreen extends BaseScreen {
   const SubtitlesPreferencesScreen({super.key});

@@ -1,8 +1,8 @@
 import "dart:convert";
 
 import "package:logger/logger.dart";
-import "package:semo/models/streaming_server.dart";
-import "package:semo/models/subtitle_style.dart";
+import "package:index/models/streaming_server.dart";
+import "package:index/models/subtitle_style.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
 class AppPreferences {

@@ -1,7 +1,7 @@
 import "package:cached_network_image/cached_network_image.dart";
 import "package:flutter/material.dart";
-import "package:semo/models/person.dart";
-import "package:semo/utils/urls.dart";
+import "package:index/models/person.dart";
+import "package:index/utils/urls.dart";
 
 class PersonCard extends StatelessWidget {
   const PersonCard({

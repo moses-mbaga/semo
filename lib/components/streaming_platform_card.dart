@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:semo/models/streaming_platform.dart";
+import "package:index/models/streaming_platform.dart";
 
 class StreamingPlatformCard extends StatelessWidget {
   const StreamingPlatformCard({

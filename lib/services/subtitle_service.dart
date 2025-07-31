@@ -6,8 +6,8 @@ import "package:dio/dio.dart";
 import "package:logger/logger.dart";
 import "package:path/path.dart" as path;
 import "package:path_provider/path_provider.dart";
-import "package:semo/utils/secrets.dart";
-import "package:semo/utils/urls.dart";
+import "package:index/utils/secrets.dart";
+import "package:index/utils/urls.dart";
 
 class SubtitleService {
   factory SubtitleService() => _instance;

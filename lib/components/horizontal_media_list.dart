@@ -1,6 +1,6 @@
 import "package:flutter/material.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
-import "package:semo/components/helpers.dart";
+import "package:index/components/helpers.dart";
 
 class HorizontalMediaList<T> extends StatelessWidget {
   const HorizontalMediaList({

@@ -1,19 +1,19 @@
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:google_fonts/google_fonts.dart";
-import "package:semo/bloc/app_bloc.dart";
-import "package:semo/bloc/app_state.dart";
-import "package:semo/screens/splash_screen.dart";
-import "package:semo/services/preferences.dart";
+import "package:index/bloc/app_bloc.dart";
+import "package:index/bloc/app_state.dart";
+import "package:index/screens/splash_screen.dart";
+import "package:index/services/preferences.dart";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await AppPreferences.init();
-  runApp(const Semo());
+  runApp(const Index());
 }
 
-class Semo extends StatelessWidget {
-  const Semo({super.key});
+class Index extends StatelessWidget {
+  const Index({super.key});
 
   static const Color _primary = Color(0xFFAB261D);
   static const Color _background = Color(0xFF120201);
@@ -118,7 +118,7 @@ class Semo extends StatelessWidget {
     create: (BuildContext context) => AppBloc()..init(),
     child: BlocBuilder<AppBloc, AppState>(
       builder: (BuildContext context, AppState state) => MaterialApp(
-        title: "Semo",
+        title: "Index",
         debugShowCheckedModeBanner: false,
         theme: _buildTheme(),
         home: const SplashScreen(),

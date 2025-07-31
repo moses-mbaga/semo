@@ -1,5 +1,5 @@
 import "package:flutter/material.dart";
-import "package:semo/enums/media_type.dart";
+import "package:index/enums/media_type.dart";
 
 class FragmentScreen {
   const FragmentScreen({

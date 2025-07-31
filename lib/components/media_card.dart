@@ -1,9 +1,9 @@
 import "package:cached_network_image/cached_network_image.dart";
 import "package:flutter/material.dart";
-import "package:semo/enums/media_type.dart";
-import "package:semo/models/movie.dart";
-import "package:semo/models/tv_show.dart";
-import "package:semo/utils/urls.dart";
+import "package:index/enums/media_type.dart";
+import "package:index/models/movie.dart";
+import "package:index/models/tv_show.dart";
+import "package:index/utils/urls.dart";
 
 class MediaCard extends StatelessWidget {
   const MediaCard({

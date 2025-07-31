@@ -1,4 +1,4 @@
-import "package:semo/utils/env/env.dart";
+import "package:index/utils/env/env.dart";
 
 class Secrets {
   static String tmdbAccessToken = Env.tmdbAccessToken;

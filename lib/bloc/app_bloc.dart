@@ -1,18 +1,18 @@
 import "package:flutter_bloc/flutter_bloc.dart";
-import "package:semo/bloc/app_event.dart";
-import "package:semo/bloc/app_state.dart";
-import "package:semo/bloc/handlers/favorites_handler.dart";
-import "package:semo/bloc/handlers/genres_handler.dart";
-import "package:semo/bloc/handlers/movie_handler.dart";
-import "package:semo/bloc/handlers/movies_handler.dart";
-import "package:semo/bloc/handlers/person_handler.dart";
-import "package:semo/bloc/handlers/recent_searches_handler.dart";
-import "package:semo/bloc/handlers/recently_watched_handler.dart";
-import "package:semo/bloc/handlers/streaming_platforms_handler.dart";
-import "package:semo/bloc/handlers/tv_show_handler.dart";
-import "package:semo/bloc/handlers/tv_shows_handler.dart";
-import "package:semo/enums/media_type.dart";
-import "package:semo/services/auth_service.dart";
+import "package:index/bloc/app_event.dart";
+import "package:index/bloc/app_state.dart";
+import "package:index/bloc/handlers/favorites_handler.dart";
+import "package:index/bloc/handlers/genres_handler.dart";
+import "package:index/bloc/handlers/movie_handler.dart";
+import "package:index/bloc/handlers/movies_handler.dart";
+import "package:index/bloc/handlers/person_handler.dart";
+import "package:index/bloc/handlers/recent_searches_handler.dart";
+import "package:index/bloc/handlers/recently_watched_handler.dart";
+import "package:index/bloc/handlers/streaming_platforms_handler.dart";
+import "package:index/bloc/handlers/tv_show_handler.dart";
+import "package:index/bloc/handlers/tv_shows_handler.dart";
+import "package:index/enums/media_type.dart";
+import "package:index/services/auth_service.dart";
 
 class AppBloc extends Bloc<AppEvent, AppState>
     with MoviesHandler, TvShowsHandler, StreamingPlatformsHandler, GenresHandler, RecentlyWatchedHandler, FavoritesHandler, MovieHandler, TvShowHandler, PersonHandler, RecentSearchesHandler {
