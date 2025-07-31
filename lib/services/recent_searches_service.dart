@@ -1,8 +1,9 @@
-import "package:cloud_firestore/cloud_firestore.dart";
-import "package:firebase_auth/firebase_auth.dart";
+import "dart:convert";
 import "package:logger/logger.dart";
+import "package:shared_preferences/shared_preferences.dart";
 import "package:index/services/firestore_collection_names.dart";
 import "package:index/enums/media_type.dart";
+import "package:index/services/auth_service.dart";
 
 class RecentSearchesService {
   factory RecentSearchesService() => _instance;
@@ -10,37 +11,59 @@ class RecentSearchesService {
 
   static final RecentSearchesService _instance = RecentSearchesService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _auth = AuthService();
   final Logger _logger = Logger();
 
-  DocumentReference<Map<String, dynamic>> _getDocReference() {
-    if (_auth.currentUser == null) {
+  String _getPreferenceKey() {
+    final user = _auth.getUser();
+    if (user == null) {
       throw Exception("User isn't authenticated");
     }
 
     try {
-      return _firestore
-          .collection(FirestoreCollection.recentSearches)
-          .doc(_auth.currentUser?.uid);
+      return "${PreferencesKeys.recentSearches}_${user.id}";
     } catch (e, s) {
-      _logger.e("Error getting recent searches document reference", error: e, stackTrace: s);
+      _logger.e("Error getting recent searches preference key", error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<Map<String, dynamic>> _getSearchData() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      final String? jsonData = prefs.getString(key);
+
+      if (jsonData == null) {
+        final initialData = <String, dynamic>{
+          "movies": <String>[],
+          "tv_shows": <String>[],
+        };
+        await prefs.setString(key, jsonEncode(initialData));
+        return initialData;
+      }
+
+      return jsonDecode(jsonData) as Map<String, dynamic>;
+    } catch (e, s) {
+      _logger.e("Error getting search data", error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> _saveSearchData(Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      await prefs.setString(key, jsonEncode(data));
+    } catch (e, s) {
+      _logger.e("Error saving search data", error: e, stackTrace: s);
       rethrow;
     }
   }
 
   Future<List<String>> getRecentSearches(MediaType mediaType) async {
     try {
-      final DocumentSnapshot<Map<String, dynamic>> doc = await _getDocReference().get();
-
-      if (!doc.exists) {
-        await _getDocReference().set(<String, dynamic>{
-          "movies": <String>[],
-          "tv_shows": <String>[],
-        });
-      }
-
-      final Map<String, dynamic> data = doc.data() ?? <String, dynamic>{};
+      final Map<String, dynamic> data = await _getSearchData();
       final String fieldName = mediaType.toJsonField();
       final List<String> searches = ((data[fieldName] ?? <dynamic>[]) as List<dynamic>).cast<String>();
 
@@ -54,7 +77,8 @@ class RecentSearchesService {
 
   Future<dynamic> add(MediaType mediaType, String query) async {
     final String fieldName = mediaType.toJsonField();
-    final List<String> searches = await getRecentSearches(mediaType);
+    final Map<String, dynamic> data = await _getSearchData();
+    final List<String> searches = ((data[fieldName] ?? <dynamic>[]) as List<dynamic>).cast<String>();
 
     // Remove duplicate entry
     if (searches.contains(query)) {
@@ -70,7 +94,8 @@ class RecentSearchesService {
     }
 
     try {
-      await _getDocReference().set(<String, dynamic>{fieldName: searches}, SetOptions(merge: true));
+      data[fieldName] = searches;
+      await _saveSearchData(data);
     } catch (e, s) {
       _logger.e("Error adding query to recent searches", error: e, stackTrace: s);
       rethrow;
@@ -79,12 +104,14 @@ class RecentSearchesService {
 
   Future<dynamic> remove(MediaType mediaType, String query) async {
     final String fieldName = mediaType.toJsonField();
-    final List<String> searches = await getRecentSearches(mediaType);
+    final Map<String, dynamic> data = await _getSearchData();
+    final List<String> searches = ((data[fieldName] ?? <dynamic>[]) as List<dynamic>).cast<String>();
 
     if (searches.contains(query)) {
       searches.remove(query);
       try {
-        await _getDocReference().set(<String, dynamic>{fieldName: searches}, SetOptions(merge: true));
+        data[fieldName] = searches;
+        await _saveSearchData(data);
       } catch (e, s) {
         _logger.e("Error removing query from recent searches", error: e, stackTrace: s);
         rethrow;
@@ -94,7 +121,9 @@ class RecentSearchesService {
 
   Future<dynamic> clear() async {
     try {
-      await _getDocReference().delete();
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      await prefs.remove(key);
     } catch (e, s) {
       _logger.e("Error clearing recent searches", error: e, stackTrace: s);
       rethrow;

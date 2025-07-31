@@ -1,9 +1,10 @@
 import "dart:math" as math;
+import "dart:convert";
 
-import "package:cloud_firestore/cloud_firestore.dart";
-import "package:firebase_auth/firebase_auth.dart";
 import "package:logger/logger.dart";
+import "package:shared_preferences/shared_preferences.dart";
 import "package:index/services/firestore_collection_names.dart";
+import "package:index/services/auth_service.dart";
 
 class RecentlyWatchedService {
   factory RecentlyWatchedService() => _instance;
@@ -11,39 +12,52 @@ class RecentlyWatchedService {
 
   static final RecentlyWatchedService _instance = RecentlyWatchedService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _auth = AuthService();
   final Logger _logger = Logger();
 
-  DocumentReference<Map<String, dynamic>> _getDocReference() {
-    if (_auth.currentUser == null) {
+  String _getPreferenceKey() {
+    final user = _auth.getUser();
+    if (user == null) {
       throw Exception("User isn't authenticated");
     }
 
     try {
-      return _firestore
-          .collection(FirestoreCollection.recentlyWatched)
-          .doc(_auth.currentUser?.uid);
+      return "${PreferencesKeys.recentlyWatched}_${user.id}";
     } catch (e, s) {
-      _logger.e("Error getting recently watched document reference", error: e, stackTrace: s);
+      _logger.e("Error getting recently watched preference key", error: e, stackTrace: s);
       rethrow;
     }
   }
 
   Future<Map<String, dynamic>> getRecentlyWatched() async {
     try {
-      final DocumentSnapshot<Map<String, dynamic>> doc = await _getDocReference().get();
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      final String? jsonData = prefs.getString(key);
 
-      if (!doc.exists) {
-        await _getDocReference().set(<String, dynamic>{
+      if (jsonData == null) {
+        final initialData = <String, dynamic>{
           "movies": <String, Map<String, dynamic>>{},
           "tv_shows": <String, Map<String, dynamic>>{},
-        });
+        };
+        await prefs.setString(key, jsonEncode(initialData));
+        return initialData;
       }
 
-      return doc.data() ?? <String, dynamic>{};
+      return jsonDecode(jsonData) as Map<String, dynamic>;
     } catch (e, s) {
       _logger.e("Error getting recently watched", error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+
+  Future<void> _saveRecentlyWatched(Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      await prefs.setString(key, jsonEncode(data));
+    } catch (e, s) {
+      _logger.e("Error saving recently watched", error: e, stackTrace: s);
       rethrow;
     }
   }
@@ -137,7 +151,7 @@ class RecentlyWatchedService {
     };
 
     try {
-      await _getDocReference().set(<String, dynamic>{"movies": recentlyWatched["movies"]}, SetOptions(merge: true));
+      await _saveRecentlyWatched(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error updating movie's watch progress", error: e, stackTrace: s);
       rethrow;
@@ -172,7 +186,8 @@ class RecentlyWatchedService {
         ...tvShows["$tvShowId"]!
       };
 
-      await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+      recentlyWatched["tv_shows"] = tvShows;
+      await _saveRecentlyWatched(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error updating episode's watch progress", error: e, stackTrace: s);
       rethrow;
@@ -204,7 +219,8 @@ class RecentlyWatchedService {
         ...tvShows["$tvShowId"]!
       };
 
-      await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+      recentlyWatched["tv_shows"] = tvShows;
+      await _saveRecentlyWatched(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error removing episode's watch progress", error: e, stackTrace: s);
       rethrow;
@@ -239,7 +255,8 @@ class RecentlyWatchedService {
     try {
       final Map<String, Map<String, dynamic>> movies = _mapDynamicDynamicToMapStringDynamic((recentlyWatched["movies"] ?? <dynamic, dynamic>{}) as Map<dynamic, dynamic>);
       movies.remove("$movieId");
-      await _getDocReference().set(<String, dynamic>{"movies": movies}, SetOptions(merge: true));
+      recentlyWatched["movies"] = movies;
+      await _saveRecentlyWatched(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error removing movie from recently watched", error: e, stackTrace: s);
       rethrow;
@@ -305,7 +322,8 @@ class RecentlyWatchedService {
 
       if (tvShows.containsKey("$tvShowId")) {
         tvShows["$tvShowId"]!["visibleInMenu"] = false;
-        await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+        recentlyWatched["tv_shows"] = tvShows;
+        await _saveRecentlyWatched(recentlyWatched);
       }
     } catch (e, s) {
       _logger.e("Error removing TV show from recently watched", error: e, stackTrace: s);
@@ -323,7 +341,8 @@ class RecentlyWatchedService {
 
       if (tvShows.containsKey("$tvShowId")) {
         tvShows.remove("$tvShowId");
-        await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+        recentlyWatched["tv_shows"] = tvShows;
+        await _saveRecentlyWatched(recentlyWatched);
       }
     } catch (e, s) {
       _logger.e("Error removing TV show from recently watched", error: e, stackTrace: s);
@@ -335,7 +354,9 @@ class RecentlyWatchedService {
 
   Future<dynamic> clear() async {
     try {
-      await _getDocReference().delete();
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      await prefs.remove(key);
     } catch (e, s) {
       _logger.e("Error clearing recently watched", error: e, stackTrace: s);
       rethrow;

@@ -94,4 +94,20 @@ class AuthService {
       rethrow;
     }
   }
+  
+  Future<dynamic> reAuthenticate() async {
+    try {
+      // For guest users, we don't need to re-authenticate
+      // Just return a dummy object to indicate success
+      return {"success": true};
+    } catch (e, s) {
+      _logger.e("Failed to re-authenticate", error: e, stackTrace: s);
+      rethrow;
+    }
+  }
+  
+  Stream<dynamic> authStateChanges() {
+    // Return a stream that emits the current user
+    return Stream.value(_currentUser);
+  }
 }

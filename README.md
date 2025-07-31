@@ -1,81 +1,99 @@
-# Semo
+# تطبيق INDEX
 
-![Semo Screenshots](https://raw.githubusercontent.com/moses-mbaga/semo/d4ed0519764b78d729cc459476086928d0a2d54b/banner.png)
+تطبيق INDEX هو تطبيق لمشاهدة الأفلام والمسلسلات، تم تعديله لإزالة ربط Firebase واستبدال تسجيل الدخول بـ Google بتسجيل دخول الضيف.
 
-Semo is designed to offer a seamless movie and TV show streaming experience. With support for multiple streaming servers, synced watch progress, and fully customizable subtitles, Semo aims to be your go-to streaming app for enjoying your favorite content.
+## الوثائق الإضافية
 
-## Features
+- [دليل الإعداد والبناء](README_SETUP.md)
+- [التغييرات الرئيسية](CHANGES.md)
+- [دليل الاستخدام](USAGE.md)
+- [هيكل المشروع](PROJECT_STRUCTURE.md)
 
-🗂 Comprehensive Library
+## الميزات
 
-- Access almost all movies and TV shows.
-- Explore a vast library to find something for everyone.
+🗂 مكتبة شاملة
 
-🎥 Stream Playback
+- الوصول إلى معظم الأفلام والمسلسلات.
+- استكشاف مكتبة واسعة للعثور على شيء للجميع.
 
-- Play movies and TV shows directly using high-quality HLS streams.
-- Multiple streaming servers to ensure uninterrupted viewing.
+🎥 تشغيل البث
 
-⏳ Synced Watch Progress
+- تشغيل الأفلام والمسلسلات مباشرة باستخدام بث HLS عالي الجودة.
+- خوادم بث متعددة لضمان المشاهدة دون انقطاع.
 
-- Automatically syncs playback progress for movies and episodes.
-- Never lose your spot, even if you switch devices or revisit content later.
+⏳ مزامنة تقدم المشاهدة
 
-🔠 Customizable Subtitles
+- مزامنة تلقائية لتقدم التشغيل للأفلام والحلقات.
+- لن تفقد مكانك أبدًا، حتى إذا قمت بتبديل الأجهزة أو إعادة زيارة المحتوى لاحقًا.
 
-- Support for .srt subtitle files.
-- Fully customizable options
+🔠 ترجمات قابلة للتخصيص
 
-## Download ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/moses-mbaga/semo/total?link=https%3A%2F%2Fgithub.com%2Fmoses-mbaga%2Fsemo%2Freleases)
+- دعم لملفات الترجمة بتنسيق .srt.
+- خيارات قابلة للتخصيص بالكامل.
 
-Download APK
-[![Download APK](https://custom-icon-badges.demolab.com/badge/-Download-F25278?style=for-the-badge&logo=download&logoColor=white&color=AB261D)](https://github.com/moses-mbaga/semo/releases)
+## مفاتيح API
 
-Download IPA
-[![Download IPA](https://custom-icon-badges.demolab.com/badge/-Download-F25278?style=for-the-badge&logo=download&logoColor=white&color=AB261D)](https://github.com/moses-mbaga/semo/releases)
-
-## Tech Stack
-
-**Client:** Flutter
-
-**Server:** Firebase
-
-## Installation
-
-Prerequisites:
-- [Flutter SDK](https://flutter.dev/) (latest stable version).
-- A code editor (e.g., [Android Studio](https://developer.android.com/studio), [VSCode](https://code.visualstudio.com/)).
-- A Firebase account
-
-Instructions:
-
-- Clone the repository
-```bash
-git clone https://github.com/moses-mbaga/semo.git
-cd semo
+### TMDB
+```
+eyJhbGciOiJIUzI1NiJ9.eyJhdWQiOiJjYTc2MDk3MTlhNTYxYjM0MWM4MDYyYzMzN2FiZTM5NyIsIm5iZiI6MTc0NDI5MzUwOC4xMDQsInN1YiI6IjY3ZjdjZTg0MzE3NzUyNzZkNmQ5OTM4OCIsInNjb3BlcyI6WyJhcGlfcmVhZCJdLCJ2ZXJzaW9uIjoxfQ.jB-LdCFKnX7xETXv3UgAHXffgoCOFK9wfyr6Z8y4AzI
 ```
 
-- Install the dependencies:
+### SUBDL
+```
+l0cgAb7VNM_KMN2KwkLCFNuRsk8q3tEg
+```
+
+## التكنولوجيا المستخدمة
+
+**العميل:** Flutter
+
+**التخزين المحلي:** SharedPreferences
+
+## التثبيت
+
+المتطلبات الأساسية:
+- [Flutter SDK](https://flutter.dev/) (أحدث إصدار مستقر).
+- محرر التعليمات البرمجية (مثل [Android Studio](https://developer.android.com/studio) أو [VSCode](https://code.visualstudio.com/)).
+
+التعليمات:
+
+- استنسخ المستودع
+```bash
+git clone https://github.com/htrdjyfjy/semo.git
+cd semo
+git checkout remove-firebase-add-guest-auth
+```
+
+- قم بتثبيت التبعيات:
 ```bash
 flutter pub get
 ```
 
-- Under the parent directory, create a ```.env``` file, which will contains required to run the app. An example can be found in ```.env.example```.
-
-- Auto generate asset and env helpers using build_runner:
+- قم بإنشاء ملف env.g.dart:
 ```bash
-dart run build_runner build --delete-conflicting-outputs
+chmod +x build_apk.sh
+./build_apk.sh
 ```
 
-- Add Firebase to the app using FlutterFire CLI. You can follow insructions from the [official documentation](https://firebase.google.com/docs/flutter/setup)
-
-- Run the app:
+- قم بتشغيل التطبيق:
 ```bash
 flutter run
 ```
 
-## Support
+## بناء التطبيق
 
-If you encounter any issues or have suggestions, please open an issue in the [GitHub Issues](https://github.com/moses-mbaga/semo/issues) section.
+لبناء ملف APK:
+```bash
+./build_apk.sh
+```
 
-Enjoy streaming with Semo! 🌟
+ستجد ملفات APK في المجلد:
+```
+build/app/outputs/apk/release/INDEX/
+```
+
+## الدعم
+
+إذا واجهت أي مشاكل أو كان لديك اقتراحات، يرجى فتح مشكلة في قسم [GitHub Issues](https://github.com/htrdjyfjy/semo/issues).
+
+استمتع بالمشاهدة مع INDEX! 🌟

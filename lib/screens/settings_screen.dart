@@ -1,7 +1,6 @@
 import "dart:io";
 
 import "package:cached_network_image/cached_network_image.dart";
-import "package:firebase_auth/firebase_auth.dart";
 import "package:flutter/gestures.dart";
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
@@ -31,7 +30,6 @@ class SettingsScreen extends BaseScreen {
 
 class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   final AppPreferences _appPreferences = AppPreferences();
-  final FirebaseAuth _auth = FirebaseAuth.instance;
   final AuthService _authService = AuthService();
 
   Future<void> _openServerSelector() async {
@@ -228,7 +226,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
     spinner.show();
 
     try {
-      UserCredential? credential = await _authService.reAuthenticate();
+      dynamic credential = await _authService.reAuthenticate();
 
       if (credential == null) {
         throw Exception("Credential is null");
@@ -304,9 +302,9 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   }
 
   Widget _buildUserCard() {
-    String photoUrl = _auth.currentUser?.photoURL ?? "";
-    String name = _auth.currentUser?.displayName ?? "User";
-    String email = _auth.currentUser?.email ?? "user@email.com";
+    String photoUrl = "";
+    String name = _authService.getUser()?.displayName ?? "Guest User";
+    String email = "guest@example.com";
 
     return Container(
       margin: const EdgeInsets.only(

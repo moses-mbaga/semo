@@ -1,13 +1,12 @@
 import "dart:async";
 
-import "package:firebase_analytics/firebase_analytics.dart";
-import "package:firebase_auth/firebase_auth.dart";
 import "package:flutter/material.dart";
 import "package:internet_connection_checker_plus/internet_connection_checker_plus.dart";
 import "package:logger/logger.dart";
 import "package:index/components/spinner.dart";
 import "package:index/screens/landing_screen.dart";
 import "package:index/utils/navigation_helper.dart";
+import "package:index/services/auth_service.dart";
 
 abstract class BaseScreen extends StatefulWidget {
   const BaseScreen({
@@ -21,8 +20,7 @@ abstract class BaseScreen extends StatefulWidget {
 }
 
 abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseAnalytics _analytics = FirebaseAnalytics.instance;
+  final AuthService _auth = AuthService();
   final InternetConnection _internetConnection = InternetConnection();
   late final StreamSubscription<InternetStatus> _connectionSubscription = _internetConnection.onStatusChange
       .listen((InternetStatus status) async {
@@ -35,7 +33,7 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
       }
     }
   });
-  StreamSubscription<User?>? _authSubscription;
+  StreamSubscription<dynamic>? _authSubscription;
   bool _isConnectedToInternet = true;
   bool _isAuthenticated = false;
 
@@ -109,25 +107,21 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
     }
   }
 
-  /// Log screen view to Firebase Analytics
+  /// Log screen view (Analytics removed)
   Future<void> _logScreenView() async {
     try {
-      await _analytics.logScreenView(
-        screenName: screenName,
-        screenClass: widget.runtimeType.toString(),
-      );
+      // Analytics logging removed
+      logger.d("Screen view: $screenName (${widget.runtimeType})");
     } catch (e, s) {
       logger.e("Failed to log screen view", error: e, stackTrace: s);
     }
   }
 
-  /// Log custom event to Firebase Analytics
+  /// Log custom event (Analytics removed)
   Future<void> logAnalyticsEvent(String eventName, Map<String, Object>? parameters) async {
     try {
-      await _analytics.logEvent(
-        name: eventName,
-        parameters: parameters,
-      );
+      // Analytics logging removed
+      logger.d("Event: $eventName, Parameters: $parameters");
     } catch (e, s) {
       logger.e("Failed to log analytics event", error: e, stackTrace: s);
     }
@@ -137,10 +131,12 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
   Future<dynamic> navigate(Widget destination, {bool replace = false}) async => NavigationHelper.navigate(context, destination, replace: replace);
 
   void _initAuthStateListener() {
-    _authSubscription = _auth.authStateChanges().listen((User? user) async {
+    // Check authentication status periodically
+    _authSubscription = Stream.periodic(const Duration(seconds: 5)).listen((_) async {
       if (mounted) {
-        setState(() => _isAuthenticated = user != null);
-        if (user == null) {
+        final isAuthenticated = _auth.isAuthenticated();
+        setState(() => _isAuthenticated = isAuthenticated);
+        if (!isAuthenticated) {
           await navigate(
             const LandingScreen(),
             replace: true,

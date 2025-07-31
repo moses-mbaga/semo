@@ -1,7 +1,8 @@
-import "package:cloud_firestore/cloud_firestore.dart";
-import "package:firebase_auth/firebase_auth.dart";
+import "dart:convert";
 import "package:logger/logger.dart";
+import "package:shared_preferences/shared_preferences.dart";
 import "package:index/services/firestore_collection_names.dart";
+import "package:index/services/auth_service.dart";
 
 class FavoritesService {
   factory FavoritesService() => _instance;
@@ -9,37 +10,39 @@ class FavoritesService {
 
   static final FavoritesService _instance = FavoritesService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final AuthService _auth = AuthService();
   final Logger _logger = Logger();
 
-  DocumentReference<Map<String, dynamic>> _getDocReference() {
-    if (_auth.currentUser == null) {
+  String _getPreferenceKey() {
+    final user = _auth.getUser();
+    if (user == null) {
       throw Exception("User isn't authenticated");
     }
 
     try {
-      return _firestore
-          .collection(FirestoreCollection.favorites)
-          .doc(_auth.currentUser?.uid);
+      return "${PreferencesKeys.favorites}_${user.id}";
     } catch (e, s) {
-      _logger.e("Error getting favorites document reference", error: e, stackTrace: s);
+      _logger.e("Error getting favorites preference key", error: e, stackTrace: s);
       rethrow;
     }
   }
 
   Future<Map<String, dynamic>> getFavorites() async {
     try {
-      final DocumentSnapshot<Map<String, dynamic>> doc = await _getDocReference().get();
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      final String? jsonData = prefs.getString(key);
 
-      if (!doc.exists) {
-        await _getDocReference().set(<String, dynamic>{
+      if (jsonData == null) {
+        final initialData = <String, dynamic>{
           "movies": <int>[],
           "tv_shows": <int>[],
-        });
+        };
+        await prefs.setString(key, jsonEncode(initialData));
+        return initialData;
       }
 
-      return doc.data() ?? <String, dynamic>{};
+      return jsonDecode(jsonData) as Map<String, dynamic>;
     } catch (e, s) {
       _logger.e("Error getting favorites", error: e, stackTrace: s);
       rethrow;
@@ -68,13 +71,26 @@ class FavoritesService {
     }
   }
 
-  Future<dynamic> addMovie(int movieId, {Map<String, dynamic>? allFavorites}) async {
-    final List<int> favorites = await getMovies(favorites: allFavorites);
+  Future<void> _saveFavorites(Map<String, dynamic> data) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      await prefs.setString(key, jsonEncode(data));
+    } catch (e, s) {
+      _logger.e("Error saving favorites", error: e, stackTrace: s);
+      rethrow;
+    }
+  }
 
-    if (!favorites.contains(movieId)) {
-      favorites.add(movieId);
+  Future<dynamic> addMovie(int movieId, {Map<String, dynamic>? allFavorites}) async {
+    final Map<String, dynamic> favorites = allFavorites ?? await getFavorites();
+    final List<int> movies = await getMovies(favorites: favorites);
+
+    if (!movies.contains(movieId)) {
+      movies.add(movieId);
+      favorites["movies"] = movies;
       try {
-        await _getDocReference().set(<String, dynamic>{"movies": favorites}, SetOptions(merge: true));
+        await _saveFavorites(favorites);
       } catch (e, s) {
         _logger.e("Error adding movie to favorites", error: e, stackTrace: s);
         rethrow;
@@ -83,12 +99,14 @@ class FavoritesService {
   }
 
   Future<dynamic> addTvShow(int tvShowId, {Map<String, dynamic>? allFavorites}) async {
-    final List<int> favorites = await getTvShows(favorites: allFavorites);
+    final Map<String, dynamic> favorites = allFavorites ?? await getFavorites();
+    final List<int> tvShows = await getTvShows(favorites: favorites);
 
-    if (!favorites.contains(tvShowId)) {
-      favorites.add(tvShowId);
+    if (!tvShows.contains(tvShowId)) {
+      tvShows.add(tvShowId);
+      favorites["tv_shows"] = tvShows;
       try {
-        await _getDocReference().set(<String, dynamic>{"tv_shows": favorites}, SetOptions(merge: true));
+        await _saveFavorites(favorites);
       } catch (e, s) {
         _logger.e("Error adding TV show to favorites", error: e, stackTrace: s);
         rethrow;
@@ -97,12 +115,14 @@ class FavoritesService {
   }
 
   Future<dynamic> removeMovie(int movieId, {Map<String, dynamic>? allFavorites}) async {
-    final List<int> favorites = await getMovies(favorites: allFavorites);
+    final Map<String, dynamic> favorites = allFavorites ?? await getFavorites();
+    final List<int> movies = await getMovies(favorites: favorites);
 
-    if (favorites.contains(movieId)) {
-      favorites.remove(movieId);
+    if (movies.contains(movieId)) {
+      movies.remove(movieId);
+      favorites["movies"] = movies;
       try {
-        await _getDocReference().set(<String, dynamic>{"movies": favorites}, SetOptions(merge: true));
+        await _saveFavorites(favorites);
       } catch (e, s) {
         _logger.e("Error removing movie from favorites", error: e, stackTrace: s);
         rethrow;
@@ -111,12 +131,14 @@ class FavoritesService {
   }
 
   Future<dynamic> removeTvShow(int tvShowId, {Map<String, dynamic>? allFavorites}) async {
-    final List<int> favorites = await getTvShows(favorites: allFavorites);
+    final Map<String, dynamic> favorites = allFavorites ?? await getFavorites();
+    final List<int> tvShows = await getTvShows(favorites: favorites);
 
-    if (favorites.contains(tvShowId)) {
-      favorites.remove(tvShowId);
+    if (tvShows.contains(tvShowId)) {
+      tvShows.remove(tvShowId);
+      favorites["tv_shows"] = tvShows;
       try {
-        await _getDocReference().set(<String, dynamic>{"tv_shows": favorites}, SetOptions(merge: true));
+        await _saveFavorites(favorites);
       } catch (e, s) {
         _logger.e("Error removing TV show from favorites", error: e, stackTrace: s);
         rethrow;
@@ -126,7 +148,9 @@ class FavoritesService {
 
   Future<dynamic> clear() async {
     try {
-      await _getDocReference().delete();
+      final prefs = await SharedPreferences.getInstance();
+      final String key = _getPreferenceKey();
+      await prefs.remove(key);
     } catch (e, s) {
       _logger.e("Error clearing favorites", error: e, stackTrace: s);
       rethrow;
