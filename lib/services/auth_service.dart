@@ -1,98 +1,94 @@
-import "package:firebase_auth/firebase_auth.dart";
-import "package:google_sign_in/google_sign_in.dart";
 import "package:logger/logger.dart";
+import "package:shared_preferences/shared_preferences.dart";
+
+class GuestUser {
+  final String id;
+  final String displayName;
+  
+  GuestUser({required this.id, required this.displayName});
+}
 
 class AuthService {
   factory AuthService() => _instance;
   AuthService._internal();
 
   static final AuthService _instance = AuthService._internal();
-
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final GoogleSignIn _googleSignIn = GoogleSignIn.instance;
+  
   final Logger _logger = Logger();
-
-  Future<OAuthCredential?> _getOAuthCredential() async {
+  GuestUser? _currentUser;
+  
+  Future<void> signIn() async {
     try {
-      final GoogleSignInAccount user = await _googleSignIn.authenticate();
-      final GoogleSignInAuthentication auth = user.authentication;
-      return GoogleAuthProvider.credential(idToken: auth.idToken);
+      // Create a guest user with a unique ID
+      final String guestId = DateTime.now().millisecondsSinceEpoch.toString();
+      _currentUser = GuestUser(
+        id: guestId,
+        displayName: "Guest User",
+      );
+      
+      // Save the guest user info to shared preferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.setString('guest_user_id', guestId);
+      await prefs.setString('guest_user_name', "Guest User");
+      
     } catch (e, s) {
-      _logger.e("Failed to get OAuth Credential", error: e, stackTrace: s);
-      rethrow;
-    }
-  }
-
-  Future<UserCredential?> signIn() async {
-    try {
-      final OAuthCredential? credential = await _getOAuthCredential();
-
-      if (credential == null) {
-        throw Exception("OAuth Credential is null");
-      }
-
-      return await _auth.signInWithCredential(credential);
-    } catch (e, s) {
-      _logger.e("Failed to authenticate", error: e, stackTrace: s);
+      _logger.e("Failed to sign in as guest", error: e, stackTrace: s);
       rethrow;
     }
   }
 
   bool isAuthenticated() {
     try {
-      User? user = getUser();
-      return user != null;
+      return _currentUser != null;
     } catch (e, s) {
       _logger.e("Failed to check authentication status", error: e, stackTrace: s);
       rethrow;
     }
   }
 
-  User? getUser() {
+  GuestUser? getUser() {
     try {
-      return _auth.currentUser;
+      return _currentUser;
     } catch (e, s) {
       _logger.e("Failed to get current user", error: e, stackTrace: s);
       rethrow;
     }
   }
 
-  Future<UserCredential?> reAuthenticate() async {
+  Future<void> loadUserFromPrefs() async {
     try {
-      if (_auth.currentUser == null) {
-        throw Exception("User is null");
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      final String? guestId = prefs.getString('guest_user_id');
+      final String? guestName = prefs.getString('guest_user_name');
+      
+      if (guestId != null && guestName != null) {
+        _currentUser = GuestUser(
+          id: guestId,
+          displayName: guestName,
+        );
       }
-
-      final OAuthCredential? credential = await _getOAuthCredential();
-
-      if (credential == null) {
-        throw Exception("OAuth Credential is null");
-      }
-
-      return await _auth.currentUser?.reauthenticateWithCredential(credential);
     } catch (e, s) {
-      _logger.e("Failed to re-authenticate", error: e, stackTrace: s);
-      rethrow;
+      _logger.e("Failed to load user from preferences", error: e, stackTrace: s);
     }
   }
 
-  Future<dynamic> signOut() async {
+  Future<void> signOut() async {
     try {
-      await _googleSignIn.signOut();
-      await _auth.signOut();
+      _currentUser = null;
+      
+      // Clear the guest user info from shared preferences
+      final SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.remove('guest_user_id');
+      await prefs.remove('guest_user_name');
     } catch (e, s) {
       _logger.e("Failed to sign out", error: e, stackTrace: s);
       rethrow;
     }
   }
 
-  Future<dynamic> deleteAccount() async {
+  Future<void> deleteAccount() async {
     try {
-      if (_auth.currentUser == null) {
-        throw Exception("User is null");
-      }
-
-      await _auth.currentUser?.delete();
+      await signOut();
     } catch (e, s) {
       _logger.e("Failed to delete account", error: e, stackTrace: s);
       rethrow;

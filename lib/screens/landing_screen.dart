@@ -1,7 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
-import "package:google_sign_in/google_sign_in.dart";
 import "package:semo/bloc/app_bloc.dart";
 import "package:semo/bloc/app_event.dart";
 import "package:semo/components/snack_bar.dart";
@@ -28,7 +27,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
     await _videoController.setLooping(true);
   }
 
-  Future<void> _authenticateWithGoogle() async {
+  Future<void> _authenticateAsGuest() async {
     spinner.show();
 
     try {
@@ -51,7 +50,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
     spinner.dismiss();
   }
 
-  Widget _buildContinueWithGoogleButton() => Container(
+  Widget _buildContinueAsGuestButton() => Container(
     width: double.infinity,
     height: 60,
     child: ElevatedButton(
@@ -66,7 +65,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
         ),
       ),
       onPressed: () async {
-        await _authenticateWithGoogle();
+        await _authenticateAsGuest();
       },
       child: Container(
         width: double.infinity,
@@ -76,7 +75,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: <Widget>[
                 FaIcon(
-                  FontAwesomeIcons.google,
+                  FontAwesomeIcons.userAlt,
                   color: Colors.white,
                   size: 20,
                 ),
@@ -94,7 +93,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
                   children: <Widget>[
                     const Spacer(),
                     Text(
-                      "Continue with Google",
+                      "Continue as Guest",
                       style: Theme.of(context).textTheme.displayMedium,
                     ),
                     const Spacer(),
@@ -155,7 +154,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
                 margin: const EdgeInsets.only(
                   bottom: 18,
                 ),
-                child: _buildContinueWithGoogleButton(),
+                child: _buildContinueAsGuestButton(),
               ),
             ),
           ],
@@ -170,7 +169,6 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
   @override
   Future<void> initializeScreen() async {
     await _initPlayback();
-    await GoogleSignIn.instance.initialize();
   }
 
   @override

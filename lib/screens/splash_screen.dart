@@ -23,7 +23,9 @@ class _SplashScreenState extends BaseScreenState<SplashScreen> {
     setState(() => _appVersion = packageInfo.version);
   }
 
-  void _checkAuthState() {
+  Future<void> _checkAuthState() async {
+    await AuthService().loadUserFromPrefs();
+    
     Widget destination;
     
     if (AuthService().isAuthenticated()) {
