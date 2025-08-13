@@ -13,18 +13,7 @@ import "package:semo/utils/urls.dart";
 class SubtitleService {
   factory SubtitleService() {
     if (!_instance._isDioLoggerInitialized) {
-      _dio.interceptors.add(
-        PrettyDioLogger(
-          requestHeader: true,
-          requestBody: true,
-          responseBody: true,
-          responseHeader: false,
-          error: true,
-          compact: true,
-          enabled: kDebugMode,
-        ),
-      );
-
+      _dio.interceptors.add(_dioLogger);
       _instance._isDioLoggerInitialized = true;
     }
 
@@ -37,13 +26,26 @@ class SubtitleService {
 
   final Logger _logger = Logger();
   static final Dio _dio = Dio();
+  static final PrettyDioLogger _dioLogger = PrettyDioLogger(
+    requestHeader: true,
+    requestBody: true,
+    responseBody: true,
+    responseHeader: false,
+    error: true,
+    compact: true,
+    enabled: kDebugMode,
+  );
   bool _isDioLoggerInitialized = false;
 
   Future<List<File>> getSubtitles(int tmdbId, {int? seasonNumber, int? episodeNumber, String? locale = "EN"}) async {
     try {
       final List<File> srtFiles = <File>[];
       final Directory directory = await getTemporaryDirectory();
-      String destinationDirectoryPath = "${directory.path}/$tmdbId/$locale";
+      String destinationDirectoryPath = "${directory.path}/d/$locale";
+
+      if (!directory.existsSync()) {
+        await directory.create(recursive: true);
+      }
 
       if (seasonNumber != null && episodeNumber != null) {
         destinationDirectoryPath = "${directory.path}/$tmdbId/$locale/$seasonNumber/$episodeNumber";
@@ -81,6 +83,12 @@ class SubtitleService {
         parameters["episode_number"] = "$episodeNumber";
       }
 
+      // Ensure the logger is added
+      // It could've been removed in a previous call
+      if (!_dio.interceptors.contains(_dioLogger)) {
+        _dio.interceptors.add(_dioLogger);
+      }
+
       final Response<dynamic> response = await _dio.get(
         Urls.subtitles,
         queryParameters: parameters,
@@ -93,6 +101,10 @@ class SubtitleService {
         for (final dynamic subtitle in subtitles) {
           final String zipUrl = subtitle["url"] as String;
           final String fullZipUrl = Urls.subdlDownloadBase + zipUrl;
+
+          // Remove the logger temporarily
+          // To avoid logging binary data
+          _dio.interceptors.removeWhere((Interceptor interceptor) => interceptor == _dioLogger);
 
           final Response<dynamic> zipResponse = await _dio.get<List<int>>(
             fullZipUrl,
@@ -111,7 +123,10 @@ class SubtitleService {
                 if (extension == ".srt") {
                   final List<int> data = file.content as List<int>;
                   final File srtFile = File("$destinationDirectoryPath/$fileName");
+
+                  await srtFile.create(recursive: true);
                   await srtFile.writeAsBytes(data);
+
                   srtFiles.add(srtFile);
                 }
               }
