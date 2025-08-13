@@ -50,9 +50,9 @@ class SemoPlayer extends StatefulWidget {
 
 class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   late final VideoPlayerController _videoPlayerController;
-  SubtitleController _subtitleController = SubtitleController(
+  final SubtitleController _subtitleController = SubtitleController(
     subtitleType: SubtitleType.srt,
-    showSubtitles: false,
+    showSubtitles: true,
   );
   final AppPreferences _appPreferences = AppPreferences();
   SubtitleStyle _subtitleStyle = const SubtitleStyle();
@@ -277,21 +277,17 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   Future<void> _setSubtitle(int index) async {
-    File? subtitleFile = widget.subtitleFiles?[index];
+    try {
+      File? subtitleFile = index >= 0 ? (widget.subtitleFiles?[index]) : null;
+      String? subtitleContent = await subtitleFile?.readAsString();
 
-    if (subtitleFile != null) {
-      String? subtitleContent = index >= 0 ? await subtitleFile.readAsString() : null;
+      _subtitleController.updateSubtitleContent(content: subtitleContent ?? "");
 
       setState(() {
-        _subtitleController = SubtitleController(
-          subtitleType: SubtitleType.srt,
-          subtitlesContent: subtitleContent,
-          showSubtitles: index >= 0,
-        );
         _selectedSubtitle = index;
         _showSubtitles = index >= 0;
       });
-    }
+    } catch (_) {}
   }
 
   Future<void> _showSubtitleSelector() async => showDialog(
