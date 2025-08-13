@@ -41,7 +41,7 @@ class SubtitleService {
     try {
       final List<File> srtFiles = <File>[];
       final Directory directory = await getTemporaryDirectory();
-      String destinationDirectoryPath = "${directory.path}/d/$locale";
+      String destinationDirectoryPath = "${directory.path}/$locale";
 
       if (!directory.existsSync()) {
         await directory.create(recursive: true);
