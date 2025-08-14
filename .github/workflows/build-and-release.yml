@@ -107,11 +107,11 @@ jobs:
             echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 -d > lib/firebase_options.dart
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      - name: Build APK
+      - name: Build APKs
         if: ${{ success() }}
         run: |
           set -o pipefail
-          { flutter build apk --release; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+          { flutter build apk --release --split-per-abi; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Build web
         if: ${{ success() }}
@@ -119,12 +119,12 @@ jobs:
           set -o pipefail
           { flutter build web --release; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      - name: Upload APK artifact
+      - name: Upload APKs artifact
         if: ${{ success() }}
         uses: actions/upload-artifact@v4
         with:
-          name: app-release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          name: app-release-apks
+          path: build/app/outputs/flutter-apk/*.apk
 
       - name: Upload web artifact
         if: ${{ success() }}
@@ -150,10 +150,10 @@ jobs:
           submodules: recursive
           token: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Download APK artifact
+      - name: Download APKs artifact
         uses: actions/download-artifact@v4
         with:
-          name: app-release-apk
+          name: app-release-apks
           path: ./artifacts/
 
       - name: Download web artifact
@@ -174,15 +174,11 @@ jobs:
           draft: false
           prerelease: false
 
-      - name: Upload APK to Release
-        uses: actions/upload-release-asset@v1
+      - name: Upload APKs to Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        with:
-          upload_url: ${{ steps.create_release.outputs.upload_url }}
-          asset_path: ./artifacts/app-release.apk
-          asset_name: app-release-${{ github.event.inputs.version }}.apk
-          asset_content_type: application/vnd.android.package-archive
+        run: |
+          gh release upload ${{ github.event.inputs.version }} ./artifacts/*.apk --clobber
 
       - name: Deploy to Vercel
         uses: amondnet/vercel-action@v25
