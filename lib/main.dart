@@ -14,6 +14,8 @@ import "package:semo/bloc/app_state.dart";
 import "package:semo/firebase_options.dart";
 import "package:semo/screens/splash_screen.dart";
 import "package:semo/services/preferences.dart";
+import "package:universal_back_gesture/back_gesture_config.dart";
+import "package:universal_back_gesture/back_gesture_page_transitions_builder.dart";
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
@@ -81,6 +83,17 @@ class Semo extends StatelessWidget {
     primaryColor: _primary,
     scaffoldBackgroundColor: _background,
     cardColor: _surface,
+    pageTransitionsTheme: PageTransitionsTheme(
+      builders: <TargetPlatform, PageTransitionsBuilder>{
+        for (final TargetPlatform platform in TargetPlatform.values)
+          platform: const BackGesturePageTransitionsBuilder(
+            parentTransitionBuilder: PredictiveBackPageTransitionsBuilder(),
+            config: BackGestureConfig(
+              cancelAnimationDuration: Duration(seconds: 1),
+            ),
+          ),
+      },
+    ),
     appBarTheme: AppBarTheme(
       scrolledUnderElevation: 0,
       backgroundColor: _background,
