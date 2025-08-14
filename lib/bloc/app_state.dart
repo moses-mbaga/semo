@@ -145,121 +145,237 @@ class AppState {
 
   final Timer? cacheTimer;
 
+  static const Object _notProvided = Object();
+
   AppState copyWith({
-    List<Movie>? nowPlayingMovies,
-    List<TvShow>? onTheAirTvShows,
-    PagingController<int, Movie>? trendingMoviesPagingController,
-    PagingController<int, TvShow>? trendingTvShowsPagingController,
-    PagingController<int, Movie>? popularMoviesPagingController,
-    PagingController<int, TvShow>? popularTvShowsPagingController,
-    PagingController<int, Movie>? topRatedMoviesPagingController,
-    PagingController<int, TvShow>? topRatedTvShowsPagingController,
-    Map<String, PagingController<int, Movie>>? streamingPlatformMoviesPagingControllers,
-    Map<String, PagingController<int, TvShow>>? streamingPlatformTvShowsPagingControllers,
-    List<Movie>? incompleteMovies,
-    List<TvShow>? incompleteTvShows,
-    List<Movie>? movies,
-    List<TvShow>? tvShows,
-    Map<String, dynamic>? recentlyWatched,
-    List<Movie>? recentlyWatchedMovies,
-    List<TvShow>? recentlyWatchedTvShows,
-    Map<String, dynamic>? favorites,
-    List<Movie>? favoriteMovies,
-    List<TvShow>? favoriteTvShows,
-    List<Genre>? movieGenres,
-    List<Genre>? tvShowGenres,
-    Map<String, PagingController<int, Movie>>? genreMoviesPagingControllers,
-    Map<String, PagingController<int, TvShow>>? genreTvShowsPagingControllers,
-    Map<String, String>? movieTrailers,
-    Map<String, List<Person>>? movieCast,
-    Map<String, PagingController<int, Movie>>? movieRecommendationsPagingControllers,
-    Map<String, PagingController<int, Movie>>? similarMoviesPagingControllers,
-    Map<String, List<Season>>? tvShowSeasons,
-    Map<String, Map<int, List<Episode>>>? tvShowEpisodes,
-    Map<String, List<Person>>? tvShowCast,
-    Map<String, String>? tvShowTrailers,
-    Map<String, PagingController<int, TvShow>>? tvShowRecommendationsPagingControllers,
-    Map<String, PagingController<int, TvShow>>? similarTvShowsPagingControllers,
-    Map<String, List<Movie>>? personMovies,
-    Map<String, List<TvShow>>? personTvShows,
-    List<String>? moviesRecentSearches,
-    List<String>? tvShowsRecentSearches,
-    Map<String, MediaStream>? movieStreams,
-    Map<String, MediaStream>? episodeStreams,
-    Map<String, List<File>>? movieSubtitles,
-    Map<String, List<File>>? episodeSubtitles,
-    bool? isLoadingMovies,
-    bool? isLoadingTvShows,
-    bool? isLoadingStreamingPlatformsMedia,
-    bool? isLoadingMovieGenres,
-    bool? isLoadingTvShowGenres,
-    bool? isLoadingRecentlyWatched,
-    bool? isLoadingFavorites,
-    Map<String, bool>? isMovieLoading,
-    Map<String, bool>? isTvShowLoading,
-    Map<String, Map<int, bool>>? isSeasonEpisodesLoading,
-    Map<String, bool>? isLoadingPersonMedia,
-    Map<String, bool>? isExtractingMovieStream,
-    Map<String, bool>? isExtractingEpisodeStream,
-    String? error,
-    Timer? cacheTimer,
+    Object? nowPlayingMovies = _notProvided,
+    Object? onTheAirTvShows = _notProvided,
+    Object? trendingMoviesPagingController = _notProvided,
+    Object? trendingTvShowsPagingController = _notProvided,
+    Object? popularMoviesPagingController = _notProvided,
+    Object? popularTvShowsPagingController = _notProvided,
+    Object? topRatedMoviesPagingController = _notProvided,
+    Object? topRatedTvShowsPagingController = _notProvided,
+    Object? streamingPlatformMoviesPagingControllers = _notProvided,
+    Object? streamingPlatformTvShowsPagingControllers = _notProvided,
+    Object? incompleteMovies = _notProvided,
+    Object? incompleteTvShows = _notProvided,
+    Object? movies = _notProvided,
+    Object? tvShows = _notProvided,
+    Object? recentlyWatched = _notProvided,
+    Object? recentlyWatchedMovies = _notProvided,
+    Object? recentlyWatchedTvShows = _notProvided,
+    Object? favorites = _notProvided,
+    Object? favoriteMovies = _notProvided,
+    Object? favoriteTvShows = _notProvided,
+    Object? movieGenres = _notProvided,
+    Object? tvShowGenres = _notProvided,
+    Object? genreMoviesPagingControllers = _notProvided,
+    Object? genreTvShowsPagingControllers = _notProvided,
+    Object? movieTrailers = _notProvided,
+    Object? movieCast = _notProvided,
+    Object? movieRecommendationsPagingControllers = _notProvided,
+    Object? similarMoviesPagingControllers = _notProvided,
+    Object? tvShowSeasons = _notProvided,
+    Object? tvShowEpisodes = _notProvided,
+    Object? tvShowCast = _notProvided,
+    Object? tvShowTrailers = _notProvided,
+    Object? tvShowRecommendationsPagingControllers = _notProvided,
+    Object? similarTvShowsPagingControllers = _notProvided,
+    Object? personMovies = _notProvided,
+    Object? personTvShows = _notProvided,
+    Object? moviesRecentSearches = _notProvided,
+    Object? tvShowsRecentSearches = _notProvided,
+    Object? movieStreams = _notProvided,
+    Object? episodeStreams = _notProvided,
+    Object? movieSubtitles = _notProvided,
+    Object? episodeSubtitles = _notProvided,
+    Object? isLoadingMovies = _notProvided,
+    Object? isLoadingTvShows = _notProvided,
+    Object? isLoadingStreamingPlatformsMedia = _notProvided,
+    Object? isLoadingMovieGenres = _notProvided,
+    Object? isLoadingTvShowGenres = _notProvided,
+    Object? isLoadingRecentlyWatched = _notProvided,
+    Object? isLoadingFavorites = _notProvided,
+    Object? isMovieLoading = _notProvided,
+    Object? isTvShowLoading = _notProvided,
+    Object? isSeasonEpisodesLoading = _notProvided,
+    Object? isLoadingPersonMedia = _notProvided,
+    Object? isExtractingMovieStream = _notProvided,
+    Object? isExtractingEpisodeStream = _notProvided,
+    Object? error = _notProvided,
+    Object? cacheTimer = _notProvided,
   }) => AppState(
-    nowPlayingMovies: nowPlayingMovies ?? this.nowPlayingMovies,
-    onTheAirTvShows: onTheAirTvShows ?? this.onTheAirTvShows,
-    trendingMoviesPagingController: trendingMoviesPagingController ?? this.trendingMoviesPagingController,
-    trendingTvShowsPagingController: trendingTvShowsPagingController ?? this.trendingTvShowsPagingController,
-    popularMoviesPagingController: popularMoviesPagingController ?? this.popularMoviesPagingController,
-    popularTvShowsPagingController: popularTvShowsPagingController ?? this.popularTvShowsPagingController,
-    topRatedMoviesPagingController: topRatedMoviesPagingController ?? this.topRatedMoviesPagingController,
-    topRatedTvShowsPagingController: topRatedTvShowsPagingController ?? this.topRatedTvShowsPagingController,
-    streamingPlatformMoviesPagingControllers: streamingPlatformMoviesPagingControllers ?? this.streamingPlatformMoviesPagingControllers,
-    streamingPlatformTvShowsPagingControllers: streamingPlatformTvShowsPagingControllers ?? this.streamingPlatformTvShowsPagingControllers,
-    incompleteMovies: incompleteMovies ?? this.incompleteMovies,
-    incompleteTvShows: incompleteTvShows ?? this.incompleteTvShows,
-    movies: movies ?? this.movies,
-    tvShows: tvShows ?? this.tvShows,
-    recentlyWatched: recentlyWatched ?? this.recentlyWatched,
-    recentlyWatchedMovies: recentlyWatchedMovies ?? this.recentlyWatchedMovies,
-    recentlyWatchedTvShows: recentlyWatchedTvShows ?? this.recentlyWatchedTvShows,
-    favorites: favorites ?? this.favorites,
-    favoriteMovies: favoriteMovies ?? this.favoriteMovies,
-    favoriteTvShows: favoriteTvShows ?? this.favoriteTvShows,
-    movieGenres: movieGenres ?? this.movieGenres,
-    tvShowGenres: tvShowGenres ?? this.tvShowGenres,
-    genreMoviesPagingControllers: genreMoviesPagingControllers ?? this.genreMoviesPagingControllers,
-    genreTvShowsPagingControllers: genreTvShowsPagingControllers ?? this.genreTvShowsPagingControllers,
-    movieTrailers: movieTrailers ?? this.movieTrailers,
-    movieCast: movieCast ?? this.movieCast,
-    movieRecommendationsPagingControllers: movieRecommendationsPagingControllers ?? this.movieRecommendationsPagingControllers,
-    similarMoviesPagingControllers: similarMoviesPagingControllers ?? this.similarMoviesPagingControllers,
-    tvShowSeasons: tvShowSeasons ?? this.tvShowSeasons,
-    tvShowEpisodes: tvShowEpisodes ?? this.tvShowEpisodes,
-    tvShowCast: tvShowCast ?? this.tvShowCast,
-    tvShowTrailers: tvShowTrailers ?? this.tvShowTrailers,
-    tvShowRecommendationsPagingControllers: tvShowRecommendationsPagingControllers ?? this.tvShowRecommendationsPagingControllers,
-    similarTvShowsPagingControllers: similarTvShowsPagingControllers ?? this.similarTvShowsPagingControllers,
-    personMovies: personMovies ?? this.personMovies,
-    personTvShows: personTvShows ?? this.personTvShows,
-    moviesRecentSearches: moviesRecentSearches ?? this.moviesRecentSearches,
-    tvShowsRecentSearches: tvShowsRecentSearches ?? this.tvShowsRecentSearches,
-    movieStreams: movieStreams ?? this.movieStreams,
-    episodeStreams: episodeStreams ?? this.episodeStreams,
-    movieSubtitles: movieSubtitles ?? this.movieSubtitles,
-    episodeSubtitles: episodeSubtitles ?? this.episodeSubtitles,
-    isLoadingMovies: isLoadingMovies ?? this.isLoadingMovies,
-    isLoadingTvShows: isLoadingTvShows ?? this.isLoadingTvShows,
-    isLoadingStreamingPlatformsMedia: isLoadingStreamingPlatformsMedia ?? this.isLoadingStreamingPlatformsMedia,
-    isLoadingMovieGenres: isLoadingMovieGenres ?? this.isLoadingMovieGenres,
-    isLoadingTvShowGenres: isLoadingTvShowGenres ?? this.isLoadingTvShowGenres,
-    isLoadingRecentlyWatched: isLoadingRecentlyWatched ?? this.isLoadingRecentlyWatched,
-    isLoadingFavorites: isLoadingFavorites ?? this.isLoadingFavorites,
-    isMovieLoading: isMovieLoading ?? this.isMovieLoading,
-    isTvShowLoading: isTvShowLoading ?? this.isTvShowLoading,
-    isSeasonEpisodesLoading: isSeasonEpisodesLoading ?? this.isSeasonEpisodesLoading,
-    isLoadingPersonMedia: isLoadingPersonMedia ?? this.isLoadingPersonMedia,
-    isExtractingMovieStream: isExtractingMovieStream ?? this.isExtractingMovieStream,
-    isExtractingEpisodeStream: isExtractingEpisodeStream ?? this.isExtractingEpisodeStream,
-    error: error ?? this.error,
-    cacheTimer: cacheTimer ?? this.cacheTimer,
+    nowPlayingMovies: nowPlayingMovies == _notProvided
+        ? this.nowPlayingMovies
+        : nowPlayingMovies as List<Movie>?,
+    onTheAirTvShows: onTheAirTvShows == _notProvided
+        ? this.onTheAirTvShows
+        : onTheAirTvShows as List<TvShow>?,
+    trendingMoviesPagingController: trendingMoviesPagingController == _notProvided
+        ? this.trendingMoviesPagingController
+        : trendingMoviesPagingController as PagingController<int, Movie>?,
+    trendingTvShowsPagingController: trendingTvShowsPagingController == _notProvided
+        ? this.trendingTvShowsPagingController
+        : trendingTvShowsPagingController as PagingController<int, TvShow>?,
+    popularMoviesPagingController: popularMoviesPagingController == _notProvided
+        ? this.popularMoviesPagingController
+        : popularMoviesPagingController as PagingController<int, Movie>?,
+    popularTvShowsPagingController: popularTvShowsPagingController == _notProvided
+        ? this.popularTvShowsPagingController
+        : popularTvShowsPagingController as PagingController<int, TvShow>?,
+    topRatedMoviesPagingController: topRatedMoviesPagingController == _notProvided
+        ? this.topRatedMoviesPagingController
+        : topRatedMoviesPagingController as PagingController<int, Movie>?,
+    topRatedTvShowsPagingController: topRatedTvShowsPagingController == _notProvided
+        ? this.topRatedTvShowsPagingController
+        : topRatedTvShowsPagingController as PagingController<int, TvShow>?,
+    streamingPlatformMoviesPagingControllers: streamingPlatformMoviesPagingControllers == _notProvided
+        ? this.streamingPlatformMoviesPagingControllers
+        : streamingPlatformMoviesPagingControllers as Map<String, PagingController<int, Movie>>?,
+    streamingPlatformTvShowsPagingControllers: streamingPlatformTvShowsPagingControllers == _notProvided
+        ? this.streamingPlatformTvShowsPagingControllers
+        : streamingPlatformTvShowsPagingControllers as Map<String, PagingController<int, TvShow>>?,
+    incompleteMovies: incompleteMovies == _notProvided
+        ? this.incompleteMovies
+        : incompleteMovies as List<Movie>?,
+    incompleteTvShows: incompleteTvShows == _notProvided
+        ? this.incompleteTvShows
+        : incompleteTvShows as List<TvShow>?,
+    movies: movies == _notProvided
+        ? this.movies
+        : movies as List<Movie>?,
+    tvShows: tvShows == _notProvided
+        ? this.tvShows
+        : tvShows as List<TvShow>?,
+    recentlyWatched: recentlyWatched == _notProvided
+        ? this.recentlyWatched
+        : recentlyWatched as Map<String, dynamic>?,
+    recentlyWatchedMovies: recentlyWatchedMovies == _notProvided
+        ? this.recentlyWatchedMovies
+        : recentlyWatchedMovies as List<Movie>?,
+    recentlyWatchedTvShows: recentlyWatchedTvShows == _notProvided
+        ? this.recentlyWatchedTvShows
+        : recentlyWatchedTvShows as List<TvShow>?,
+    favorites: favorites == _notProvided
+        ? this.favorites
+        : favorites as Map<String, dynamic>?,
+    favoriteMovies: favoriteMovies == _notProvided
+        ? this.favoriteMovies
+        : favoriteMovies as List<Movie>?,
+    favoriteTvShows: favoriteTvShows == _notProvided
+        ? this.favoriteTvShows
+        : favoriteTvShows as List<TvShow>?,
+    movieGenres: movieGenres == _notProvided
+        ? this.movieGenres
+        : movieGenres as List<Genre>?,
+    tvShowGenres: tvShowGenres == _notProvided
+        ? this.tvShowGenres
+        : tvShowGenres as List<Genre>?,
+    genreMoviesPagingControllers: genreMoviesPagingControllers == _notProvided
+        ? this.genreMoviesPagingControllers
+        : genreMoviesPagingControllers as Map<String, PagingController<int, Movie>>?,
+    genreTvShowsPagingControllers: genreTvShowsPagingControllers == _notProvided
+        ? this.genreTvShowsPagingControllers
+        : genreTvShowsPagingControllers as Map<String, PagingController<int, TvShow>>?,
+    movieCast: movieCast == _notProvided
+        ? this.movieCast
+        : movieCast as Map<String, List<Person>>?,
+    movieTrailers: movieTrailers == _notProvided
+        ? this.movieTrailers
+        : movieTrailers as Map<String, String>?,
+    movieRecommendationsPagingControllers: movieRecommendationsPagingControllers == _notProvided
+        ? this.movieRecommendationsPagingControllers
+        : movieRecommendationsPagingControllers as Map<String, PagingController<int, Movie>>?,
+    similarMoviesPagingControllers: similarMoviesPagingControllers == _notProvided
+        ? this.similarMoviesPagingControllers
+        : similarMoviesPagingControllers as Map<String, PagingController<int, Movie>>?,
+    tvShowSeasons: tvShowSeasons == _notProvided
+        ? this.tvShowSeasons
+        : tvShowSeasons as Map<String, List<Season>>?,
+    tvShowEpisodes: tvShowEpisodes == _notProvided
+        ? this.tvShowEpisodes
+        : tvShowEpisodes as Map<String, Map<int, List<Episode>>>?,
+    tvShowCast: tvShowCast == _notProvided
+        ? this.tvShowCast
+        : tvShowCast as Map<String, List<Person>>?,
+    tvShowTrailers: tvShowTrailers == _notProvided
+        ? this.tvShowTrailers
+        : tvShowTrailers as Map<String, String>?,
+    tvShowRecommendationsPagingControllers: tvShowRecommendationsPagingControllers == _notProvided
+        ? this.tvShowRecommendationsPagingControllers
+        : tvShowRecommendationsPagingControllers as Map<String, PagingController<int, TvShow>>?,
+    similarTvShowsPagingControllers: similarTvShowsPagingControllers == _notProvided
+        ? this.similarTvShowsPagingControllers
+        : similarTvShowsPagingControllers as Map<String, PagingController<int, TvShow>>?,
+    personMovies: personMovies == _notProvided
+        ? this.personMovies
+        : personMovies as Map<String, List<Movie>>?,
+    personTvShows: personTvShows == _notProvided
+        ? this.personTvShows
+        : personTvShows as Map<String, List<TvShow>>?,
+    moviesRecentSearches: moviesRecentSearches == _notProvided
+        ? this.moviesRecentSearches
+        : moviesRecentSearches as List<String>?,
+    tvShowsRecentSearches: tvShowsRecentSearches == _notProvided
+        ? this.tvShowsRecentSearches
+        : tvShowsRecentSearches as List<String>?,
+    movieStreams: movieStreams == _notProvided
+        ? this.movieStreams
+        : movieStreams as Map<String, MediaStream>?,
+    episodeStreams: episodeStreams == _notProvided
+        ? this.episodeStreams
+        : episodeStreams as Map<String, MediaStream>?,
+    movieSubtitles: movieSubtitles == _notProvided
+        ? this.movieSubtitles
+        : movieSubtitles as Map<String, List<File>>?,
+    episodeSubtitles: episodeSubtitles == _notProvided
+        ? this.episodeSubtitles
+        : episodeSubtitles as Map<String, List<File>>?,
+    isLoadingMovies: isLoadingMovies == _notProvided
+        ? this.isLoadingMovies
+        : isLoadingMovies as bool,
+    isLoadingTvShows: isLoadingTvShows == _notProvided
+        ? this.isLoadingTvShows
+        : isLoadingTvShows as bool,
+    isLoadingStreamingPlatformsMedia: isLoadingStreamingPlatformsMedia == _notProvided
+        ? this.isLoadingStreamingPlatformsMedia
+        : isLoadingStreamingPlatformsMedia as bool,
+    isLoadingMovieGenres: isLoadingMovieGenres == _notProvided
+        ? this.isLoadingMovieGenres
+        : isLoadingMovieGenres as bool,
+    isLoadingTvShowGenres: isLoadingTvShowGenres == _notProvided
+        ? this.isLoadingTvShowGenres
+        : isLoadingTvShowGenres as bool,
+    isLoadingRecentlyWatched: isLoadingRecentlyWatched == _notProvided
+        ? this.isLoadingRecentlyWatched
+        : isLoadingRecentlyWatched as bool,
+    isLoadingFavorites: isLoadingFavorites == _notProvided
+        ? this.isLoadingFavorites
+        : isLoadingFavorites as bool,
+    isMovieLoading: isMovieLoading == _notProvided
+        ? this.isMovieLoading
+        : isMovieLoading as Map<String, bool>?,
+    isTvShowLoading: isTvShowLoading == _notProvided
+        ? this.isTvShowLoading
+        : isTvShowLoading as Map<String, bool>?,
+    isSeasonEpisodesLoading: isSeasonEpisodesLoading == _notProvided
+        ? this.isSeasonEpisodesLoading
+        : isSeasonEpisodesLoading as Map<String, Map<int, bool>>?,
+    isLoadingPersonMedia: isLoadingPersonMedia == _notProvided
+        ? this.isLoadingPersonMedia
+        : isLoadingPersonMedia as Map<String, bool>?,
+    isExtractingMovieStream: isExtractingMovieStream == _notProvided
+        ? this.isExtractingMovieStream
+        : isExtractingMovieStream as Map<String, bool>?,
+    isExtractingEpisodeStream: isExtractingEpisodeStream == _notProvided
+        ? this.isExtractingEpisodeStream
+        : isExtractingEpisodeStream as Map<String, bool>?,
+    error: error == _notProvided
+        ? this.error
+        : error as String?,
+    cacheTimer: cacheTimer == _notProvided
+        ? this.cacheTimer
+        : cacheTimer as Timer?,
   );
 }
