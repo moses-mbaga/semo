@@ -66,7 +66,7 @@ if __name__ == "__main__":
         response = openai.generate_text("gpt-5", request_payload["system_instruction"], request_payload["command"], "low", api_key)
     elif args.provider == "anthropic":
         api_key = os.environ.get("ANTHROPIC_API_KEY")
-        response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], api_key)
+        response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], False, api_key)
     elif args.provider == "gemini":
         api_key = os.environ.get("GEMINI_API_KEY")
         response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)

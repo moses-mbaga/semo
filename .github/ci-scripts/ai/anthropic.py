@@ -4,7 +4,7 @@ import requests
 
 from helpers import log
 
-def send_request(system_instruction, command, api_key, model):
+def send_request(system_instruction, command, enable_thinking, api_key, model):
     max_retries = 3
     wait_time = 5  # Seconds
 
@@ -36,6 +36,12 @@ def send_request(system_instruction, command, api_key, model):
                     }
                 ]
             }
+
+            if enable_thinking:
+                payload["thinking"] = {
+                    "type": "enabled",
+                    "budget_tokens": 4000,
+                }
 
             response = requests.post(
                 endpoint,
@@ -85,5 +91,5 @@ def send_request(system_instruction, command, api_key, model):
     log(f"Failed to get valid response after {max_retries} retries.", "error")
     return { "error": True }
 
-def generate_text(model, system_instruction, command, api_key):
-    return send_request(system_instruction, command, api_key, model)
+def generate_text(model, system_instruction, command, enable_thinking=False, api_key=None):
+    return send_request(system_instruction, command, enable_thinking, api_key, model)
