@@ -3,7 +3,7 @@ import json
 import os
 import sys
 
-from ai import openai, anthropic, gemini, github_models
+from ai import openai, anthropic, gemini
 from helpers import log, sanitize
 
 def create_payload(commit_info, diff, repo):
@@ -82,9 +82,6 @@ if __name__ == "__main__":
     elif args.provider == "gemini":
         api_key = os.environ.get("GEMINI_API_KEY")
         response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)
-    elif args.provider == "github_models":
-        api_key = os.environ.get("GITHUB_MODELS_API_KEY")
-        response = github_models.generate_text("openai/gpt-5-mini", request_payload["system_instruction"], request_payload["command"], api_key)
     else:
         log(f"Provider '{args.provider}' is currently not supported.", "error")
         sys.exit(1)
