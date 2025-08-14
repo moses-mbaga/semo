@@ -55,7 +55,13 @@ def send_request(system_instruction, command, enable_thinking, api_key, model):
             response_data = response.json()
 
             try:
-                message = response_data['content'][0]['text']
+                message = ""
+
+                if enable_thinking:
+                    message = response_data['content'][1]['text']
+                else:
+                    message = response_data['content'][0]['text']
+
                 input_tokens = response_data['usage']['input_tokens']
                 output_tokens = response_data['usage']['output_tokens']
 
