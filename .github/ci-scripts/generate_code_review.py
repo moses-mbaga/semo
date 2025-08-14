@@ -62,7 +62,7 @@ if __name__ == "__main__":
     response = None
     if args.provider == "openai":
         api_key = os.environ.get("OPENAI_API_KEY")
-        response = openai.generate_text("gpt-5", request_payload["system_instruction"], request_payload["command"], api_key)
+        response = openai.generate_text("gpt-5", request_payload["system_instruction"], request_payload["command"], "medium", api_key)
     elif args.provider == "anthropic":
         api_key = os.environ.get("ANTHROPIC_API_KEY")
         response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], api_key)
@@ -88,5 +88,4 @@ if __name__ == "__main__":
             json.dump(payload, f, ensure_ascii=False)
 
         log("Code review added to file successfully.", "info")
-
         log("Code review generated.", "success")
