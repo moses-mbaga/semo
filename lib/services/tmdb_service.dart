@@ -19,7 +19,7 @@ import "package:semo/utils/urls.dart";
 class TMDBService {
   factory TMDBService() {
     if (!_instance._isDioLoggerInitialized) {
-      TMDBService._dio.interceptors.add(
+      _instance._dio.interceptors.add(
         PrettyDioLogger(
           requestHeader: true,
           requestBody: true,
@@ -41,7 +41,7 @@ class TMDBService {
 
   static final TMDBService _instance = TMDBService._internal();
 
-  static final Dio _dio = Dio(
+  final Dio _dio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),

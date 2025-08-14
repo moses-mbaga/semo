@@ -13,7 +13,7 @@ import "package:semo/utils/urls.dart";
 class SubtitleService {
   factory SubtitleService() {
     if (!_instance._isDioLoggerInitialized) {
-      _dio.interceptors.add(_dioLogger);
+      _instance._dio.interceptors.add(_instance._dioLogger);
       _instance._isDioLoggerInitialized = true;
     }
 
@@ -25,8 +25,13 @@ class SubtitleService {
   static final SubtitleService _instance = SubtitleService._internal();
 
   final Logger _logger = Logger();
-  static final Dio _dio = Dio();
-  static final PrettyDioLogger _dioLogger = PrettyDioLogger(
+  final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 30),
+    ),
+  );
+  final PrettyDioLogger _dioLogger = PrettyDioLogger(
     requestHeader: true,
     requestBody: true,
     responseBody: true,

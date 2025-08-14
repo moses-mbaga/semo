@@ -4,7 +4,26 @@ import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
 
 class StreamingServerBaseUrlService {
-  factory StreamingServerBaseUrlService() => _instance;
+  factory StreamingServerBaseUrlService() {
+    if (!_instance._isDioLoggerInitialized) {
+      _instance._dio.interceptors.add(
+        PrettyDioLogger(
+          requestHeader: true,
+          requestBody: true,
+          responseBody: true,
+          responseHeader: false,
+          error: true,
+          compact: true,
+          enabled: kDebugMode,
+        ),
+      );
+
+      _instance._isDioLoggerInitialized = true;
+    }
+
+    return _instance;
+  }
+
   StreamingServerBaseUrlService._internal();
 
   static final StreamingServerBaseUrlService _instance = StreamingServerBaseUrlService._internal();
@@ -15,8 +34,14 @@ class StreamingServerBaseUrlService {
   final Map<String, String> _cachedBaseUrls = <String, String>{};
   final Map<String, DateTime> _cacheTimestamps = <String, DateTime>{};
 
-  final Dio _dio = Dio();
   final Logger _logger = Logger();
+  final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 10),
+      receiveTimeout: const Duration(seconds: 10),
+    ),
+  );
+  bool _isDioLoggerInitialized = false;
 
   Future<String?> getBaseUrl(String serverKey) async {
     if (isCached(serverKey)) {
