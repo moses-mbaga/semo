@@ -38,9 +38,10 @@ def send_request(system_instruction, command, enable_thinking, api_key, model):
             }
 
             if enable_thinking:
+                payload["temperature"] = 1
                 payload["thinking"] = {
                     "type": "enabled",
-                    "budget_tokens": 4000,
+                    "budget_tokens": 3999,
                 }
 
             response = requests.post(
