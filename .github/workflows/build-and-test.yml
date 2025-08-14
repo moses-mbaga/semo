@@ -100,11 +100,11 @@ jobs:
             echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 -d > lib/firebase_options.dart
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      - name: Build APK
+      - name: Build APKs
         if: ${{ success() }}
         run: |
           set -o pipefail
-          { flutter build apk --release; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+          { flutter build apk --release --split-per-abi; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Build web
         if: ${{ success() }}
