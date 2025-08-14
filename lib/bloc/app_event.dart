@@ -13,6 +13,10 @@ class LoadInitialData extends AppEvent {}
 
 class ClearError extends AppEvent {}
 
+class InitCacheTimer extends AppEvent {}
+
+class InvalidateCache extends AppEvent {}
+
 // Movies
 
 class LoadMovies extends AppEvent {}

@@ -1,3 +1,4 @@
+import "dart:async";
 import "dart:io";
 
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
@@ -67,6 +68,7 @@ class AppState {
     this.isExtractingMovieStream,
     this.isExtractingEpisodeStream,
     this.error,
+    this.cacheTimer,
   });
 
   final List<Movie>? nowPlayingMovies;
@@ -141,6 +143,8 @@ class AppState {
 
   final String? error;
 
+  final Timer? cacheTimer;
+
   AppState copyWith({
     List<Movie>? nowPlayingMovies,
     List<TvShow>? onTheAirTvShows,
@@ -198,6 +202,7 @@ class AppState {
     Map<String, bool>? isExtractingMovieStream,
     Map<String, bool>? isExtractingEpisodeStream,
     String? error,
+    Timer? cacheTimer,
   }) => AppState(
     nowPlayingMovies: nowPlayingMovies ?? this.nowPlayingMovies,
     onTheAirTvShows: onTheAirTvShows ?? this.onTheAirTvShows,
@@ -255,5 +260,6 @@ class AppState {
     isExtractingMovieStream: isExtractingMovieStream ?? this.isExtractingMovieStream,
     isExtractingEpisodeStream: isExtractingEpisodeStream ?? this.isExtractingEpisodeStream,
     error: error ?? this.error,
+    cacheTimer: cacheTimer ?? this.cacheTimer,
   );
 }

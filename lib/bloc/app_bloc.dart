@@ -1,7 +1,11 @@
+import "dart:async";
+
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:semo/bloc/app_event.dart";
 import "package:semo/bloc/app_state.dart";
+import "package:semo/bloc/handlers/cache_handler.dart";
 import "package:semo/bloc/handlers/favorites_handler.dart";
+import "package:semo/bloc/handlers/general_handler.dart";
 import "package:semo/bloc/handlers/genres_handler.dart";
 import "package:semo/bloc/handlers/movie_handler.dart";
 import "package:semo/bloc/handlers/movies_handler.dart";
@@ -13,15 +17,31 @@ import "package:semo/bloc/handlers/streaming_platforms_handler.dart";
 import "package:semo/bloc/handlers/subtitles_handler.dart";
 import "package:semo/bloc/handlers/tv_show_handler.dart";
 import "package:semo/bloc/handlers/tv_shows_handler.dart";
-import "package:semo/enums/media_type.dart";
 import "package:semo/services/auth_service.dart";
 
-class AppBloc extends Bloc<AppEvent, AppState>
-    with MoviesHandler, TvShowsHandler, StreamingPlatformsHandler, GenresHandler, RecentlyWatchedHandler, FavoritesHandler, MovieHandler, TvShowHandler, PersonHandler, RecentSearchesHandler, StreamHandler, SubtitlesHandler {
+class AppBloc extends Bloc<AppEvent, AppState> with
+    GeneralHandler,
+    CacheHandler,
+    MoviesHandler,
+    TvShowsHandler,
+    StreamingPlatformsHandler,
+    GenresHandler,
+    RecentlyWatchedHandler,
+    FavoritesHandler,
+    MovieHandler,
+    TvShowHandler,
+    PersonHandler,
+    RecentSearchesHandler,
+    StreamHandler,
+    SubtitlesHandler {
   AppBloc() : super(const AppState()) {
     // General
-    on<LoadInitialData>(_onLoadInitialData);
-    on<ClearError>(_onClearError);
+    on<LoadInitialData>(onLoadInitialData);
+    on<ClearError>(onClearError);
+
+    // Cache
+    on<InitCacheTimer>(onInitCacheTimer);
+    on<InvalidateCache>(onInvalidateCache);
 
     // Movies
     on<LoadMovies>(onLoadMovies);
@@ -90,20 +110,9 @@ class AppBloc extends Bloc<AppEvent, AppState>
     }
   }
 
-  void _onLoadInitialData(LoadInitialData event, Emitter<AppState> emit) {
-    add(LoadMovies());
-    add(LoadTvShows());
-    add(LoadStreamingPlatformsMedia());
-    add(const LoadGenres(MediaType.movies));
-    add(const LoadGenres(MediaType.tvShows));
-    add(LoadRecentlyWatched());
-    add(LoadFavorites());
-    add(LoadRecentSearches());
-  }
-
-  void _onClearError(ClearError event, Emitter<AppState> emit) {
-    emit(state.copyWith(
-      error: null,
-    ));
+  @override
+  Future<void> close() {
+    state.cacheTimer?.cancel();
+    return super.close();
   }
 }
