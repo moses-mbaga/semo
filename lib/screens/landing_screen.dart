@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:google_sign_in/google_sign_in.dart";
+import "package:lottie/lottie.dart";
 import "package:semo/bloc/app_bloc.dart";
 import "package:semo/bloc/app_event.dart";
 import "package:semo/components/snack_bar.dart";
@@ -9,7 +10,6 @@ import "package:semo/gen/assets.gen.dart";
 import "package:semo/screens/base_screen.dart";
 import "package:semo/screens/fragments_screen.dart";
 import "package:semo/services/auth_service.dart";
-import "package:video_player/video_player.dart";
 
 class LandingScreen extends BaseScreen {
   const LandingScreen({super.key}) : super(shouldListenToAuthStateChanges: false);
@@ -18,15 +18,9 @@ class LandingScreen extends BaseScreen {
   BaseScreenState<LandingScreen> createState() => _LandingScreenState();
 }
 
-class _LandingScreenState extends BaseScreenState<LandingScreen> {
+class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
-  final VideoPlayerController _videoController = VideoPlayerController.asset(Assets.videos.coverPortrait);
-
-  Future<void> _initPlayback() async {
-    await _videoController.initialize();
-    await _videoController.play();
-    await _videoController.setLooping(true);
-  }
+  late final AnimationController _lottieController = AnimationController(vsync: this);
 
   Future<void> _authenticateWithGoogle() async {
     spinner.show();
@@ -108,9 +102,20 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
     ),
   );
 
+  Widget _buildAnimation() => Expanded(
+    child: Lottie.asset(
+      Assets.lottie.watchingTv,
+      controller: _lottieController,
+      fit: BoxFit.fill,
+      onLoaded: (LottieComposition composition) async {
+        _lottieController.duration = const Duration(seconds: 5);
+        await _lottieController.repeat(reverse: true);
+      },
+    ),
+  );
+
   Widget _buildContent() => Column(
     children: <Widget>[
-      const Spacer(),
       Container(
         width: double.infinity,
         padding: const EdgeInsets.symmetric(
@@ -169,29 +174,19 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> {
 
   @override
   Future<void> initializeScreen() async {
-    await _initPlayback();
     await GoogleSignIn.instance.initialize();
   }
 
   @override
   void handleDispose() {
-    _videoController.pause();
-    _videoController.dispose();
+    _lottieController.dispose();
   }
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
-    body: Stack(
+    body: Column(
       children: <Widget>[
-        Positioned.fill(
-          child: AspectRatio(
-            aspectRatio: _videoController.value.aspectRatio,
-            child: VideoPlayer(_videoController),
-          ),
-        ),
-        Container(
-          color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
-        ),
+        _buildAnimation(),
         _buildContent(),
       ],
     ),
