@@ -46,7 +46,10 @@ class _TvShowsScreenState extends BaseScreenState<TvShowsScreen> {
     Timer(const Duration(milliseconds: 500), () {
       try {
         context.read<AppBloc>().add(RefreshTvShows());
+        context.read<AppBloc>().add(const RefreshStreamingPlatformsMedia(MediaType.tvShows));
         context.read<AppBloc>().add(const RefreshGenres(MediaType.tvShows));
+        context.read<AppBloc>().add(RefreshRecentlyWatched());
+        context.read<AppBloc>().add(RefreshFavorites());
       } catch (_) {}
     });
   }

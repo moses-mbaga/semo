@@ -146,6 +146,8 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
     });
 
     context.read<AppBloc>().add(RefreshTvShowDetails(widget.tvShow.id));
+    context.read<AppBloc>().add(RefreshRecentlyWatched());
+    context.read<AppBloc>().add(RefreshFavorites());
   }
 
   Widget _buildSeasonSelector(List<Season>? seasons) {

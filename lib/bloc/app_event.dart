@@ -69,6 +69,8 @@ class RefreshGenres extends AppEvent {
 
 class LoadRecentlyWatched extends AppEvent {}
 
+class RefreshRecentlyWatched extends AppEvent {}
+
 class UpdateMovieProgress extends AppEvent {
   const UpdateMovieProgress(this.movieId, this.progress);
 
@@ -132,6 +134,8 @@ class RemoveFavorite extends AppEvent {
 }
 
 class ClearFavorites extends AppEvent {}
+
+class RefreshFavorites extends AppEvent {}
 
 // Movie
 

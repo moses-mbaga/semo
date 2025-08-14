@@ -252,17 +252,40 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
   }
 
   void onRefreshTvShowDetails(RefreshTvShowDetails event, Emitter<AppState> emit) {
-    state.tvShowRecommendationsPagingControllers?.forEach((String tvShowId, PagingController<int, TvShow> controller) {
-      if (event.tvShowId == int.parse(tvShowId)) {
-        controller.refresh();
-      }
-    });
+    final List<TvShow> tvShows = List<TvShow>.from(state.tvShows ?? <TvShow>[]);
+    tvShows.removeWhere((TvShow tvShow) => tvShow.id == event.tvShowId);
 
-    state.similarTvShowsPagingControllers?.forEach((String tvShowId, PagingController<int, TvShow> controller) {
-      if (event.tvShowId == int.parse(tvShowId)) {
-        controller.refresh();
-      }
-    });
+    Map<String, String> tvShowTrailers = Map<String, String>.from(state.tvShowTrailers ?? <String, String>{});
+    tvShowTrailers.remove(event.tvShowId.toString());
+
+    Map<String, List<Person>> tvShowCast = Map<String, List<Person>>.from(state.tvShowCast ?? <String, List<Person>>{});
+    tvShowCast.remove(event.tvShowId.toString());
+
+    Map<String, List<Season>> tvShowSeasons = Map<String, List<Season>>.from(state.tvShowSeasons ?? <String, List<Season>>{});
+    tvShowSeasons.remove(event.tvShowId.toString());
+
+    Map<String, Map<int, List<Episode>>> tvShowEpisodes = Map<String, Map<int, List<Episode>>>.from(state.tvShowEpisodes ?? <String, Map<int, List<Episode>>>{});
+    tvShowEpisodes.remove(event.tvShowId.toString());
+
+    Map<String, PagingController<int, TvShow>> recommendationsControllers = Map<String, PagingController<int, TvShow>>.from(state.tvShowRecommendationsPagingControllers ?? <String, PagingController<int, TvShow>>{});
+    recommendationsControllers.remove(event.tvShowId.toString());
+
+    Map<String, PagingController<int, TvShow>> similarTvShowsControllers = Map<String, PagingController<int, TvShow>>.from(state.similarTvShowsPagingControllers ?? <String, PagingController<int, TvShow>>{});
+    similarTvShowsControllers.remove(event.tvShowId.toString());
+
+    final Map<String, bool> loadingStatus = Map<String, bool>.from(state.isTvShowLoading ?? <String, bool>{});
+    loadingStatus[event.tvShowId.toString()] = false;
+
+    emit(state.copyWith(
+      tvShows: tvShows,
+      tvShowTrailers: tvShowTrailers,
+      tvShowCast: tvShowCast,
+      tvShowSeasons: tvShowSeasons,
+      tvShowEpisodes: tvShowEpisodes,
+      tvShowRecommendationsPagingControllers: recommendationsControllers,
+      similarTvShowsPagingControllers: similarTvShowsControllers,
+      isTvShowLoading: loadingStatus,
+    ));
 
     add(LoadTvShowDetails(event.tvShowId));
   }

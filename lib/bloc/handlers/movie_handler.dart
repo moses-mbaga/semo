@@ -77,8 +77,7 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
 
       if (movie != null) {
         final List<Movie> movies = List<Movie>.from(state.movies ?? <Movie>[]);
-        final int existingIndex = movies.indexWhere((Movie m) =>
-        m.id == movieId);
+        final int existingIndex = movies.indexWhere((Movie m) => m.id == movieId);
 
         if (existingIndex != -1) {
           movies[existingIndex] = movie;
@@ -179,17 +178,32 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
   }
 
   void onRefreshMovieDetails(RefreshMovieDetails event, Emitter<AppState> emit) {
-    state.movieRecommendationsPagingControllers?.forEach((String movieId, PagingController<int, Movie> controller) {
-      if (event.movieId == int.parse(movieId)) {
-        controller.refresh();
-      }
-    });
+    final List<Movie> movies = List<Movie>.from(state.movies ?? <Movie>[]);
+    movies.removeWhere((Movie movie) => movie.id == event.movieId);
 
-    state.similarMoviesPagingControllers?.forEach((String movieId, PagingController<int, Movie> controller) {
-      if (event.movieId == int.parse(movieId)) {
-        controller.refresh();
-      }
-    });
+    Map<String, String> movieTrailers = Map<String, String>.from(state.movieTrailers ?? <String, String>{});
+    movieTrailers.remove(event.movieId.toString());
+
+    Map<String, List<Person>> movieCast = Map<String, List<Person>>.from(state.movieCast ?? <String, List<Person>>{});
+    movieCast.remove(event.movieId.toString());
+
+    Map<String, PagingController<int, Movie>> recommendationsControllers = Map<String, PagingController<int, Movie>>.from(state.movieRecommendationsPagingControllers ?? <String, PagingController<int, Movie>>{});
+    recommendationsControllers.remove(event.movieId.toString());
+
+    Map<String, PagingController<int, Movie>> similarMoviesControllers = Map<String, PagingController<int, Movie>>.from(state.similarMoviesPagingControllers ?? <String, PagingController<int, Movie>>{});
+    similarMoviesControllers.remove(event.movieId.toString());
+
+    final Map<String, bool> loadingStatus = Map<String, bool>.from(state.isMovieLoading ?? <String, bool>{});
+    loadingStatus[event.movieId.toString()] = false;
+
+    emit(state.copyWith(
+      movies: movies,
+      movieTrailers: movieTrailers,
+      movieCast: movieCast,
+      movieRecommendationsPagingControllers: recommendationsControllers,
+      similarMoviesPagingControllers: similarMoviesControllers,
+      isMovieLoading: loadingStatus,
+    ));
 
     add(LoadMovieDetails(event.movieId));
   }

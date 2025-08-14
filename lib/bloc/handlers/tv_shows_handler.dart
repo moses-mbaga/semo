@@ -79,12 +79,11 @@ mixin TvShowsHandler on Bloc<AppEvent, AppState> {
   }
 
   void onRefreshTvShows(RefreshTvShows event, Emitter<AppState> emit) {
-    state.trendingTvShowsPagingController?.refresh();
-    state.popularTvShowsPagingController?.refresh();
-    state.topRatedTvShowsPagingController?.refresh();
-
     emit(state.copyWith(
       onTheAirTvShows: null,
+      trendingTvShowsPagingController: null,
+      popularTvShowsPagingController: null,
+      topRatedTvShowsPagingController: null,
       isLoadingTvShows: false,
     ));
 
@@ -96,7 +95,10 @@ mixin TvShowsHandler on Bloc<AppEvent, AppState> {
 
     for (final TvShow tvShow in event.tvShows) {
       try {
-        if (!incompleteTvShows.any((TvShow m) => m.id == tvShow.id)) {
+        if (incompleteTvShows.any((TvShow m) => m.id == tvShow.id)) {
+          incompleteTvShows.removeWhere((TvShow m) => m.id == tvShow.id);
+          incompleteTvShows.add(tvShow);
+        } else {
           incompleteTvShows.add(tvShow);
         }
       } catch (e, s) {

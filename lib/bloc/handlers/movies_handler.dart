@@ -79,12 +79,11 @@ mixin MoviesHandler on Bloc<AppEvent, AppState> {
   }
 
   void onRefreshMovies(RefreshMovies event, Emitter<AppState> emit) {
-    state.trendingMoviesPagingController?.refresh();
-    state.popularMoviesPagingController?.refresh();
-    state.topRatedMoviesPagingController?.refresh();
-
     emit(state.copyWith(
       nowPlayingMovies: null,
+      trendingMoviesPagingController: null,
+      popularMoviesPagingController: null,
+      topRatedMoviesPagingController: null,
       isLoadingMovies: false,
     ));
 
@@ -96,7 +95,10 @@ mixin MoviesHandler on Bloc<AppEvent, AppState> {
 
     for (final Movie movie in event.movies) {
       try {
-        if (!incompleteMovies.any((Movie m) => m.id == movie.id)) {
+        if (incompleteMovies.any((Movie m) => m.id == movie.id)) {
+          incompleteMovies.removeWhere((Movie m) => m.id == movie.id);
+          incompleteMovies.add(movie);
+        } else {
           incompleteMovies.add(movie);
         }
       } catch (e, s) {

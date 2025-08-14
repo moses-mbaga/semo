@@ -143,6 +143,16 @@ mixin FavoritesHandler on Bloc<AppEvent, AppState> {
     }
   }
 
+  void onRefreshFavorites(RefreshFavorites event, Emitter<AppState> emit) {
+    emit(state.copyWith(
+      favorites: null,
+      favoriteMovies: null,
+      favoriteTvShows: null,
+      isLoadingFavorites: false,
+    ));
+    add(LoadFavorites());
+  }
+
   void onClearFavorites(ClearFavorites event, Emitter<AppState> emit) {
     try {
       unawaited(_favoritesService.clear());

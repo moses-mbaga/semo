@@ -69,6 +69,8 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
     });
 
     context.read<AppBloc>().add(RefreshMovieDetails(_movie.id));
+    context.read<AppBloc>().add(RefreshRecentlyWatched());
+    context.read<AppBloc>().add(RefreshFavorites());
   }
 
   String _formatDuration(Duration d) {

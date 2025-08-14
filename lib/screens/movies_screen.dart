@@ -42,6 +42,8 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
         context.read<AppBloc>().add(RefreshMovies());
         context.read<AppBloc>().add(const RefreshStreamingPlatformsMedia(MediaType.movies));
         context.read<AppBloc>().add(const RefreshGenres(MediaType.movies));
+        context.read<AppBloc>().add(RefreshRecentlyWatched());
+        context.read<AppBloc>().add(RefreshFavorites());
       } catch (_) {}
     });
   }

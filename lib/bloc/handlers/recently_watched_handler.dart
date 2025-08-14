@@ -48,6 +48,16 @@ mixin RecentlyWatchedHandler on Bloc<AppEvent, AppState> {
     }
   }
 
+  Future<void> onRefreshRecentlyWatched(RefreshRecentlyWatched event, Emitter<AppState> emit) async {
+    emit(state.copyWith(
+      recentlyWatched: null,
+      recentlyWatchedMovies: null,
+      recentlyWatchedTvShows: null,
+      isLoadingRecentlyWatched: false,
+    ));
+    add(LoadRecentlyWatched());
+  }
+
   Future<void> onUpdateMovieProgress(UpdateMovieProgress event, Emitter<AppState> emit) async {
     try {
       final Map<String, dynamic> updatedRecentlyWatched = await _recentlyWatchedService.updateMovieProgress(event.movieId, event.progress, recentlyWatched: state.recentlyWatched);
