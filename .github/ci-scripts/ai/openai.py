@@ -9,6 +9,7 @@ def send_request(system_instruction, command, reasoning_effort : str | None, api
     wait_time = 5  # Seconds
 
     retry_count = 0
+    response_data = {}
 
     while retry_count < max_retries:
         if retry_count > 0:
@@ -91,12 +92,15 @@ def send_request(system_instruction, command, reasoning_effort : str | None, api
 
         except requests.exceptions.RequestException as e:
             log(f"Request failed: {e}", "error")
+
             if hasattr(e, 'response') and e.response:
                 try:
                     error_details = e.response.json()
                     log(f"{json.dumps(error_details, indent=2)}", "error")
                 except:
                     log(f"{e.response.text}", "error")
+
+            log(f"{json.dumps(response_data, indent=2)}", "error")
 
         retry_count += 1
         if retry_count < max_retries:
