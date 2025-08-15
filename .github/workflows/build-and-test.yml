@@ -172,16 +172,16 @@ jobs:
         id: generate_changelog
         if: ${{ needs.build.outputs.build-success == 'true' }}
         env:
-          COMMIT_INFO: ${{ env.COMMIT_INFO }}
-          DIFF: ${{ env.DIFF }}
+          COMMIT_INFO_FILE: ${{ env.COMMIT_INFO_FILE }}
+          DIFF_FILE: ${{ env.DIFF_FILE }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
         run: |
           set -o pipefail
           {
             . .venv/bin/activate
             python3 .github/ci-scripts/generate_changelog.py \
-              --commit-info "$COMMIT_INFO" \
-              --diff "$DIFF" \
+              --commit-info-file "$COMMIT_INFO_FILE" \
+              --diff-file "$DIFF_FILE" \
               --provider "openai"
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
@@ -189,14 +189,14 @@ jobs:
         id: generate_code_review
         if: ${{ needs.build.outputs.build-success == 'true' }}
         env:
-          DIFF: ${{ env.DIFF }}
+          DIFF_FILE: ${{ env.DIFF_FILE }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
         run: |
           set -o pipefail
           {
             . .venv/bin/activate
             python3 .github/ci-scripts/generate_code_review.py \
-              --diff "$DIFF" \
+              --diff-file "$DIFF_FILE" \
               --provider "anthropic"
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 

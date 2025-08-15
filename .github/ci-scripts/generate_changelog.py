@@ -58,16 +58,40 @@ def create_payload(commit_info, diff, repo):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument('--commit-info', required=True)
-    p.add_argument('--diff', required=True)
+    p.add_argument('--commit-info-file', required=True)
+    p.add_argument('--diff-file', required=True)
     p.add_argument('--provider', required=True)
     args = p.parse_args()
 
     repo = os.environ.get("GITHUB_REPOSITORY").split("/")[0]
     branch = os.environ.get("GITHUB_REF_NAME")
 
+    log("Reading commit info file...", "info")
+    try:
+        with open(args.commit_info_file, 'r', encoding='utf-8') as f:
+            commit_info_content = f.read()
+        log(f"Successfully read commit info file: {args.commit_info_file}", "info")
+    except FileNotFoundError:
+        log(f"Error: Commit info file not found at {args.commit_info_file}", "error")
+        sys.exit(1)
+    except Exception as e:
+        log(f"Error reading commit info file: {e}", "error")
+        sys.exit(1)
+
+    log("Reading diff file...", "info")
+    try:
+        with open(args.diff_file, 'r', encoding='utf-8') as f:
+            diff_content = f.read()
+        log(f"Successfully read diff file: {args.diff_file}", "info")
+    except FileNotFoundError:
+        log(f"Error: Diff file not found at {args.diff_file}", "error")
+        sys.exit(1)
+    except Exception as e:
+        log(f"Error reading diff file: {e}", "error")
+        sys.exit(1)
+
     log("Creating payload for changelog generation...", "info") 
-    request_payload = create_payload(sanitize(args.commit_info), sanitize(args.diff), repo)
+    request_payload = create_payload(sanitize(commit_info_content), sanitize(diff_content), repo)
     log("Completed creating payload for changelog generation.", "info")
 
     log("Generating changelog...", "info")

@@ -128,16 +128,28 @@ def main():
     commit_info = run_command(f'git log "{commit_range}" --pretty=format:"Commit: %H%nAuthor: %an%nMessage: %s%n"')
     log(f"Commit information retrieved:\n{commit_info}", "info")
 
+    # Write commit info to a file
+    commit_info_file_path = os.path.join(os.environ["GITHUB_WORKSPACE"], "commit_info.txt")
+    with open(commit_info_file_path, "w") as commit_info_file:
+        commit_info_file.write(commit_info)
+    log(f"Commit info written to {commit_info_file_path}", "info")
+
     # Get diff
     log("Retrieving diff information...", "info")
     diff = run_command(f'git diff "{commit_range}"')
     log(f"Diff information retrieved.", "info")
 
+    # Write diff to a file
+    diff_file_path = os.path.join(os.environ["GITHUB_WORKSPACE"], "diff.txt")
+    with open(diff_file_path, "w") as diff_file:
+        diff_file.write(diff)
+    log(f"Diff written to {diff_file_path}", "info")
+
     # Set environment variables
     log("Setting environment variables...", "info")
     write_to_github_env("COMMIT_RANGE", commit_range)
-    write_multiline_to_github_env("COMMIT_INFO", commit_info)
-    write_multiline_to_github_env("DIFF", diff)
+    write_multiline_to_github_env("COMMIT_INFO_FILE", commit_info_file_path)
+    write_to_github_env("DIFF_FILE", diff_file_path) # Output path to diff file
     log("Environment variables are set.", "info")
 
     # Log everything
@@ -148,8 +160,7 @@ Commit Range: {commit_range}
 Commit Info:
 {commit_info}
 
-Diff:
-{diff}
+Diff is stored in: {diff_file_path}
 """
     add_to_logs(log_message)
     log("Commit information and diff added to logs.", "info")

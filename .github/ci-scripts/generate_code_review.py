@@ -6,7 +6,7 @@ import sys
 from ai import openai, anthropic, gemini
 from helpers import log, sanitize
 
-def create_payload(diff, repo):
+def create_payload(diff_content, repo):
     system_instruction = f"""
     You are an expert programmer that can do review on critical issues on different type of files.
     You have access to to the whole contents of the changed files, file specific squashed diffs, and file specific relevant commits.
@@ -14,7 +14,7 @@ def create_payload(diff, repo):
     The code you are reviewing has already been compiled successfully so there cannot be any syntax errors.
               
     Here are the diff logs of the changed files:
-    {diff}
+    {diff_content}
     """
 
     command = f"""
@@ -45,7 +45,7 @@ def create_payload(diff, repo):
 
 if __name__ == "__main__":
     p = argparse.ArgumentParser()
-    p.add_argument('--diff', required=True)
+    p.add_argument('--diff-file', required=True)  # Changed from --diff to --diff-file
     p.add_argument('--provider', required=True)
     args = p.parse_args()
 
@@ -53,8 +53,20 @@ if __name__ == "__main__":
     branch = os.environ.get("GITHUB_REF_NAME")
     actor = os.environ.get("GITHUB_ACTOR");
 
+    log("Reading diff file...", "info")
+    try:
+        with open(args.diff_file, 'r', encoding='utf-8') as f:
+            diff_content = f.read()
+        log(f"Successfully read diff file: {args.diff_file}", "info")
+    except FileNotFoundError:
+        log(f"Error: Diff file not found at {args.diff_file}", "error")
+        sys.exit(1)
+    except Exception as e:
+        log(f"Error reading diff file: {e}", "error")
+        sys.exit(1)
+
     log("Creating payload for code review generation...", "info") 
-    request_payload = create_payload(sanitize(args.diff), repo)
+    request_payload = create_payload(sanitize(diff_content), repo)
     log("Completed creating payload for code review generation.", "info")
 
     log("Generating code review...", "info")
