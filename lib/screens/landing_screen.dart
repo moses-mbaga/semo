@@ -108,7 +108,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProv
       controller: _lottieController,
       fit: BoxFit.fill,
       onLoaded: (LottieComposition composition) async {
-        _lottieController.duration = const Duration(seconds: 5);
+        _lottieController.duration = const Duration(milliseconds: 3500);
         await _lottieController.repeat(reverse: true);
       },
     ),
