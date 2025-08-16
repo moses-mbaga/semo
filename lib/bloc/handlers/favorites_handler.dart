@@ -50,7 +50,7 @@ mixin FavoritesHandler on Bloc<AppEvent, AppState> {
   }
 
   // ignore: avoid_annotating_with_dynamic
-  Future<dynamic> _addFavorite(dynamic media, MediaType mediaType) async {
+  Future<void> _addFavorite(dynamic media, MediaType mediaType) async {
     try {
       final int id = _getMediaId(media);
       if (mediaType == MediaType.movies) {
@@ -60,7 +60,6 @@ mixin FavoritesHandler on Bloc<AppEvent, AppState> {
       }
     } catch (e, s) {
       _logger.e("Error adding favorite", error: e, stackTrace: s);
-      rethrow;
     }
   }
 
@@ -113,7 +112,6 @@ mixin FavoritesHandler on Bloc<AppEvent, AppState> {
       }
     } catch (e, s) {
       _logger.e("Error removing favorite", error: e, stackTrace: s);
-      rethrow;
     }
   }
 
