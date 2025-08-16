@@ -64,8 +64,10 @@ mixin RecentlyWatchedHandler on Bloc<AppEvent, AppState> {
       final List<Movie> updatedRecentlyWatchedMovies = state.recentlyWatchedMovies ?? <Movie>[];
 
       if (state.recentlyWatchedMovies != null && !state.recentlyWatchedMovies!.any((Movie movie) => movie.id == event.movieId)) {
-        final Movie movie = await _helpers.fetchMovieById(state, event.movieId);
-        updatedRecentlyWatchedMovies.add(movie);
+        final Movie? movie = await _helpers.fetchMovieById(state, event.movieId);
+        if (movie != null) {
+          updatedRecentlyWatchedMovies.add(movie);
+        }
       }
 
       emit(state.copyWith(
@@ -92,8 +94,10 @@ mixin RecentlyWatchedHandler on Bloc<AppEvent, AppState> {
       final List<TvShow> updatedRecentlyWatchedTvShows = state.recentlyWatchedTvShows ?? <TvShow>[];
 
       if (state.recentlyWatchedTvShows != null && !state.recentlyWatchedTvShows!.any((TvShow tvShow) => tvShow.id == event.tvShowId)) {
-        final TvShow tvShow = await _helpers.fetchTvShowById(state, event.tvShowId);
-        updatedRecentlyWatchedTvShows.add(tvShow);
+        final TvShow? tvShow = await _helpers.fetchTvShowById(state, event.tvShowId);
+        if (tvShow != null) {
+          updatedRecentlyWatchedTvShows.add(tvShow);
+        }
       }
 
       emit(state.copyWith(
