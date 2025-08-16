@@ -21,6 +21,7 @@ class SemoPlayer extends StatefulWidget {
     super.key,
     required this.stream,
     required this.title,
+    this.subtitle,
     this.subtitleFiles,
     this.initialProgress = 0,
     this.onProgress,
@@ -34,6 +35,7 @@ class SemoPlayer extends StatefulWidget {
 
   final MediaStream stream;
   final String title;
+  final String? subtitle;
   final List<File>? subtitleFiles;
   final int initialProgress;
   final OnProgressCallback? onProgress;
@@ -423,7 +425,21 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                       widget.onBack?.call(_mediaProgress.progress.inSeconds);
                     },
                   ) : null,
-                  title: Text(widget.title),
+                  title: Column(
+                    children: <Widget>[
+                      Text(
+                        widget.title,
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontSize: 20,
+                        ),
+                      ),
+                      const SizedBox(height: 5),
+                      Text(
+                        widget.subtitle ?? "",
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                    ],
+                  ),
                   actions: <Widget>[
                     if (widget.subtitleFiles != null && widget.subtitleFiles!.isNotEmpty) InkWell(
                       borderRadius: BorderRadius.circular(1000),

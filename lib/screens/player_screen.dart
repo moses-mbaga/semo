@@ -22,6 +22,7 @@ class PlayerScreen extends BaseScreen {
     this.seasonId,
     this.episodeId,
     required this.title,
+    this.subtitle,
     required this.stream,
     required this.mediaType,
   }) : assert(mediaType != MediaType.tvShows || (seasonId != null && episodeId != null),
@@ -32,6 +33,7 @@ class PlayerScreen extends BaseScreen {
   final int? seasonId;
   final int? episodeId;
   final String title;
+  final String? subtitle;
   final MediaStream stream;
   final MediaType mediaType;
 
@@ -162,6 +164,7 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
         body: SemoPlayer(
           stream: widget.stream,
           title: widget.title,
+          subtitle: widget.subtitle,
           subtitleFiles: _subtitleFiles,
           initialProgress: progressSeconds,
           onProgress: _onProgress,
