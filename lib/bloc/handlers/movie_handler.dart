@@ -71,7 +71,7 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
     }
   }
 
-  Future<dynamic> _loadMovieBasicDetails(int movieId, Emitter<AppState> emit) async {
+  Future<void> _loadMovieBasicDetails(int movieId, Emitter<AppState> emit) async {
     try {
       final Movie? movie = await _tmdbService.getMovie(movieId);
 
@@ -91,7 +91,6 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
       }
     } catch (e, s) {
       _logger.e("Error loading basic movie details for ID $movieId", error: e, stackTrace: s);
-      rethrow;
     }
   }
 
