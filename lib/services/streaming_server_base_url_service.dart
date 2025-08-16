@@ -48,18 +48,6 @@ class StreamingServerBaseUrlService {
       return _cachedBaseUrls[serverKey]!;
     }
 
-    _dio.interceptors.add(
-      PrettyDioLogger(
-        requestHeader: true,
-        requestBody: true,
-        responseBody: true,
-        responseHeader: false,
-        error: true,
-        compact: true,
-        enabled: kDebugMode,
-      ),
-    );
-
     try {
       final Response<dynamic> response = await _dio.get(_configUrl);
 
@@ -87,8 +75,9 @@ class StreamingServerBaseUrlService {
       return baseUrl;
     } catch (e, s) {
       _logger.e("Error fetching base URL for $serverKey", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 
   void clearCache(String serverKey) {
@@ -117,7 +106,8 @@ class StreamingServerBaseUrlService {
       return data.keys.toList();
     } catch (e, s) {
       _logger.e("Error fetching available servers", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <String>[];
   }
 }
