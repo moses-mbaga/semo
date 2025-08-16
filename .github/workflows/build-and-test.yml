@@ -124,6 +124,7 @@ jobs:
     runs-on: macos-latest
     needs: build
     if: ${{ always() }}
+    continue-on-error: ${{ needs.build.outputs.build-success == 'true' }}
     permissions:
       actions: read
       contents: write
