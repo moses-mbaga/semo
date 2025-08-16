@@ -90,8 +90,9 @@ class KissKhExtractor implements BaseStreamExtractor {
       return id?.toString();
     } catch(e, s) {
       _logger.e("Error finding episode ID for external ID: $externalId", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 
   @override
@@ -130,7 +131,8 @@ class KissKhExtractor implements BaseStreamExtractor {
       );
     } catch (e, s) {
       _logger.e("Error in KissKhExtractor", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 }

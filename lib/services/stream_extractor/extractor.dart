@@ -77,7 +77,8 @@ class StreamExtractor {
       return stream;
     } catch (e, s) {
       _logger.e("Failed to extract stream", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 }
