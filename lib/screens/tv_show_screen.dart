@@ -190,7 +190,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
         final Episode episode = episodes[index];
         final bool isExtracting = extractingMap?[episode.id.toString()] ?? false;
         final bool disableAll = anyExtracting && !isExtracting;
-        final MediaStream? stream = episodeStreams?[_extractingEpisodeId.toString()];
+        final MediaStream? stream = episodeStreams?[episode.id.toString()];
 
         return EpisodeCard(
           episode: episode,
