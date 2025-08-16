@@ -15,18 +15,19 @@ class RecentSearchesService {
   final Logger _logger = Logger();
 
   DocumentReference<Map<String, dynamic>> _getDocReference() {
-    if (_auth.currentUser == null) {
-      throw Exception("User isn't authenticated");
-    }
-
     try {
+      if (_auth.currentUser == null) {
+        throw Exception("User isn't authenticated");
+      }
+
       return _firestore
           .collection(FirestoreCollection.recentSearches)
           .doc(_auth.currentUser?.uid);
     } catch (e, s) {
       _logger.e("Error getting recent searches document reference", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return FirebaseFirestore.instance.collection("empty").doc();
   }
 
   Future<List<String>> getRecentSearches(MediaType mediaType) async {
@@ -48,11 +49,12 @@ class RecentSearchesService {
       return searches.reversed.toList();
     } catch (e, s) {
       _logger.e("Error getting recent searches", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <String>[];
   }
 
-  Future<dynamic> add(MediaType mediaType, String query) async {
+  Future<void> add(MediaType mediaType, String query) async {
     final String fieldName = mediaType.toJsonField();
     final List<String> searches = await getRecentSearches(mediaType);
 
@@ -73,11 +75,10 @@ class RecentSearchesService {
       await _getDocReference().set(<String, dynamic>{fieldName: searches}, SetOptions(merge: true));
     } catch (e, s) {
       _logger.e("Error adding query to recent searches", error: e, stackTrace: s);
-      rethrow;
     }
   }
 
-  Future<dynamic> remove(MediaType mediaType, String query) async {
+  Future<void> remove(MediaType mediaType, String query) async {
     final String fieldName = mediaType.toJsonField();
     final List<String> searches = await getRecentSearches(mediaType);
 
@@ -87,17 +88,15 @@ class RecentSearchesService {
         await _getDocReference().set(<String, dynamic>{fieldName: searches}, SetOptions(merge: true));
       } catch (e, s) {
         _logger.e("Error removing query from recent searches", error: e, stackTrace: s);
-        rethrow;
       }
     }
   }
 
-  Future<dynamic> clear() async {
+  Future<void> clear() async {
     try {
       await _getDocReference().delete();
     } catch (e, s) {
       _logger.e("Error clearing recent searches", error: e, stackTrace: s);
-      rethrow;
     }
   }
 }
