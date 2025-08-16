@@ -127,7 +127,7 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
     return state.tvShowEpisodes?[tvShowId]?.containsKey(firstSeason.number) ?? false;
   }
 
-  Future<dynamic> _loadTvShowSeasons(int tvShowId, Emitter<AppState> emit) async {
+  Future<void> _loadTvShowSeasons(int tvShowId, Emitter<AppState> emit) async {
     try {
       final List<Season> seasons = await _tmdbService.getTvShowSeasons(tvShowId);
 
@@ -144,11 +144,10 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
       }
     } catch (e, s) {
       _logger.e("Error loading TV show seasons for ID $tvShowId", error: e, stackTrace: s);
-      rethrow;
     }
   }
 
-  Future<dynamic> _loadEpisodesForSeason(int tvShowId, int seasonNumber, Emitter<AppState> emit) async {
+  Future<void> _loadEpisodesForSeason(int tvShowId, int seasonNumber, Emitter<AppState> emit) async {
     try {
       final List<Episode> episodes = await _tmdbService.getEpisodes(tvShowId, seasonNumber);
 
@@ -165,7 +164,6 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
       ));
     } catch (e, s) {
       _logger.e("Error loading episodes for TV show ID $tvShowId, season $seasonNumber", error: e, stackTrace: s);
-      rethrow;
     }
   }
 
