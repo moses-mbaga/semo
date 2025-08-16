@@ -172,7 +172,7 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
                   setState(() => _subtitleStyle.hasBorder = isSelected);
                   await _appPreferences.setSubtitlesStyle(_subtitleStyle);
                 },
-                activeColor: Theme.of(context).primaryColor,
+                activeThumbColor: Theme.of(context).primaryColor,
               ),
               onPressed: (BuildContext context) async {
                 setState(() => _subtitleStyle.hasBorder = !_subtitleStyle.hasBorder);
