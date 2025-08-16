@@ -9,7 +9,7 @@ class EpisodeCard extends StatelessWidget {
     required this.episode,
     this.onTap,
     this.onMarkWatched,
-    this.onRemove,
+    this.onRemoveFromWatched,
     this.isLoading = false,
     this.disabled = false,
   });
@@ -17,7 +17,7 @@ class EpisodeCard extends StatelessWidget {
   final Episode episode;
   final VoidCallback? onTap;
   final VoidCallback? onMarkWatched;
-  final VoidCallback? onRemove;
+  final VoidCallback? onRemoveFromWatched;
   final bool isLoading;
   final bool disabled;
 
@@ -156,7 +156,7 @@ class EpisodeCard extends StatelessWidget {
                       case "mark_watched":
                         onMarkWatched?.call();
                       case "delete_progress":
-                        onRemove?.call();
+                        onRemoveFromWatched?.call();
                     }
                   },
                   itemBuilder: (BuildContext context) => <PopupMenuEntry<String>>[

@@ -202,7 +202,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
             }
           },
           onMarkWatched: () => _markEpisodeAsWatched(selectedSeason, episode),
-          onRemove: episode.isRecentlyWatched
+          onRemoveFromWatched: episode.isRecentlyWatched
               ? () => _removeEpisodeFromRecentlyWatched(selectedSeason, episode)
               : null,
           isLoading: isExtracting,
