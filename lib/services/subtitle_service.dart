@@ -147,4 +147,12 @@ class SubtitleService {
 
     return <File>[];
   }
+
+  Future<void> deleteAllSubtitles() async {
+    final Directory directory = await getTemporaryDirectory();
+
+    if (directory.existsSync()) {
+      await directory.delete(recursive: true);
+    }
+  }
 }

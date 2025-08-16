@@ -21,6 +21,7 @@ dependencies:
   dio: ^5.8.0+1
   firebase_remote_config: ^5.4.5
   flutter_bloc: ^8.1.6
+  flutter_cache_manager: ^3.4.1
   flutter_settings_ui: ^3.0.1
   font_awesome_flutter: ^10.8.0
   google_fonts: ^6.2.1

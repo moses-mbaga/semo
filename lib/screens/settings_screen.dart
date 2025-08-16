@@ -5,6 +5,7 @@ import "package:firebase_auth/firebase_auth.dart";
 import "package:flutter/gestures.dart";
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
+import "package:flutter_cache_manager/flutter_cache_manager.dart";
 import "package:flutter_settings_ui/flutter_settings_ui.dart";
 import "package:package_info_plus/package_info_plus.dart";
 import "package:semo/bloc/app_bloc.dart";
@@ -19,6 +20,7 @@ import "package:semo/screens/subtitles_preferences_screen.dart";
 import "package:semo/services/auth_service.dart";
 import "package:semo/services/stream_extractor/extractor.dart";
 import "package:semo/services/preferences.dart";
+import "package:semo/services/subtitle_service.dart";
 import "package:semo/utils/urls.dart";
 import "package:url_launcher/url_launcher.dart";
 
@@ -271,6 +273,22 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
     }
   }
 
+  Future<void> _clearCache() async {
+    if (mounted) {
+      context.read<AppBloc>().add(InvalidateCache());
+    }
+
+    try {
+      DefaultCacheManager manager = DefaultCacheManager();
+      await manager.emptyCache();
+    } catch (_) {}
+
+    try {
+      SubtitleService subtitleService = SubtitleService();
+      await subtitleService.deleteAllSubtitles();
+    } catch (_) {}
+  }
+
   Future<void> _clearRecentSearches({bool showResponse = true}) async {
     if (mounted) {
       context.read<AppBloc>().add(ClearRecentSearches());
@@ -465,6 +483,13 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
         SettingsSection(
           title: _buildSectionTitle("Other"),
           tiles: <SettingsTile>[
+            _buildSectionTile(
+              title: "Clear cache",
+              description: "Deletes all cached data",
+              icon: Icons.cached,
+              trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
+              onPressed: (BuildContext context) => _clearCache(),
+            ),
             _buildSectionTile(
               title: "Clear recent searches",
               description: "Deletes all the recent search queries",
