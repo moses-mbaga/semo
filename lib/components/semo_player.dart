@@ -426,6 +426,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                     },
                   ) : null,
                   title: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
                     children: <Widget>[
                       Text(
                         widget.title,
