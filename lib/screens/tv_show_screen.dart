@@ -153,6 +153,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
               seasons: seasons,
               selectedSeason: selectedSeason,
               onSeasonChanged: _onSeasonChanged,
+              enabled: !anyExtracting,
             ),
             const Spacer(),
           ],
