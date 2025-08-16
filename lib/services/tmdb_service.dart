@@ -54,12 +54,12 @@ class TMDBService {
   final Logger _logger = Logger();
 
   // Movie Methods
-  Future<SearchResults> getNowPlayingMovies() => _search(MediaType.movies, Urls.nowPlayingMovies, 1);
-  Future<SearchResults> getTrendingMovies(int page) => _search(MediaType.movies, Urls.trendingMovies, page);
-  Future<SearchResults> getPopularMovies(int page) => _search(MediaType.movies, Urls.popularMovies, page);
-  Future<SearchResults> getTopRatedMovies(int page) async => _search(MediaType.movies, Urls.topRatedMovies, page);
-  Future<SearchResults> discoverMovies(int page, {Map<String, String>? parameters}) => _search(MediaType.movies, Urls.discoverMovie, page, parameters: parameters);
-  Future<SearchResults> searchMovies(String query, int page) => _search(
+  Future<SearchResults?> getNowPlayingMovies() => _search(MediaType.movies, Urls.nowPlayingMovies, 1);
+  Future<SearchResults?> getTrendingMovies(int page) => _search(MediaType.movies, Urls.trendingMovies, page);
+  Future<SearchResults?> getPopularMovies(int page) => _search(MediaType.movies, Urls.popularMovies, page);
+  Future<SearchResults?> getTopRatedMovies(int page) async => _search(MediaType.movies, Urls.topRatedMovies, page);
+  Future<SearchResults?> discoverMovies(int page, {Map<String, String>? parameters}) => _search(MediaType.movies, Urls.discoverMovie, page, parameters: parameters);
+  Future<SearchResults?> searchMovies(String query, int page) => _search(
     MediaType.movies,
     Urls.searchMovies,
     page,
@@ -81,17 +81,18 @@ class TMDBService {
       throw Exception("Failed to get movie details for ID: $id");
     } catch (e, s) {
       _logger.e("Error getting movie details for ID: $id", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 
   // TV Show Methods
-  Future<SearchResults> getOnTheAirTvShows() => _search(MediaType.tvShows, Urls.onTheAirTvShows, 1);
-  Future<SearchResults> getTrendingTvShows(int page) => _search(MediaType.tvShows, Urls.trendingTvShows, page);
-  Future<SearchResults> getPopularTvShows(int page) => _search(MediaType.tvShows, Urls.popularTvShows, page);
-  Future<SearchResults> getTopRatedTvShows(int page) => _search(MediaType.tvShows, Urls.topRatedTvShows, page);
-  Future<SearchResults> discoverTvShows(int page, {Map<String, String>? parameters}) => _search(MediaType.tvShows, Urls.discoverTvShow, page, parameters: parameters);
-  Future<SearchResults> searchTvShows(String query, int page) => _search(
+  Future<SearchResults?> getOnTheAirTvShows() => _search(MediaType.tvShows, Urls.onTheAirTvShows, 1);
+  Future<SearchResults?> getTrendingTvShows(int page) => _search(MediaType.tvShows, Urls.trendingTvShows, page);
+  Future<SearchResults?> getPopularTvShows(int page) => _search(MediaType.tvShows, Urls.popularTvShows, page);
+  Future<SearchResults?> getTopRatedTvShows(int page) => _search(MediaType.tvShows, Urls.topRatedTvShows, page);
+  Future<SearchResults?> discoverTvShows(int page, {Map<String, String>? parameters}) => _search(MediaType.tvShows, Urls.discoverTvShow, page, parameters: parameters);
+  Future<SearchResults?> searchTvShows(String query, int page) => _search(
     MediaType.tvShows,
     Urls.searchTvShows,
     page,
@@ -113,8 +114,9 @@ class TMDBService {
       throw Exception("Error getting TV show details for ID: $id");
     } catch (e, s) {
       _logger.e("Error getting TV show details for ID: $id", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 
   Future<List<Season>> getTvShowSeasons(int id) async {
@@ -138,8 +140,9 @@ class TMDBService {
       throw Exception("Error getting TV show seasons for ID: $id");
     } catch (e, s) {
       _logger.e("Error getting TV show seasons for ID: $id", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <Season>[];
   }
 
   Future<List<Episode>> getEpisodes(int showId, int seasonNumber) async {
@@ -163,12 +166,13 @@ class TMDBService {
       throw Exception("Error getting episodes for season $seasonNumber in TV show with ID $showId");
     } catch (e, s) {
       _logger.e("Error getting episodes for season $seasonNumber in TV show with ID $showId", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <Episode>[];
   }
 
   // Common methods for both movies and TV shows
-  Future<SearchResults> _search(MediaType mediaType, String url, int page, {Map<String, String>? parameters}) async {
+  Future<SearchResults?> _search(MediaType mediaType, String url, int page, {Map<String, String>? parameters}) async {
     try {
       final Response<dynamic> response = await _dio.get(url, queryParameters: <String, String>{
         "page": "$page",
@@ -185,11 +189,12 @@ class TMDBService {
       throw Exception("Failed to get ${mediaType.toString()} search results");
     } catch (e, s) {
       _logger.e("Error getting ${mediaType.toString()} search results", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 
-  Future<SearchResults> searchFromUrl(MediaType mediaType, String url, int page, Map<String, String>? parameters) => _search(mediaType, url, page, parameters: parameters);
+  Future<SearchResults?> searchFromUrl(MediaType mediaType, String url, int page, Map<String, String>? parameters) => _search(mediaType, url, page, parameters: parameters);
 
   Future<List<Genre>> _getGenres(MediaType mediaType) async {
     String url = mediaType == MediaType.movies ? Urls.movieGenres : Urls.tvShowGenres;
@@ -205,11 +210,12 @@ class TMDBService {
       throw Exception("Failed to get genres");
     } catch (e, s) {
       _logger.e("Error getting genres", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <Genre>[];
   }
 
-  Future<String> getGenreBackdrop(MediaType mediaType, Genre genre) async {
+  Future<String?> getGenreBackdrop(MediaType mediaType, Genre genre) async {
     if (genre.backdropPath != null && genre.backdropPath!.isNotEmpty) {
       return genre.backdropPath!;
     }
@@ -217,11 +223,11 @@ class TMDBService {
     bool isMovie = mediaType == MediaType.movies;
 
     try {
-      final SearchResults result = isMovie
+      final SearchResults? result = isMovie
           ? await discoverMovies(1, parameters: <String, String>{"with_genres": "${genre.id}"})
           : await discoverTvShows(1, parameters: <String, String>{"with_genres": "${genre.id}"});
 
-      if ((isMovie ? result.movies : result.tvShows) != null && (isMovie ? result.movies!.isNotEmpty : result.tvShows!.isNotEmpty)) {
+      if ((isMovie ? result?.movies : result?.tvShows) != null && (isMovie ? result!.movies!.isNotEmpty : result!.tvShows!.isNotEmpty)) {
         final Random random = Random();
         final List<dynamic> items = isMovie ? result.movies! : result.tvShows!;
         final int randomIndex = random.nextInt(items.length);
@@ -235,18 +241,19 @@ class TMDBService {
       throw Exception("Error getting genre backdrop for name: ${genre.name}");
     } catch (e, s) {
       _logger.e("Error getting genre backdrop for name: ${genre.name}", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 
-  Future<SearchResults> getRecommendations(MediaType mediaType, int id, int page) {
+  Future<SearchResults?> getRecommendations(MediaType mediaType, int id, int page) {
     final String url = mediaType == MediaType.movies
         ? Urls.getMovieRecommendations(id)
         : Urls.getTvShowRecommendations(id);
     return _search(mediaType, url, page);
   }
 
-  Future<SearchResults> getSimilar(MediaType mediaType, int id, int page) {
+  Future<SearchResults?> getSimilar(MediaType mediaType, int id, int page) {
     final String url = mediaType == MediaType.movies
         ? Urls.getMovieSimilar(id)
         : Urls.getTvShowSimilar(id);
@@ -277,8 +284,9 @@ class TMDBService {
       throw Exception("Error getting ${mediaType.toString()} trailer for ID: $mediaId");
     } catch (e, s) {
       _logger.e("Error getting ${mediaType.toString()} trailer for ID: $mediaId", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return null;
   }
 
   Future<List<Person>> getCast(MediaType mediaType, int mediaId) async {
@@ -298,8 +306,9 @@ class TMDBService {
       throw Exception("Error getting ${mediaType.toString()} cast for ID: $mediaId");
     } catch (e, s) {
       _logger.e("Error getting ${mediaType.toString()} cast for ID: $mediaId", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <Person>[];
   }
 
   Future<List<Map<String, dynamic>>> _getPersonMedia(int personId, MediaType mediaType) async {
@@ -317,8 +326,9 @@ class TMDBService {
       throw Exception("Error getting ${mediaType.toString()} for person $personId");
     } catch (e, s) {
       _logger.e("Error getting ${mediaType.toString()} for person $personId", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <Map<String, dynamic>>[];
   }
 
   Future<List<Movie>> getPersonMovies(int personId) async {
@@ -327,8 +337,9 @@ class TMDBService {
       return moviesData.map((Map<String, dynamic> json) => Movie.fromJson(json)).toList();
     } catch (e, s) {
       _logger.e("Error getting movies for cast for person $personId", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <Movie>[];
   }
 
   Future<List<TvShow>> getPersonTvShows(int personId) async {
@@ -337,7 +348,8 @@ class TMDBService {
       return tvShowsData.map((Map<String, dynamic> json) => TvShow.fromJson(json)).toList();
     } catch (e, s) {
       _logger.e("Error getting TV shows for cast for person $personId", error: e, stackTrace: s);
-      rethrow;
     }
+
+    return <TvShow>[];
   }
 }

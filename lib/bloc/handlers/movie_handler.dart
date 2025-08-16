@@ -135,8 +135,8 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, Movie> recommendationsController = PagingController<int, Movie>(
         getNextPageKey: (PagingState<int, Movie> state) => state.lastPageIsEmpty ? null: state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getRecommendations(MediaType.movies, movieId, pageKey);
-          final List<Movie> movies = results.movies ?? <Movie>[];
+          final SearchResults? results = await _tmdbService.getRecommendations(MediaType.movies, movieId, pageKey);
+          final List<Movie> movies = results?.movies ?? <Movie>[];
           add(AddIncompleteMovies(movies));
           return movies;
         },
@@ -160,8 +160,8 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, Movie> similarMoviesController = PagingController<int, Movie>(
         getNextPageKey: (PagingState<int, Movie> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getSimilar(MediaType.movies, movieId, pageKey);
-          final List<Movie> movies = results.movies ?? <Movie>[];
+          final SearchResults? results = await _tmdbService.getSimilar(MediaType.movies, movieId, pageKey);
+          final List<Movie> movies = results?.movies ?? <Movie>[];
           add(AddIncompleteMovies(movies));
           return movies;
         },

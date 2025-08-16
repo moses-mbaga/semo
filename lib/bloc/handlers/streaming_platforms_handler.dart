@@ -37,14 +37,14 @@ mixin StreamingPlatformsHandler on Bloc<AppEvent, AppState> {
         movieControllers[platformId] = PagingController<int, Movie>(
           getNextPageKey: (PagingState<int, Movie> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
           fetchPage: (int pageKey) async {
-            final SearchResults results = await _tmdbService.discoverMovies(
+            final SearchResults? results = await _tmdbService.discoverMovies(
               pageKey,
               parameters: <String, String>{
                 "with_watch_providers": platformId,
                 "watch_region": "US",
               },
             );
-            final List<Movie> movies = results.movies ?? <Movie>[];
+            final List<Movie> movies = results?.movies ?? <Movie>[];
             add(AddIncompleteMovies(movies));
             return movies;
           },
@@ -53,14 +53,14 @@ mixin StreamingPlatformsHandler on Bloc<AppEvent, AppState> {
         tvShowControllers[platformId] = PagingController<int, TvShow>(
           getNextPageKey: (PagingState<int, TvShow> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
           fetchPage: (int pageKey) async {
-            final SearchResults results = await _tmdbService.discoverTvShows(
+            final SearchResults? results = await _tmdbService.discoverTvShows(
               pageKey,
               parameters: <String, String>{
                 "with_watch_providers": platformId,
                 "watch_region": "US",
               },
             );
-            final List<TvShow> tvShows = results.tvShows ?? <TvShow>[];
+            final List<TvShow> tvShows = results?.tvShows ?? <TvShow>[];
             add(AddIncompleteTvShows(tvShows));
             return tvShows;
           },

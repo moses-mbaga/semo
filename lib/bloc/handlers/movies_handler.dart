@@ -28,15 +28,15 @@ mixin MoviesHandler on Bloc<AppEvent, AppState> {
     ));
 
     try {
-      final SearchResults results = await _tmdbService.getNowPlayingMovies();
-      final List<Movie> nowPlayingMovies = results.movies ?? <Movie>[];
+      final SearchResults? results = await _tmdbService.getNowPlayingMovies();
+      final List<Movie> nowPlayingMovies = results?.movies ?? <Movie>[];
       final List<Movie> limitedNowPlayingMovies = nowPlayingMovies.length > 10 ? nowPlayingMovies.sublist(0, 10) : nowPlayingMovies;
 
       final PagingController<int, Movie> trendingController = PagingController<int, Movie>(
         getNextPageKey: (PagingState<int, Movie> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getTrendingMovies(pageKey);
-          final List<Movie> movies = results.movies ?? <Movie>[];
+          final SearchResults? results = await _tmdbService.getTrendingMovies(pageKey);
+          final List<Movie> movies = results?.movies ?? <Movie>[];
           add(AddIncompleteMovies(movies));
           return movies;
         },
@@ -45,8 +45,8 @@ mixin MoviesHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, Movie> popularController = PagingController<int, Movie>(
         getNextPageKey: (PagingState<int, Movie> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getPopularMovies(pageKey);
-          final List<Movie> movies = results.movies ?? <Movie>[];
+          final SearchResults? results = await _tmdbService.getPopularMovies(pageKey);
+          final List<Movie> movies = results?.movies ?? <Movie>[];
           add(AddIncompleteMovies(movies));
           return movies;
         },
@@ -55,8 +55,8 @@ mixin MoviesHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, Movie> topRatedController = PagingController<int, Movie>(
         getNextPageKey: (PagingState<int, Movie> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getTopRatedMovies(pageKey);
-          final List<Movie> movies = results.movies ?? <Movie>[];
+          final SearchResults? results = await _tmdbService.getTopRatedMovies(pageKey);
+          final List<Movie> movies = results?.movies ?? <Movie>[];
           add(AddIncompleteMovies(movies));
           return movies;
         },

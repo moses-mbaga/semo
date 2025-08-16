@@ -28,15 +28,15 @@ mixin TvShowsHandler on Bloc<AppEvent, AppState> {
     ));
 
     try {
-      final SearchResults results = await _tmdbService.getOnTheAirTvShows();
-      final List<TvShow> onTheAirTvShows = results.tvShows ?? <TvShow>[];
+      final SearchResults? results = await _tmdbService.getOnTheAirTvShows();
+      final List<TvShow> onTheAirTvShows = results?.tvShows ?? <TvShow>[];
       final List<TvShow> limitedNowPlayingTvShows = onTheAirTvShows.length > 10 ? onTheAirTvShows.sublist(0, 10) : onTheAirTvShows;
 
       final PagingController<int, TvShow> trendingController = PagingController<int, TvShow>(
         getNextPageKey: (PagingState<int, TvShow> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getTrendingTvShows(pageKey);
-          final List<TvShow> tvShows = results.tvShows ?? <TvShow>[];
+          final SearchResults? results = await _tmdbService.getTrendingTvShows(pageKey);
+          final List<TvShow> tvShows = results?.tvShows ?? <TvShow>[];
           add(AddIncompleteTvShows(tvShows));
           return tvShows;
         },
@@ -45,8 +45,8 @@ mixin TvShowsHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, TvShow> popularController = PagingController<int, TvShow>(
         getNextPageKey: (PagingState<int, TvShow> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getPopularTvShows(pageKey);
-          final List<TvShow> tvShows = results.tvShows ?? <TvShow>[];
+          final SearchResults? results = await _tmdbService.getPopularTvShows(pageKey);
+          final List<TvShow> tvShows = results?.tvShows ?? <TvShow>[];
           add(AddIncompleteTvShows(tvShows));
           return tvShows;
         },
@@ -55,8 +55,8 @@ mixin TvShowsHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, TvShow> topRatedController = PagingController<int, TvShow>(
         getNextPageKey: (PagingState<int, TvShow> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getTopRatedTvShows(pageKey);
-          final List<TvShow> tvShows = results.tvShows ?? <TvShow>[];
+          final SearchResults? results = await _tmdbService.getTopRatedTvShows(pageKey);
+          final List<TvShow> tvShows = results?.tvShows ?? <TvShow>[];
           add(AddIncompleteTvShows(tvShows));
           return tvShows;
         },

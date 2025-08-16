@@ -42,13 +42,13 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
         return <dynamic>[];
       }
 
-      final SearchResults result = widget.mediaType == MediaType.movies
+      final SearchResults? result = widget.mediaType == MediaType.movies
           ? await _tmdbService.searchMovies(_currentQuery, pageKey)
           : await _tmdbService.searchTvShows(_currentQuery, pageKey);
 
       return widget.mediaType == MediaType.movies
-          ? (result.movies ?? <Movie>[])
-          : (result.tvShows ?? <TvShow>[]);
+          ? (result?.movies ?? <Movie>[])
+          : (result?.tvShows ?? <TvShow>[]);
     },
   );
 

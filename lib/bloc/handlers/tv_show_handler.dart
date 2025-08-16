@@ -209,8 +209,8 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, TvShow> recommendationsController = PagingController<int, TvShow>(
         getNextPageKey: (PagingState<int, TvShow> state) => state.lastPageIsEmpty ? null: state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getRecommendations(MediaType.tvShows, tvShowId, pageKey);
-          final List<TvShow> tvShows = results.tvShows ?? <TvShow>[];
+          final SearchResults? results = await _tmdbService.getRecommendations(MediaType.tvShows, tvShowId, pageKey);
+          final List<TvShow> tvShows = results?.tvShows ?? <TvShow>[];
           add(AddIncompleteTvShows(tvShows));
           return tvShows;
         },
@@ -234,8 +234,8 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
       final PagingController<int, TvShow> similarTvShowsController = PagingController<int, TvShow>(
         getNextPageKey: (PagingState<int, TvShow> state) => state.lastPageIsEmpty ? null : state.nextIntPageKey,
         fetchPage: (int pageKey) async {
-          final SearchResults results = await _tmdbService.getSimilar(MediaType.tvShows, tvShowId, pageKey);
-          final List<TvShow> tvShows = results.tvShows ?? <TvShow>[];
+          final SearchResults? results = await _tmdbService.getSimilar(MediaType.tvShows, tvShowId, pageKey);
+          final List<TvShow> tvShows = results?.tvShows ?? <TvShow>[];
           add(AddIncompleteTvShows(tvShows));
           return tvShows;
         },
