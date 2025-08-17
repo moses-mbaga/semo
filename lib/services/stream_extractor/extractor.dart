@@ -9,7 +9,7 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/models/tv_show.dart";
 import "package:semo/services/stream_extractor/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor/extractors/kiss_kh_extractor.dart";
-import "package:semo/services/preferences.dart";
+import "package:semo/services/app_preferences_service.dart";
 
 class StreamExtractor {
   static final Logger _logger = Logger();
@@ -23,7 +23,7 @@ class StreamExtractor {
   static Future<MediaStream?> getStream({Movie? movie, TvShow? tvShow, Episode? episode}) async {
     try {
       math.Random random = math.Random();
-      String serverName = AppPreferences().getStreamingServer();
+      String serverName = AppPreferencesService().getStreamingServer();
       MediaStream? stream;
       BaseStreamExtractor? extractor;
 

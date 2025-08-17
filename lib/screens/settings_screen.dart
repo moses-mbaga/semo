@@ -19,7 +19,7 @@ import "package:semo/screens/open_source_libraries_screen.dart";
 import "package:semo/screens/subtitles_preferences_screen.dart";
 import "package:semo/services/auth_service.dart";
 import "package:semo/services/stream_extractor/extractor.dart";
-import "package:semo/services/preferences.dart";
+import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/subtitle_service.dart";
 import "package:semo/utils/urls.dart";
 import "package:url_launcher/url_launcher.dart";
@@ -32,7 +32,7 @@ class SettingsScreen extends BaseScreen {
 }
 
 class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
-  final AppPreferences _appPreferences = AppPreferences();
+  final AppPreferencesService _appPreferences = AppPreferencesService();
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final AuthService _authService = AuthService();
 

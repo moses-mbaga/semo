@@ -5,7 +5,7 @@ import "package:flutter_settings_ui/flutter_settings_ui.dart";
 import "package:semo/gen/assets.gen.dart";
 import "package:semo/models/subtitle_style.dart";
 import "package:semo/screens/base_screen.dart";
-import "package:semo/services/preferences.dart";
+import "package:semo/services/app_preferences_service.dart";
 import "package:semo/utils/string_extension.dart";
 
 class SubtitlesPreferencesScreen extends BaseScreen {
@@ -16,7 +16,7 @@ class SubtitlesPreferencesScreen extends BaseScreen {
 }
 
 class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferencesScreen> {
-  final AppPreferences _appPreferences = AppPreferences();
+  final AppPreferencesService _appPreferences = AppPreferencesService();
   //ignore: prefer_final_fields
   late SubtitleStyle _subtitleStyle = _appPreferences.getSubtitlesStyle();
 

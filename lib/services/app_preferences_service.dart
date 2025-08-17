@@ -5,11 +5,11 @@ import "package:semo/models/streaming_server.dart";
 import "package:semo/models/subtitle_style.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
-class AppPreferences {
-  factory AppPreferences() => _instance;
+class AppPreferencesService {
+  factory AppPreferencesService() => _instance;
 
-  AppPreferences._internal();
-  static final AppPreferences _instance = AppPreferences._internal();
+  AppPreferencesService._internal();
+  static final AppPreferencesService _instance = AppPreferencesService._internal();
   static SharedPreferences? _prefs;
 
   static Future<void> init() async {
