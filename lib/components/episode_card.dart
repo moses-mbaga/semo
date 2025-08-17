@@ -7,6 +7,8 @@ class EpisodeCard extends StatelessWidget {
   const EpisodeCard({
     super.key,
     required this.episode,
+    this.isRecentlyWatched = false,
+    this.watchedProgress = 0,
     this.onTap,
     this.onMarkWatched,
     this.onRemoveFromWatched,
@@ -15,6 +17,8 @@ class EpisodeCard extends StatelessWidget {
   });
 
   final Episode episode;
+  final bool isRecentlyWatched;
+  final int watchedProgress;
   final VoidCallback? onTap;
   final VoidCallback? onMarkWatched;
   final VoidCallback? onRemoveFromWatched;
@@ -74,12 +78,11 @@ class EpisodeCard extends StatelessWidget {
                               fit: BoxFit.cover,
                             ),
                           ),
-                          child: episode.isRecentlyWatched
-                              ? Column(
+                          child: isRecentlyWatched ? Column(
                             children: <Widget>[
                               const Spacer(),
                               LinearProgressIndicator(
-                                value: episode.watchedProgress! / (episode.duration * 60),
+                                value: watchedProgress / (episode.duration * 60),
                                 valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
                                 backgroundColor: Colors.transparent,
                               ),
@@ -167,7 +170,7 @@ class EpisodeCard extends StatelessWidget {
                         style: Theme.of(context).textTheme.displaySmall,
                       ),
                     ),
-                    if (episode.isRecentlyWatched)
+                    if (isRecentlyWatched)
                       PopupMenuItem<String>(
                         value: "delete_progress",
                         child: Text(

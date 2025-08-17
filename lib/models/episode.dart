@@ -8,9 +8,6 @@ class Episode {
     required this.stillPath,
     required this.duration,
     this.airDate,
-    this.creditsStart,
-    this.isRecentlyWatched = false,
-    this.watchedProgress,
   });
 
   factory Episode.fromJson(Map<String, dynamic> json) => Episode(
@@ -32,7 +29,4 @@ class Episode {
   final String stillPath;
   final int duration;
   final String? airDate;
-  Duration? creditsStart;
-  bool isRecentlyWatched;
-  int? watchedProgress;
 }

@@ -20,7 +20,6 @@ import "package:semo/models/season.dart";
 import "package:semo/models/tv_show.dart";
 import "package:semo/screens/base_screen.dart";
 import "package:semo/screens/player_screen.dart";
-import "package:semo/services/recently_watched_service.dart";
 import "package:semo/enums/media_type.dart";
 
 class TvShowScreen extends BaseScreen {
@@ -33,7 +32,6 @@ class TvShowScreen extends BaseScreen {
 }
 
 class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
-  final RecentlyWatchedService _recentlyWatchedService = RecentlyWatchedService();
   bool _isFavorite = false;
   bool _isLoading = true;
   int _currentSeasonIndex = 0;
@@ -77,39 +75,23 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
     );
   }
 
-  Future<void> _markEpisodeAsWatched(Season season, Episode episode) async {
-    try {
-      unawaited(
-        _recentlyWatchedService.updateEpisodeProgress(
-          widget.tvShow.id,
-          season.id,
-          episode.id,
-          episode.duration * 60,
-        ),
-      );
-    } catch (_) {}
+  // TODO: Make airing later episodes unplayable
 
-    setState(() {
-      episode.isRecentlyWatched = true;
-      episode.watchedProgress = episode.duration * 60;
-    });
+  Future<void> _markEpisodeAsWatched(Season season, Episode episode) async {
+    context.read<AppBloc>().add(UpdateEpisodeProgress(
+      widget.tvShow.id,
+      season.id,
+      episode.id,
+      episode.duration * 60,
+    ));
   }
 
   Future<void> _removeEpisodeFromRecentlyWatched(Season season, Episode episode) async {
-    try {
-      unawaited(
-        _recentlyWatchedService.removeEpisodeProgress(
-          widget.tvShow.id,
-          season.id,
-          episode.id,
-        ),
-      );
-    } catch (_) {}
-
-    setState(() {
-      episode.isRecentlyWatched = false;
-      episode.watchedProgress = null;
-    });
+    context.read<AppBloc>().add(DeleteEpisodeProgress(
+      widget.tvShow.id,
+      season.id,
+      episode.id,
+    ));
   }
 
   Future<void> _onSeasonChanged(List<Season> seasons, Season season) async {
@@ -163,7 +145,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
   }
 
   Widget _buildSelectedSeasonEpisodes(List<Season>? seasons, List<Episode>? episodes,
-      {bool isLoadingEpisodes = false, Map<String, bool>? extractingMap, Map<String, MediaStream>? episodeStreams}) {
+      {bool isLoadingEpisodes = false, Map<String, dynamic>? recentlyWatchedEpisodes, Map<String, bool>? extractingMap, Map<String, MediaStream>? episodeStreams}) {
     if (seasons == null || seasons.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -191,9 +173,13 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
         final bool isExtracting = extractingMap?[episode.id.toString()] ?? false;
         final bool disableAll = anyExtracting && !isExtracting;
         final MediaStream? stream = episodeStreams?[episode.id.toString()];
+        final bool isRecentlyWatched = recentlyWatchedEpisodes?.keys.contains(episode.id.toString()) ?? false;
+        final int watchedProgress = recentlyWatchedEpisodes?[episode.id.toString()]?["progress"] ?? 0;
 
         return EpisodeCard(
           episode: episode,
+          isRecentlyWatched: isRecentlyWatched,
+          watchedProgress: watchedProgress,
           onTap: (disableAll || isExtracting) ? null : () {
             if (stream == null) {
               _extractEpisodeStream(selectedSeason, episode);
@@ -202,7 +188,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
             }
           },
           onMarkWatched: () => _markEpisodeAsWatched(selectedSeason, episode),
-          onRemoveFromWatched: episode.isRecentlyWatched
+          onRemoveFromWatched: isRecentlyWatched
               ? () => _removeEpisodeFromRecentlyWatched(selectedSeason, episode)
               : null,
           isLoading: isExtracting,
@@ -256,14 +242,17 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
   @override
   Widget buildContent(BuildContext context) => BlocConsumer<AppBloc, AppState>(
     listener: (BuildContext context, AppState state) {
+      final Season? selectedSeason = state.tvShowSeasons?[widget.tvShow.id.toString()]?[_currentSeasonIndex];
+      final List<Episode> episodes = state.tvShowEpisodes?[widget.tvShow.id.toString()]?[selectedSeason?.number] ?? <Episode>[];
+      final Map<String, MediaStream>? episodeStreams = state.episodeStreams;
+      final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
+
       if (mounted) {
         setState(() {
           _isLoading = state.isTvShowLoading?[widget.tvShow.id.toString()] ?? true;
           _isFavorite = state.favoriteTvShows?.any((TvShow tvShow) => tvShow.id == widget.tvShow.id) ?? false;
 
           // Track extracting episode id for UI
-          final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
-
           if (extractingMap != null && extractingMap.containsValue(true)) {
             try {
               final MapEntry<String, bool> found = extractingMap.entries.firstWhere((MapEntry<String, bool> entry) => entry.value);
@@ -276,13 +265,8 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
       }
 
       // Handle stream extraction result
-      final Map<String, MediaStream>? episodeStreams = state.episodeStreams;
-      final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
-
       if (_extractingEpisodeId != null && extractingMap?[_extractingEpisodeId.toString()] == false && episodeStreams?[_extractingEpisodeId.toString()] != null) {
         try {
-          final Season? selectedSeason = state.tvShowSeasons?[widget.tvShow.id.toString()]?[_currentSeasonIndex];
-          final List<Episode> episodes = state.tvShowEpisodes?[widget.tvShow.id.toString()]?[selectedSeason?.number] ?? <Episode>[];
           final Episode selectedEpisode = episodes.firstWhere((Episode e) => e.id == _extractingEpisodeId);
           final MediaStream? stream = episodeStreams?[_extractingEpisodeId.toString()];
 
@@ -310,10 +294,11 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
       final bool isTvShowLoaded = seasons != null && seasons.isNotEmpty && episodes != null && episodes.isNotEmpty;
       final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
       final Map<String, MediaStream>? episodeStreams = state.episodeStreams;
+      final Map<String, dynamic>? recentlyWatchedEpisodes = state.recentlyWatched?[MediaType.tvShows.toJsonField()]?[widget.tvShow.id.toString()]?[selectedSeason?.id.toString()];
 
       return Scaffold(
         appBar: AppBar(
-          leading: BackButton(onPressed: () => Navigator.pop(context),),
+          leading: BackButton(onPressed: () => Navigator.pop(context)),
           actions: <Widget>[
             IconButton(
               icon: Icon(
@@ -357,6 +342,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
                           seasons,
                           episodes,
                           isLoadingEpisodes: isLoadingEpisodes,
+                          recentlyWatchedEpisodes: recentlyWatchedEpisodes,
                           extractingMap: extractingMap,
                           episodeStreams: episodeStreams,
                         ),
