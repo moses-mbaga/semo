@@ -44,7 +44,7 @@ class EpisodeCard extends StatelessWidget {
     return Opacity(
       opacity: disabled ? 0.5 : 1.0,
       child: InkWell(
-        onTap: (!isAired | disabled) ? null : onTap,
+        onTap: (!isAired || disabled) ? null : onTap,
         child: Container(
           padding: const EdgeInsets.symmetric(vertical: 10),
           child: Column(
