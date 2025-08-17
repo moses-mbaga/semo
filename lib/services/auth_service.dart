@@ -14,7 +14,13 @@ class AuthService {
 
   Future<OAuthCredential?> _getOAuthCredential() async {
     try {
-      final GoogleSignInAccount user = await _googleSignIn.authenticate();
+      GoogleSignInAccount? user;
+
+      try {
+        user = await _googleSignIn.attemptLightweightAuthentication();
+      } catch (_) {}
+
+      user ??= await _googleSignIn.authenticate();
       final GoogleSignInAuthentication auth = user.authentication;
       return GoogleAuthProvider.credential(idToken: auth.idToken);
     } catch (e, s) {
