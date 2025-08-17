@@ -20,7 +20,7 @@ class LandingScreen extends BaseScreen {
 
 class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProviderStateMixin {
   final AuthService _authService = AuthService();
-  late final AnimationController _lottieController = AnimationController(vsync: this);
+  AnimationController? _lottieController;
 
   Future<void> _authenticateWithGoogle() async {
     spinner.show();
@@ -108,8 +108,9 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProv
       controller: _lottieController,
       fit: BoxFit.fill,
       onLoaded: (LottieComposition composition) async {
-        _lottieController.duration = const Duration(milliseconds: 3500);
-        await _lottieController.repeat(reverse: true);
+        _lottieController = AnimationController(vsync: this);
+        _lottieController?.duration = const Duration(milliseconds: 3500);
+        await _lottieController?.repeat(reverse: true);
       },
     ),
   );
@@ -179,7 +180,7 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProv
 
   @override
   void handleDispose() {
-    _lottieController.dispose();
+    _lottieController?.dispose();
   }
 
   @override

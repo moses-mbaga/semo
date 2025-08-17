@@ -180,12 +180,12 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
 
   @override
   void dispose() {
-    super.dispose();
+    handleDispose();
     _connectionSubscription.cancel();
     if (widget.shouldListenToAuthStateChanges) {
       _authSubscription?.cancel();
     }
-    handleDispose();
+    super.dispose();
   }
 
   @override
