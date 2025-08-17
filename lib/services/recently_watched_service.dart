@@ -140,7 +140,7 @@ class RecentlyWatchedService {
         "timestamp": DateTime.now().millisecondsSinceEpoch,
       };
 
-      await _getDocReference().set(<String, dynamic>{"movies": recentlyWatched["movies"]}, SetOptions(merge: true));
+      await _getDocReference().set(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error updating movie's watch progress", error: e, stackTrace: s);
     }
@@ -176,7 +176,7 @@ class RecentlyWatchedService {
 
       recentlyWatched["tv_shows"] = tvShows;
 
-      await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+      await _getDocReference().set(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error updating episode's watch progress", error: e, stackTrace: s);
     }
@@ -209,7 +209,7 @@ class RecentlyWatchedService {
 
       recentlyWatched["tv_shows"] = tvShows;
 
-      await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+      await _getDocReference().set(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error removing episode's watch progress", error: e, stackTrace: s);
     }
@@ -245,7 +245,7 @@ class RecentlyWatchedService {
       final Map<String, Map<String, dynamic>> movies = _mapDynamicDynamicToMapStringDynamic((recentlyWatched["movies"] ?? <dynamic, dynamic>{}) as Map<dynamic, dynamic>);
       movies.remove("$movieId");
       recentlyWatched["movies"] = movies;
-      await _getDocReference().set(<String, dynamic>{"movies": movies}, SetOptions(merge: true));
+      await _getDocReference().set(recentlyWatched);
     } catch (e, s) {
       _logger.e("Error removing movie from recently watched", error: e, stackTrace: s);
     }
@@ -312,7 +312,7 @@ class RecentlyWatchedService {
       if (tvShows.containsKey("$tvShowId")) {
         tvShows["$tvShowId"]!["visibleInMenu"] = false;
         recentlyWatched["tv_shows"] = tvShows;
-        await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+        await _getDocReference().set(recentlyWatched);
       }
     } catch (e, s) {
       _logger.e("Error removing TV show from recently watched", error: e, stackTrace: s);
@@ -330,7 +330,7 @@ class RecentlyWatchedService {
       if (tvShows.containsKey("$tvShowId")) {
         tvShows.remove("$tvShowId");
         recentlyWatched["tv_shows"] = tvShows;
-        await _getDocReference().set(<String, dynamic>{"tv_shows": tvShows}, SetOptions(merge: true));
+        await _getDocReference().set(recentlyWatched);
       }
     } catch (e, s) {
       _logger.e("Error removing TV show from recently watched", error: e, stackTrace: s);
