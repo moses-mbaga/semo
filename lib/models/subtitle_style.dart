@@ -9,13 +9,13 @@ class SubtitleStyle {
   });
 
   factory SubtitleStyle.fromJson(Map<String, dynamic> json) => SubtitleStyle(
-      fontSize: json["fontSize"] ?? 18.0,
+      fontSize: json["font_size"] ?? 18.0,
       color: json["color"] ?? "Black",
-      hasBorder: json["hasBorder"] ?? true,
+      hasBorder: json["has_border"] ?? true,
       borderStyle: SubtitleBorderStyle(
-        strokeWidth: json["borderWidth"] ?? 5.0,
-        style: PaintingStyle.values.byName(json["borderStyle"] ?? "stroke"),
-        color: json["borderColor"] ?? "White",
+        strokeWidth: json["border_width"] ?? 5.0,
+        style: PaintingStyle.values.byName(json["border_style"] ?? "stroke"),
+        color: json["border_color"] ?? "White",
       ),
     );
   
@@ -40,12 +40,12 @@ class SubtitleStyle {
   static final List<double> _borderWidths = <double>[1.0, 2.0, 3.0, 4.0, 5.0];
 
   Map<String, dynamic> toJson() => <String, dynamic>{
-    "fontSize": fontSize,
+    "font_size": fontSize,
     "color": color,
-    "hasBorder": hasBorder,
-    "borderWidth": borderStyle.strokeWidth,
-    "borderStyle": borderStyle.style.name,
-    "borderColor": borderStyle.color,
+    "has_border": hasBorder,
+    "border_width": borderStyle.strokeWidth,
+    "border_style": borderStyle.style.name,
+    "border_color": borderStyle.color,
   };
   
   static List<double> getFontSizes() => _fontSizes;
