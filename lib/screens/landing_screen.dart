@@ -1,7 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter_bloc/flutter_bloc.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
-import "package:google_sign_in/google_sign_in.dart";
 import "package:lottie/lottie.dart";
 import "package:semo/bloc/app_bloc.dart";
 import "package:semo/bloc/app_event.dart";
@@ -172,11 +171,6 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProv
 
   @override
   String get screenName => "Landing";
-
-  @override
-  Future<void> initializeScreen() async {
-    await GoogleSignIn.instance.initialize();
-  }
 
   @override
   void handleDispose() {
