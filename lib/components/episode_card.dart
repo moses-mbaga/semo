@@ -144,12 +144,25 @@ class EpisodeCard extends StatelessWidget {
                             ],
                           ),
                           const Padding(
-                            padding: EdgeInsets.only(top: 2),
+                            padding: EdgeInsets.only(top: 4),
                           ),
+                          if (episode.airDate != null)
+                            Text(
+                              episode.airDate!,
+                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                                color: Colors.white54,
+                                fontSize: 12
+                              ),
+                              maxLines: 1,
+                            ),
+                            const Padding(
+                              padding: EdgeInsets.only(top: 4),
+                            ),
                           Text(
                             isAired ? _formatDuration(Duration(minutes: episode.duration)) : "TBD",
                             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                               color: Colors.white54,
+                              fontSize: 12
                             ),
                             maxLines: 1,
                           ),
