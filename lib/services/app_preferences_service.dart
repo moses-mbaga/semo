@@ -18,19 +18,19 @@ class AppPreferencesService {
 
   Future<bool?> setStreamingServer(StreamingServer server) async => await _prefs?.setString("server", server.name);
 
-  Future<bool?> setSeekDuration(int seekDuration) async => await _prefs?.setInt("seekDuration", seekDuration);
+  Future<bool?> setSeekDuration(int seekDuration) async => await _prefs?.setInt("seek_duration", seekDuration);
 
-  Future<bool?> setSubtitlesStyle(SubtitleStyle subtitlesStyle) async => await _prefs?.setString("subtitleStyle", json.encode(subtitlesStyle.toJson()));
+  Future<bool?> setSubtitlesStyle(SubtitleStyle subtitlesStyle) async => await _prefs?.setString("subtitle_style", json.encode(subtitlesStyle.toJson()));
 
   String getStreamingServer() => _prefs?.getString("server") ?? "Random";
 
-  int getSeekDuration() => _prefs?.getInt("seekDuration") ?? 15;
+  int getSeekDuration() => _prefs?.getInt("seek_duration") ?? 15;
 
   SubtitleStyle getSubtitlesStyle() {
     Map<String, dynamic> data = <String, dynamic>{};
 
     try {
-      data = json.decode(_prefs?.getString("subtitleStyle") ?? "{}");
+      data = json.decode(_prefs?.getString("subtitle_style") ?? "{}");
     } catch (e, stackTrace) {
       Logger logger = Logger();
       logger.e("Error decoding subtitle style", error: e, stackTrace: stackTrace);
