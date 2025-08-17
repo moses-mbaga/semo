@@ -75,8 +75,6 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
     );
   }
 
-  // TODO: Make airing later episodes unplayable
-
   Future<void> _markEpisodeAsWatched(Season season, Episode episode) async {
     context.read<AppBloc>().add(UpdateEpisodeProgress(
       widget.tvShow.id,
