@@ -104,7 +104,7 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
     
     return AppBar(
       leading: BackButton(
-        onPressed: () => Navigator.pop(context, "refresh"),
+        onPressed: () => Navigator.pop(context),
       ),
       title: TextField(
         controller: _searchController,
