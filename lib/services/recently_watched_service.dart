@@ -135,10 +135,13 @@ class RecentlyWatchedService {
     recentlyWatched ??= await getRecentlyWatched();
 
     try {
-      recentlyWatched["movies"]["$movieId"] = <String, dynamic>{
+      final Map<String, Map<String, dynamic>> movies = _mapDynamicDynamicToMapStringDynamic((recentlyWatched["movies"] ?? <dynamic, dynamic>{}) as Map<dynamic, dynamic>);
+      movies["$movieId"] = <String, dynamic>{
         "progress": progress,
         "timestamp": DateTime.now().millisecondsSinceEpoch,
       };
+
+      recentlyWatched["movies"] = movies;
 
       await _getDocReference().set(recentlyWatched);
     } catch (e, s) {
