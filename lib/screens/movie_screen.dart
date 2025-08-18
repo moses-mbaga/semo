@@ -223,7 +223,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
                 children: <Widget>[
                   MediaPoster(
                     backdropPath: displayMovie.backdropPath,
-                    trailerUrl: state.movieTrailers?[_movie.id.toString()],
+                    trailerUrl: state.movieTrailers?[displayMovie.id.toString()],
                   ),
                   Padding(
                     padding: const EdgeInsets.all(18),
@@ -236,14 +236,14 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
                           overview: displayMovie.overview,
                         ),
                         _buildPlayButton(stream),
-                        _buildPersonCardHorizontalList(state.movieCast?[_movie.id.toString()]),
+                        _buildPersonCardHorizontalList(state.movieCast?[displayMovie.id.toString()]),
                         _buildMediaCardHorizontalList(
                           title: "Recommendations",
-                          controller: state.movieRecommendationsPagingControllers?[_movie.id.toString()],
+                          controller: state.movieRecommendationsPagingControllers?[displayMovie.id.toString()],
                         ),
                         _buildMediaCardHorizontalList(
                           title: "Similar",
-                          controller: state.similarMoviesPagingControllers?[_movie.id.toString()],
+                          controller: state.similarMoviesPagingControllers?[displayMovie.id.toString()],
                         ),
                       ],
                     ),
