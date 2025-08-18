@@ -169,13 +169,15 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
       if (mounted) {
         setState(() {
           _isLoading = state.isMovieLoading?[_movie.id.toString()] ?? true;
-          _movie = state.movies?.firstWhere((Movie movie) => movie.id == _movie.id, orElse: () => widget.movie) ?? widget.movie;
-          _isFavorite = state.favoriteMovies?.any((Movie movie) => movie.id == _movie.id) ?? false;
+          _movie = state.movies?.firstWhere((Movie m) => m.id == widget.movie.id,
+              orElse: () => widget.movie,
+          ) ?? widget.movie;
+          _isFavorite = state.favoriteMovies?.any((Movie m) => m.id == _movie.id) ?? false;
           _isExtractingStream = state.isExtractingMovieStream?[_movie.id.toString()] ?? false;
         });
       }
 
-      MediaStream? stream = state.movieStreams?[_movie.id.toString()];
+      final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
 
       if (_isPlayTriggered && !_isExtractingStream && stream != null) {
         if (mounted) {
@@ -190,27 +192,16 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
       }
     },
     builder: (BuildContext context, AppState state) {
-      Movie? movie;
-
-      try {
-        movie = state.movies?.firstWhere((Movie movie) => movie.id == widget.movie.id, orElse: () => widget.movie);
-
-        if (mounted && movie != null) {
-          setState(() => _movie = movie!);
-        }
-      } catch (_) {}
-
-      bool isMovieLoaded = movie != null;
-      MediaStream? stream = state.movieStreams?[_movie.id.toString()];
-
-      if (mounted) {
-        _isExtractingStream = state.isExtractingMovieStream?[_movie.id.toString()] ?? false;
-      }
+      final Movie displayMovie = state.movies?.firstWhere((Movie m) => m.id == widget.movie.id,
+        orElse: () => _movie,
+      ) ?? _movie;
+      final bool isMovieLoaded = state.movies?.any((Movie m) => m.id == widget.movie.id) ?? false;
+      final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
 
       return Scaffold(
         appBar: AppBar(
           leading: BackButton(
-            onPressed: () => Navigator.pop(context, "refresh"),
+            onPressed: () => Navigator.pop(context),
           ),
           actions: <Widget>[
             IconButton(
@@ -231,7 +222,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
               child: Column(
                 children: <Widget>[
                   MediaPoster(
-                    backdropPath: _movie.backdropPath,
+                    backdropPath: displayMovie.backdropPath,
                     trailerUrl: state.movieTrailers?[_movie.id.toString()],
                   ),
                   Padding(
@@ -240,9 +231,9 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: <Widget>[
                         MediaInfo(
-                          title: _movie.title,
-                          subtitle: "${_movie.releaseDate.split("-")[0]} · ${_formatDuration(Duration(minutes: _movie.duration))}",
-                          overview: _movie.overview,
+                          title: displayMovie.title,
+                          subtitle: "${displayMovie.releaseDate.split("-").first} · ${_formatDuration(Duration(minutes: displayMovie.duration))}",
+                          overview: displayMovie.overview,
                         ),
                         _buildPlayButton(stream),
                         _buildPersonCardHorizontalList(state.movieCast?[_movie.id.toString()]),
