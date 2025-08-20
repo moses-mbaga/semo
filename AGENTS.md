@@ -30,9 +30,7 @@
 - Screens end with `...Screen`; services end with `...Service`. Keep widgets small and reusable in `components/`.
 
 ## Testing Guidelines
-- Framework: `flutter_test` with `testWidgets` and unit tests.
-- Naming: mirror source path and use `*_test.dart` (e.g., `test/screens/landing_screen_test.dart`).
-- Aim for fast widget smoke tests and service units; mock Firebase where needed. Run `flutter test` before pushing.
+TBD
 
 ## Commits & Pull Requests
 - Commits: use imperative, concise subjects; include scope when clear (e.g., `screens: fix crash on movie screen`). Prefer descriptive refactors over generic messages.
