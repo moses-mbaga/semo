@@ -65,10 +65,9 @@
 - Methods catch and log errors internally and typically return `null` (or `false` for boolean checks).
 - In UI, treat `null` results as a non-success (canceled or failed) and surface a message/snack bar as needed.
 
-**Testing Tips**
+**Testing**
 
-- UI logic can be tested by abstracting calls behind a simple interface and injecting a fake; the concrete service here is a singleton for app code simplicity.
-- For widget tests, prefer stubbing `FirebaseAuth` and routing based on `authStateChanges()` rather than calling Google sign-in.
+TBD
 
 **Quick Reference**
 
