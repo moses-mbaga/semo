@@ -3,7 +3,7 @@
 /fonts/
 /lib/gen/
 /.env
-/lib/utils/env/env.g.dart
+/lib/services/secrets_service.g.dart
 /firebase.json
 /devtools_options.yaml
 /firepit-log.txt

@@ -7,7 +7,7 @@ import "package:logger/logger.dart";
 import "package:path/path.dart" as path;
 import "package:path_provider/path_provider.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
-import "package:semo/utils/secrets.dart";
+import "package:semo/services/secrets_service.dart";
 import "package:semo/utils/urls.dart";
 
 class SubtitleService {
@@ -77,7 +77,7 @@ class SubtitleService {
       }
 
       final Map<String, dynamic> parameters = <String, dynamic>{
-        "api_key": Secrets.subdlApiKey,
+        "api_key": SecretsService.subdlApiKey,
         "tmdb_id": "$tmdbId",
         "languages": locale,
         "subs_per_page": "5",

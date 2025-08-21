@@ -12,7 +12,7 @@ import "package:semo/models/season.dart";
 import "package:semo/models/tv_show.dart";
 import "package:semo/models/person.dart";
 import "package:semo/models/search_results.dart";
-import "package:semo/utils/secrets.dart";
+import "package:semo/services/secrets_service.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/utils/urls.dart";
 
@@ -46,7 +46,7 @@ class TMDBService {
       connectTimeout: const Duration(seconds: 10),
       receiveTimeout: const Duration(seconds: 10),
       headers: <String, String>{
-        HttpHeaders.authorizationHeader: "Bearer ${Secrets.tmdbAccessToken}",
+        HttpHeaders.authorizationHeader: "Bearer ${SecretsService.tmdbAccessToken}",
       },
     ),
   );
