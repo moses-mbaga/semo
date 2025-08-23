@@ -7,7 +7,7 @@ import "package:pretty_dio_logger/pretty_dio_logger.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor/extractors/base_stream_extractor.dart";
-import "package:semo/services/streaming_server_base_url_service.dart";
+import "package:semo/services/stream_extractor/extractors/streaming_server_base_url_extractor.dart";
 
 class KissKhExtractor implements BaseStreamExtractor {
   KissKhExtractor() {
@@ -25,7 +25,7 @@ class KissKhExtractor implements BaseStreamExtractor {
 
   final String _providerKey = "kissKh";
 
-  final StreamingServerBaseUrlService _streamingServerBaseUrlService = StreamingServerBaseUrlService();
+  final StreamingServerBaseUrlExtractor _streamingServerBaseUrlExtractor = StreamingServerBaseUrlExtractor();
   final Dio _dio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 30),
@@ -98,7 +98,7 @@ class KissKhExtractor implements BaseStreamExtractor {
   @override
   Future<MediaStream?> getStream(StreamExtractorOptions options) async {
     try {
-      final String? baseUrl = await _streamingServerBaseUrlService.getBaseUrl(_providerKey);
+      final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null || baseUrl.isEmpty) {
         throw Exception("Failed to get base URL for $_providerKey");
       }

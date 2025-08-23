@@ -3,8 +3,8 @@ import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
 
-class StreamingServerBaseUrlService {
-  factory StreamingServerBaseUrlService() {
+class StreamingServerBaseUrlExtractor {
+  factory StreamingServerBaseUrlExtractor() {
     if (!_instance._isDioLoggerInitialized) {
       _instance._dio.interceptors.add(
         PrettyDioLogger(
@@ -24,9 +24,9 @@ class StreamingServerBaseUrlService {
     return _instance;
   }
 
-  StreamingServerBaseUrlService._internal();
+  StreamingServerBaseUrlExtractor._internal();
 
-  static final StreamingServerBaseUrlService _instance = StreamingServerBaseUrlService._internal();
+  static final StreamingServerBaseUrlExtractor _instance = StreamingServerBaseUrlExtractor._internal();
 
   final String _configUrl = "https://himanshu8443.github.io/providers/modflix.json";
   final Duration _cacheExpireTime = const Duration(hours: 1);
