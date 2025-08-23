@@ -7,8 +7,8 @@ import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/tv_show.dart";
-import "package:semo/services/stream_extractor/extractors/base_stream_extractor.dart";
-import "package:semo/services/stream_extractor/extractors/kiss_kh_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
 
 class StreamExtractor {
