@@ -40,6 +40,20 @@ Download IPA
 
 **Server:** Firebase
 
+## Documentation
+
+- [Architecture](https://github.com/moses-mbaga/semo/blob/main/docs/ARCHITECTURE.md)
+- API:
+  - [TMDB Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/TMDB.md)
+  - [Stream Extractor Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/STREAM_EXTRACTOR.md)
+  - [Subtitle Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/SUBTITLES.md)
+  - [App Preferences Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/APP_PREFERENCES.md)
+  - [Auth Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/AUTH.md)
+  - [Favorites Services](https://github.com/moses-mbaga/semo/blob/main/docs/api/FAVORITES.md)
+  - [Recently Watched Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/RECENTLY_WATCHED.md)
+  - [Recent Searches Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/RECENT_SEARCHES.md)
+  - [Secrets Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/SECRETS.md)
+
 ## Installation
 
 Prerequisites:
