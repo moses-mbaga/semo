@@ -193,32 +193,38 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
     }
   }
 
-  Future<void> _showDeleteAccountConfirmation() async {
+  Future<void> _showConfirmationDialog({
+    required String title,
+    required String content,
+    String cancelLabel = "Cancel",
+    required String confirmLabel,
+    required Future<void> Function() onConfirm,
+  }) async {
     await showDialog(
       context: context,
-      builder: (BuildContext context) => AlertDialog(
-        title: const Text("Delete account"),
-        content: const Text("Are you sure that you want to close your account? Your account will be delete your account, along with all the saved data.\nYou can create a new account at any time.\n\nFor security reasons, you will be asked to re-authenticate first"),
+      builder: (BuildContext dialogContext) => AlertDialog(
+        title: Text(title),
+        content: Text(content),
         actions: <Widget>[
           TextButton(
             child: Text(
-              "Cancel",
+              cancelLabel,
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
                 color: Colors.white54,
               ),
             ),
-            onPressed: () => Navigator.of(context).pop(),
+            onPressed: () => Navigator.of(dialogContext).pop(),
           ),
           TextButton(
             child: Text(
-              "Delete",
+              confirmLabel,
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
                 color: Theme.of(context).primaryColor,
               ),
             ),
             onPressed: () async {
-              await _reAuthenticate();
-              await _deleteAccount();
+              Navigator.of(dialogContext).pop();
+              await onConfirm();
             },
           ),
         ],
@@ -488,41 +494,74 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
               description: "Deletes all cached data",
               icon: Icons.cached,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => _clearCache(),
+              onPressed: (BuildContext context) => _showConfirmationDialog(
+                title: "Clear cache",
+                content: "Are you sure that you want to clear cached data? This will delete all cached images and subtitles.",
+                confirmLabel: "Clear",
+                onConfirm: () => _clearCache(),
+              ),
             ),
             _buildSectionTile(
               title: "Clear recent searches",
               description: "Deletes all the recent search queries",
               icon: Icons.search_off,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => _clearRecentSearches(),
+              onPressed: (BuildContext context) => _showConfirmationDialog(
+                title: "Clear recent searches",
+                content: "Are you sure that you want to clear recent searches? This will delete all the recent search queries.",
+                confirmLabel: "Clear",
+                onConfirm: () => _clearRecentSearches(),
+              ),
             ),
             _buildSectionTile(
               title: "Clear favorites",
               description: "Deletes all your favorites",
               icon: Icons.favorite_border,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => _clearFavorites(),
+              onPressed: (BuildContext context) => _showConfirmationDialog(
+                title: "Clear favorites",
+                content: "Are you sure that you want to clear favorites? This will delete all your favorites.",
+                confirmLabel: "Clear",
+                onConfirm: () => _clearFavorites(),
+              ),
             ),
             _buildSectionTile(
               title: "Clear recently watched",
               description: "Deletes all the progress of recently watched movies and TV shows",
               icon: Icons.video_library_outlined,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => _clearRecentlyWatched(),
+              onPressed: (BuildContext context) => _showConfirmationDialog(
+                title: "Clear recently watched",
+                content: "Are you sure that you want to clear recently watched? This will delete all the progress of recently watched movies and TV shows.",
+                confirmLabel: "Clear",
+                onConfirm: () => _clearRecentlyWatched(),
+              ),
             ),
             _buildSectionTile(
               title: "Delete account",
               description: "Delete your account, along with all the saved data. You can create a new account at any time",
               icon: Icons.no_accounts_rounded,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => _showDeleteAccountConfirmation(),
+              onPressed: (BuildContext context) => _showConfirmationDialog(
+                title: "Delete account",
+                content: "Are you sure that you want to close your account? Your account will be delete your account, along with all the saved data.\nYou can create a new account at any time.\n\nFor security reasons, you will be asked to re-authenticate first.",
+                confirmLabel: "Delete",
+                onConfirm: () async {
+                  await _reAuthenticate();
+                  await _deleteAccount();
+                },
+              ),
             ),
             _buildSectionTile(
               title: "Sign out",
               icon: Icons.exit_to_app,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => _signOut(),
+              onPressed: (BuildContext context) => _showConfirmationDialog(
+                title: "Sign out",
+                content: "Are you sure that you want to sign out? You can always sign in again later.",
+                confirmLabel: "Sign out",
+                onConfirm: () => _signOut(),
+              ),
             ),
           ],
         ),
