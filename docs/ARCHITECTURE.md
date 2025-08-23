@@ -1,6 +1,43 @@
 # Architecture
 
-This document explains how state management works in this app using Flutter BLoC. It’s written for contributors and maintainers of this open‑source project.
+This document explains how the app is organized and how state management works using Flutter BLoC. It’s written for contributors and maintainers of this open‑source project.
+
+## Project Structure
+
+High‑level folders and the most important files:
+
+```
+.
+├─ lib/
+│  ├─ bloc/                 # flutter_bloc state management (events/state/handlers)
+│  │  ├─ app_bloc.dart
+│  │  ├─ app_event.dart
+│  │  ├─ app_state.dart
+│  │  └─ handlers/          # Feature mixins (genres, general, ...)
+│  ├─ components/           # Reusable widgets (small, composable)
+│  ├─ screens/              # UI screens (end with *Screen)
+│  ├─ services/             # Data access, APIs, persistence, secrets
+│  │  └─ secrets_service.dart  # envied source → generates secrets_service.g.dart
+│  ├─ models/               # Domain models
+│  ├─ enums/                # Enums shared across features
+│  ├─ utils/                # Helpers, formatters, extensions
+│  ├─ gen/                  # Generated assets helper (assets.gen.dart)
+│  ├─ firebase_options.dart # FlutterFire config
+│  └─ main.dart             # App entry
+├─ assets/                  # Images, lottie, etc. Declared in pubspec.yaml
+├─ docs/                    # Project documentation (this file, API notes, etc.)
+├─ test/                    # Unit/widget tests (*_test.dart)
+├─ android/ ios/ web/      # Platform folders
+├─ .env / .env.example      # Local secrets (never commit real secrets)
+├─ analysis_options.yaml    # Lints (extends flutter_lints)
+├─ firebase.json            # Firebase config
+└─ pubspec.yaml             # Dependencies and assets declarations
+```
+
+Conventions and naming:
+- Files use `snake_case.dart`; classes use `PascalCase`; fields/locals use `camelCase`.
+- Screens end with `...Screen`; services end with `...Service`.
+- Keep widgets small and reusable under `components/`. Put large page layouts in `screens/`.
 
 ## Overview
 
@@ -24,28 +61,21 @@ This document explains how state management works in this app using Flutter BLoC
 └──────────┘      └───────────┘
 ```
 
-## Files & Folders
 
-- `lib/bloc/app_bloc.dart`: BLoC that wires events to handler methods using `on<...>()`. Mixes in feature handler mixins.
-- `lib/bloc/app_event.dart`: All event types. Pure data, no logic.
-- `lib/bloc/app_state.dart`: Single immutable state. Holds lists, maps, and paging controllers, plus transient flags.
-- `lib/bloc/handlers/*.dart`: Feature‑scoped logic grouped by domain (movies, tv shows, genres, favorites, streams, subtitles, cache, etc.). Each exposes `onXxxYyy` methods that match events.
-- `lib/services/*.dart`: Side‑effect boundaries (TMDB API, persistence, auth, preferences, stream extraction, subtitles, etc.).
-- `lib/components/` and `lib/screens/`: Render from state and dispatch events.
 
-## AppBloc
+## Bloc
 
 - `AppBloc` composes feature logic using mixins from `lib/bloc/handlers/` and registers event → handler bindings:
 - Composition: Each mixin contributes a set of `on<Event>` handlers, keeping the bloc file small and feature code cohesive.
 - Lifecycle: `init()` kicks off initial loads if the user is authenticated. `close()` disposes any subscriptions.
 
-## Events
+## Bloc Events
 
 - Defined in `lib/bloc/app_event.dart` and grouped by domain (movies, tv shows, genres, favorites, recently watched, person media, recent searches, streams, subtitles, cache, general).
 - Events are plain data classes (no logic) and should be serializable and easily testable.
 - UI dispatches events via `context.read<AppBloc>().add(Event(...))`.
 
-## State
+## Bloc State
 
 - Defined in `lib/bloc/app_state.dart` as an immutable class with final fields and a `copyWith` method that uses a sentry `_notProvided` to distinguish “no change” vs “set to null”.
 - Holds:
@@ -59,12 +89,18 @@ Guidelines:
 - Keep fields normalized and keyed by stable IDs when possible.
 - Prefer `copyWith` updates that narrow changes to affected subtrees.
 
-## Handlers (Feature Mixins)
+## Bloc Handlers (Feature Mixins)
 
 - Each file in `lib/bloc/handlers/` encapsulates side‑effectful use cases: fetch, refresh, update, clear, etc.
 - Handlers read current `state`, call services, derive new data, and `emit(state.copyWith(...))`.
 - They should be the only place where services are invoked. UI never calls services directly.
 - Keep them small and focused per event. Share helper utilities in `lib/bloc/handlers/helpers.dart` when needed.
+
+## Bloc State Caching
+
+- A `cacheTimer` in state (created by cache handlers) periodically invalidates or refreshes computed/cached data.
+- On bloc `close()`, the timer is cancelled to avoid leaks.
+- Currently defaults to 12 hours, but can be adjusted in `handlers/cache_handlers.dart`.
 
 ## Services and Side Effects
 
@@ -85,12 +121,6 @@ Guidelines:
 - `PagingController` instances are stored in state to allow consistent paging per feed (global lists, by genre, by platform).
 - Handlers load pages on demand and append results to the active controller.
 
-## Caching
-
-- A `cacheTimer` in state (created by cache handlers) periodically invalidates or refreshes computed/cached data.
-- On bloc `close()`, the timer is cancelled to avoid leaks.
-- Currently defaults to 12 hours, but can be adjusted in `handlers/cache_handlers.dart`.
-
 ## Error Handling
 
 - Handlers catch and map exceptions to `state.error` and clear relevant loading flags.
@@ -105,15 +135,35 @@ Guidelines:
 
 TBD
 
+## Generated Code (Assets & Env)
+
+Some files are generated via build_runner and should not be edited by hand:
+
+- `lib/gen/assets.gen.dart`: Strongly‑typed asset accessors generated from `pubspec.yaml` assets. Update assets under `assets/` and their declarations in `pubspec.yaml`, then regenerate.
+- `lib/services/secrets_service.g.dart`: Generated by `envied` from `.env` based on annotations in `lib/services/secrets_service.dart`. Do not commit actual secrets; only commit `.env.example`.
+
+Commands:
+- One‑off generation: `dart run build_runner build --delete-conflicting-outputs`
+- Continuous watch: `dart run build_runner watch --delete-conflicting-outputs`
+
+Notes:
+- Re‑run the command after adding/removing assets or changing `.env` values.
+- If generation fails, verify assets are declared in `pubspec.yaml` and required env keys exist in `.env` (see `docs/api/SECRETS.md`).
+- Do not edit generated files; changes will be overwritten on the next build.
+
 ## Adding a New Feature
 
-1. Define events in `lib/bloc/app_event.dart`.
-2. Extend `AppState` with any new fields and `copyWith` support.
-3. Create a handler mixin in `lib/bloc/handlers/your_feature_handler.dart` with `onXxx` methods.
-4. Wire the handler in `AppBloc` by mixing it in and registering `on<Event>(onEvent)`.
-5. Add or extend services in `lib/services/` for I/O.
-6. Build UI that selects needed slices via `BlocSelector` and dispatches events.
-7. Add tests for handler logic and UI smoke tests.
+Keep changes scoped to the type of feature you are adding. A few common paths:
+
+- New screen: Create under `lib/screens/` with a `...Screen` suffix. Render state with `BlocBuilder`/`BlocSelector` and dispatch events to trigger work. Extract reusable parts into `lib/components/`. Wire up navigation where appropriate.
+- New component: Add to `lib/components/` as a small, reusable widget. Keep it presentational; take typed inputs and avoid side effects.
+- New service: Add under `lib/services/` with a `...Service` suffix. Encapsulate I/O (network, storage, platform). Surface clear methods and errors (throw or typed results). If secrets are needed, read via `SecretsService` (generated by `envied`).
+- Update BLoC (when business logic is needed): Add events in `lib/bloc/app_event.dart`, state fields in `lib/bloc/app_state.dart`, and handler methods in a mixin inside `lib/bloc/handlers/`. Register handlers in `AppBloc`. UI should never call services directly.
+- New model/enum: Add to `lib/models/` or `lib/enums/`. Keep models immutable with explicit fields and constructors. Provide serialization if required.
+- New assets: Place files under `assets/` and declare in `pubspec.yaml`. Regenerate helpers with `dart run build_runner build --delete-conflicting-outputs`, then reference via `lib/gen/assets.gen.dart`.
+- Tests: For logic, add unit tests (handlers/services). For UI, add widget tests. Keep tests close to the feature.
+
+Before opening a PR: run `flutter pub get`, `dart analyze`, optional `flutter test`, and regenerate code if assets or env changed.
 
 Naming & style:
 - Events: imperative verbs (`LoadX`, `RefreshX`, `AddX`, `RemoveX`).
