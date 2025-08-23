@@ -544,7 +544,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
               onPressed: (BuildContext context) => _showConfirmationDialog(
                 title: "Delete account",
-                content: "Are you sure that you want to close your account? Your account will be delete your account, along with all the saved data.\nYou can create a new account at any time.\n\nFor security reasons, you will be asked to re-authenticate first.",
+                content: "Are you sure that you want to close your account? Your account will be deleted, along with all the saved data.\nYou can create a new account at any time.\n\nFor security reasons, you will be asked to re-authenticate first.",
                 confirmLabel: "Delete",
                 onConfirm: () async {
                   await _reAuthenticate();
