@@ -232,9 +232,10 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
     );
   }
 
-  Future<void> _reAuthenticate() async {
+  Future<void> _deleteAccount() async {
     spinner.show();
 
+    // Re-authenticate the user
     try {
       UserCredential? credential = await _authService.reAuthenticate();
 
@@ -245,15 +246,12 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
       if (mounted) {
         showSnackBar(context, "Failed to re-authenticate");
       }
+      spinner.dismiss();
+      return;
     }
 
-    spinner.dismiss();
-  }
-
-  Future<void> _deleteAccount() async {
+    // Delete user data and account
     try {
-      spinner.show();
-
       await Future.wait(<Future<void>>[
         _clearRecentSearches(showResponse: false),
         _clearFavorites(showResponse: false),
@@ -276,6 +274,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
       if (mounted) {
         showSnackBar(context, "Failed to delete account");
       }
+      spinner.dismiss();
     }
   }
 
@@ -547,7 +546,6 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
                 content: "Are you sure that you want to close your account? Your account will be deleted, along with all the saved data.\nYou can create a new account at any time.\n\nFor security reasons, you will be asked to re-authenticate first.",
                 confirmLabel: "Delete",
                 onConfirm: () async {
-                  await _reAuthenticate();
                   await _deleteAccount();
                 },
               ),
