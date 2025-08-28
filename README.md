@@ -53,6 +53,7 @@ Download IPA
   - [Recently Watched Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/RECENTLY_WATCHED.md)
   - [Recent Searches Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/RECENT_SEARCHES.md)
   - [Secrets Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/SECRETS.md)
+- [TODOs](https://github.com/moses-mbaga/semo/blob/main/docs/TODO.md)
 
 ## Installation
 
