@@ -1,4 +1,7 @@
+import "dart:convert";
+
 import "package:flutter/material.dart";
+import "package:semo/gen/assets.gen.dart";
 import "package:semo/screens/base_screen.dart";
 import "package:url_launcher/url_launcher.dart";
 
@@ -10,45 +13,20 @@ class OpenSourceLibrariesScreen extends BaseScreen {
 }
 
 class _OpenSourceLibrariesScreenState extends BaseScreenState<OpenSourceLibrariesScreen> {
-  final List<String> _libraries = <String>[
-    "archive",
-    "audio_video_progress_bar",
-    "cached_network_image",
-    "carousel_slider",
-    "cloud_firestore",
-    "dio",
-    "envied",
-    "firebase_analytics",
-    "firebase_auth",
-    "firebase_core",
-    "firebase_crashlytics",
-    "firebase_remote_config",
-    "flutter_bloc",
-    "flutter_cache_manager",
-    "flutter_settings_ui",
-    "font_awesome_flutter",
-    "google_fonts",
-    "google_sign_in",
-    "html",
-    "infinite_scroll_pagination",
-    "internet_connection_checker_plus",
-    "logger",
-    "lottie",
-    "package_info_plus",
-    "path",
-    "path_provider",
-    "pretty_dio_logger",
-    "shared_preferences",
-    "smooth_page_indicator",
-    "subtitle_wrapper_package",
-    "universal_back_gesture",
-    "url_launcher",
-    "wakelock_plus",
-    "video_player",
-  ];
+  List<String> _libraries = <String>[];
+
+  Future<void> loadPubPackages() async {
+    String data = await DefaultAssetBundle.of(context).loadString(Assets.gen.pubPackages);
+    setState(() => _libraries = jsonDecode(data).cast<String>());
+  }
 
   @override
   String get screenName => "Open Source Libraries";
+
+  @override
+  Future<void> initializeScreen() async {
+    await loadPubPackages();
+  }
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
