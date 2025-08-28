@@ -20,7 +20,7 @@ class PersonCard extends StatelessWidget {
         child: CachedNetworkImage(
           imageUrl: "${Urls.image300}${person.profilePath}",
           placeholder: (BuildContext context, String url) => Container(
-            width: MediaQuery.of(context).size.width * 0.4,
+            width: MediaQuery.of(context).size.width * 0.32,
             height: double.infinity,
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
@@ -37,7 +37,7 @@ class PersonCard extends StatelessWidget {
             ),
             onTap: onTap,
             child: Container(
-              width: MediaQuery.of(context).size.width * 0.4,
+              width: MediaQuery.of(context).size.width * 0.32,
               height: double.infinity,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
@@ -49,7 +49,7 @@ class PersonCard extends StatelessWidget {
             ),
           ),
           errorWidget: (BuildContext context, String url, Object error) => Container(
-            width: MediaQuery.of(context).size.width * 0.4,
+            width: MediaQuery.of(context).size.width * 0.32,
             height: double.infinity,
             decoration: BoxDecoration(
               color: Theme.of(context).cardColor,
@@ -66,7 +66,7 @@ class PersonCard extends StatelessWidget {
         ),
       ),
       Container(
-        width: MediaQuery.of(context).size.width * 0.4,
+        width: MediaQuery.of(context).size.width * 0.32,
         margin: const EdgeInsets.only(top: 10),
         child: Text(
           person.name,
