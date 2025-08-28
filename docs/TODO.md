@@ -4,6 +4,7 @@ This document tracks a simple, high-level TODO list for the project. It’s a li
 
 #### Crucial for next release (v2.0.0)
 1. Add more stream extractors.
+2. Add app version checks.
 
 #### Future improvements
 1. Add support for direct YouTube streams, using Cobalt, for trailers.
