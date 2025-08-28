@@ -71,7 +71,10 @@ class _ViewAllScreenState extends BaseScreenState<ViewAllScreen> {
     ),
     body: SafeArea(
       child: Container(
-        padding: const EdgeInsets.all(18),
+        margin: const EdgeInsets.symmetric(
+          horizontal: 10,
+          vertical: 18,
+        ),
         child: _buildGrid(),
       ),
     ),

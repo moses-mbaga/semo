@@ -232,7 +232,7 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
         appBar: _buildSearchAppBar(),
         body: SafeArea(
           child: Container(
-            padding: const EdgeInsets.all(18),
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
             child: _isSearched ? _buildSearchResults() : _buildRecentSearches(recentSearches),
           ),
         ),

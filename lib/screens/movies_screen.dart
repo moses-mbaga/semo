@@ -157,7 +157,10 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
         child: !state.isLoadingMovies ? SingleChildScrollView(
           child: SafeArea(
             child: Container(
-              margin: const EdgeInsets.all(18),
+              margin: const EdgeInsets.symmetric(
+                horizontal: 10,
+                vertical: 18,
+              ),
               child: Column(
                 children: <Widget>[
                   _buildNowPlaying(state.nowPlayingMovies),

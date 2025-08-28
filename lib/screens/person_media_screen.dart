@@ -118,7 +118,10 @@ class _PersonMediaScreenState extends BaseScreenState<PersonMediaScreen> with Ti
         ),
         body: SafeArea(
           child: Container(
-            margin: const EdgeInsets.all(18),
+            margin: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 18,
+            ),
             child: TabBarView(
               controller: _tabController,
               children: <Widget>[
