@@ -179,26 +179,14 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
     pagingController: _searchPagingController,
     //ignore: avoid_annotating_with_dynamic
     itemBuilder: (BuildContext context, dynamic media, int index) {
-      if (widget.mediaType == MediaType.movies) {
-        final Movie movie = media as Movie;
-        return MediaCard(
-          media: movie,
-          mediaType: MediaType.movies,
-          onTap: () => _navigateToMediaScreen(movie),
-        );
-      } else {
-        final TvShow tvShow = media as TvShow;
-        return MediaCard(
-          media: tvShow,
-          mediaType: MediaType.tvShows,
-          onTap: () => _navigateToMediaScreen(tvShow),
-        );
-      }
+      String posterPath = media.posterPath ?? "";
+      double voteAverage = media.voteAverage ?? 0;
+      return MediaCard(
+        posterPath: posterPath,
+        voteAverage: voteAverage,
+        onTap: () => _navigateToMediaScreen(media),
+      );
     },
-    crossAxisCount: 3,
-    childAspectRatio: 0.5,
-    crossAxisSpacing: 10,
-    mainAxisSpacing: 10,
     emptyStateMessage: "No results found for $_currentQuery",
     errorMessage: "Failed to load search results",
     shrinkWrap: false,

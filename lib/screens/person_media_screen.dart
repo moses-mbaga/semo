@@ -47,15 +47,15 @@ class _PersonMediaScreenState extends BaseScreenState<PersonMediaScreen> with Ti
     isLoading: isLoading,
     items: media ?? <dynamic>[],
     // ignore: avoid_annotating_with_dynamic
-    itemBuilder: (BuildContext context, dynamic media, int index) => MediaCard(
-      media: media,
-      mediaType: mediaType,
-      onTap: () => _navigateToMediaScreen(media, mediaType),
-    ),
-    crossAxisCount: 3,
-    childAspectRatio: 0.5,
-    crossAxisSpacing: 10,
-    mainAxisSpacing: 10,
+    itemBuilder: (BuildContext context, dynamic media, int index) {
+      String posterPath = media.posterPath ?? "";
+      double voteAverage = media.voteAverage ?? 0;
+      return MediaCard(
+        posterPath: posterPath,
+        voteAverage: voteAverage,
+        onTap: () => _navigateToMediaScreen(media, mediaType),
+      );
+    },
     emptyStateMessage: "No ${mediaType.toString()} found",
     errorMessage: "Failed to load ${mediaType.toString()}",
     shrinkWrap: true,

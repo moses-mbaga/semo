@@ -26,16 +26,21 @@ class MediaCardHorizontalList extends StatelessWidget {
     title: title,
     pagingController: pagingController,
     //ignore: avoid_annotating_with_dynamic
-    itemBuilder: (BuildContext context, dynamic media, int index) => Padding(
-      padding: EdgeInsets.only(
-        right: index < (pagingController.items?.length ?? 0) - 1 ? 18 : 0,
-      ),
-      child: MediaCard(
-        media: media,
-        mediaType: mediaType,
-        onTap: () => onTap(media),
-      ),
-    ),
+    itemBuilder: (BuildContext context, dynamic media, int index) {
+      String posterPath = media.posterPath ?? "";
+      double voteAverage = media.voteAverage ?? 0;
+
+      return Padding(
+        padding: EdgeInsets.only(
+          right: index < (pagingController.items?.length ?? 0) - 1 ? 18 : 0,
+        ),
+        child: MediaCard(
+          posterPath: posterPath,
+          voteAverage: voteAverage,
+          onTap: () => onTap(media),
+        ),
+      );
+    },
     onViewAllTap: () => NavigationHelper.navigate(
       context,
       ViewAllScreen(

@@ -38,9 +38,12 @@ class _FavoritesScreenState extends BaseScreenState<FavoritesScreen> {
       onTap = () => navigate(TvShowScreen(media as TvShow));
     }
 
+    String posterPath = media.posterPath ?? "";
+    double voteAverage = media.voteAverage ?? 0;
+
     return MediaCard(
-      media: media,
-      mediaType: widget.mediaType,
+      posterPath: posterPath,
+      voteAverage: voteAverage,
       onTap: onTap,
       showRemoveOption: true,
       onRemove: () {

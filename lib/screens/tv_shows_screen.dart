@@ -83,8 +83,8 @@ class _TvShowsScreenState extends BaseScreenState<TvShowsScreen> {
             right: index < (recentlyWatched.length) - 1 ? 18 : 0,
           ),
           child: MediaCard(
-            media: tvShow,
-            mediaType: MediaType.tvShows,
+            posterPath: tvShow.posterPath,
+            voteAverage: tvShow.voteAverage,
             onTap: () => navigate(TvShowScreen(tvShow)),
             showHideOption: true,
             onHide: () => _hideFromMenu(tvShow),

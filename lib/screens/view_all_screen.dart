@@ -46,15 +46,16 @@ class _ViewAllScreenState extends BaseScreenState<ViewAllScreen> {
     pagingController: widget.pagingController,
     items: widget.items,
     //ignore: avoid_annotating_with_dynamic
-    itemBuilder: (BuildContext context, dynamic media, int index) => MediaCard(
-      media: media,
-      mediaType: widget.mediaType,
-      onTap: () => _navigateToMedia(media),
-    ),
-    crossAxisCount: 3,
-    childAspectRatio: 0.5,
-    crossAxisSpacing: 10,
-    mainAxisSpacing: 10,
+    itemBuilder: (BuildContext context, dynamic media, int index) {
+      String posterPath = media.posterPath ?? "";
+      double voteAverage = media.voteAverage ?? 0;
+
+      return MediaCard(
+        posterPath: posterPath,
+        voteAverage: voteAverage,
+        onTap: () => _navigateToMedia(media),
+      );
+    },
     padding: EdgeInsets.zero,
     emptyStateMessage: "No ${widget.mediaType.toString()} found",
     errorMessage: "Failed to load ${widget.mediaType.toString()}",

@@ -77,8 +77,8 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
             right: index < (recentlyWatched.length) - 1 ? 18 : 0,
           ),
           child: MediaCard(
-            media: movie,
-            mediaType: MediaType.movies,
+            posterPath: movie.posterPath,
+            voteAverage: movie.voteAverage,
             onTap: () => navigate(MovieScreen(movie)),
             showRemoveOption: true,
             onRemove: () => _removeFromRecentlyWatched(movie),

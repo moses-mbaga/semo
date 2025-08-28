@@ -117,7 +117,7 @@ class HorizontalMediaList<T> extends StatelessWidget {
       ),
       const SizedBox(height: 10),
       SizedBox(
-        height: height ?? MediaQuery.of(context).size.height * 0.25,
+        height: height ?? MediaQuery.of(context).size.height * 0.22,
         child: _buildListView(context),
       ),
     ],
