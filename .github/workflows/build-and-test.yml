@@ -55,6 +55,14 @@ jobs:
             echo "${{ secrets.ENV }}" > .env
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
+      - name: Extract packages from pubspec.yaml
+        run: |
+          set -o pipefail
+          {
+            mkdir -p assets/gen
+            yq eval '.dependencies | keys | map(select(. != "flutter"))' pubspec.yaml > assets/gen/pub_packages.json
+          } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+
       - name: Generate code with build_runner
         if: ${{ success() }}
         run: |
