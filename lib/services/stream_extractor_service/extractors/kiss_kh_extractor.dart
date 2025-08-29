@@ -35,14 +35,14 @@ class KissKhExtractor implements BaseStreamExtractor {
   final Logger _logger = Logger();
 
   Future<String?> _findExternalId(String baseUrl, StreamExtractorOptions options) async {
-    String searchQuery = options.title;
+    String searchQuery = Uri.encodeComponent(options.title);
     String searchUrl = "$baseUrl/api/DramaList/Search?q=$searchQuery&type=0";
 
     final Response<dynamic> response = await _dio.get(searchUrl);
     final List<Map<String, dynamic>> searchResults = (response.data as List<dynamic>).cast<Map<String, dynamic>>();
 
     if (searchResults.isEmpty) {
-      throw Exception("No search results found for $searchQuery");
+      throw Exception("No search results found for ${options.title}");
     }
 
     List<String> referenceTitles = <String>[];
