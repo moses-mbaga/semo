@@ -55,14 +55,14 @@ class KissKhExtractor implements BaseStreamExtractor {
 
     for (String title in referenceTitles) {
       try {
-        Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => result["title"] == title);
+        Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => "${result["title"]}".toLowerCase() == title.toLowerCase());
         int? id = result["id"];
         return id?.toString();
       } catch (_) {}
     }
 
     // Fallback
-    Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => result["title"].contains(options.title));
+    Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => "${result["title"]}".toLowerCase().contains(options.title.toLowerCase()));
     int? id = result["id"];
     return id?.toString();
   }
