@@ -24,7 +24,6 @@ class KissKhExtractor implements BaseStreamExtractor {
   }
 
   final String _providerKey = "kissKh";
-
   final StreamingServerBaseUrlExtractor _streamingServerBaseUrlExtractor = StreamingServerBaseUrlExtractor();
   final Dio _dio = Dio(
     BaseOptions(
