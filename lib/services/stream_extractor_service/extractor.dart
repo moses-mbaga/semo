@@ -10,14 +10,14 @@ import "package:semo/models/tv_show.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/multi_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 
 class StreamExtractor {
   static final Logger _logger = Logger();
   static final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
-    StreamingServer(name: "Multi", extractor: MultiExtractor()),
+    StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
   ];
 
   static List<StreamingServer> get streamingServers => _streamingServers;

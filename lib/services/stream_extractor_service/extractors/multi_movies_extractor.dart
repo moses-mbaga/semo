@@ -13,8 +13,8 @@ import "package:semo/services/stream_extractor_service/extractors/base_stream_ex
 import "package:semo/services/stream_extractor_service/extractors/helpers.dart";
 import "package:semo/services/stream_extractor_service/extractors/streaming_server_base_url_extractor.dart";
 
-class MultiExtractor implements BaseStreamExtractor {
-  MultiExtractor() {
+class MultiMoviesExtractor implements BaseStreamExtractor {
+  MultiMoviesExtractor() {
     _dio.interceptors.add(
       PrettyDioLogger(
         requestHeader: false,
@@ -414,7 +414,7 @@ class MultiExtractor implements BaseStreamExtractor {
         return _extractStream(externalUrl);
       }
     } catch (e, s) {
-      _logger.e("Error in MultiExtractor", error: e, stackTrace: s);
+      _logger.e("Error in MultiMoviesExtractor", error: e, stackTrace: s);
     }
 
     return null;
