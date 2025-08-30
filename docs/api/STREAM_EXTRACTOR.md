@@ -5,7 +5,7 @@
 
 **Concepts**
 
-- `StreamExtractor`: Static façade that chooses an extractor and returns a `MediaStream?`.
+- `StreamExtractorService`: Static façade that chooses an extractor and returns a `MediaStream?`.
 - `StreamingServer`: UI‑friendly descriptor of a source with a `name` and an associated extractor instance (or `null` for randomized selection).
 - `BaseStreamExtractor`: Interface every extractor implements with `Future<MediaStream?> getStream(StreamExtractorOptions options)`.
 - `StreamExtractorOptions`: Options passed to extractors (TMDB ID, title, and optionally season/episode or movie release year).
@@ -44,21 +44,21 @@
 **Preference & Selection**
 
 - Read current preference: `AppPreferencesService().getStreamingServer()` returns the server name or `"Random"` by default.
-- Update preference: `await AppPreferencesService().setStreamingServer(server)` where `server` is a `StreamingServer` from `StreamExtractor.streamingServers`.
-- Present options: Use `StreamExtractor.streamingServers` to populate a selection UI by `name`.
+- Update preference: `await AppPreferencesService().setStreamingServer(server)` where `server` is a `StreamingServer` from `StreamExtractorService.streamingServers`.
+- Present options: Use `StreamExtractorService.streamingServers` to populate a selection UI by `name`.
 
 **Usage Examples**
 
 - Movie stream
-  - `final stream = await StreamExtractor.getStream(movie: movie);`
+  - `final stream = await StreamExtractorService.getStream(movie: movie);`
   - `if (stream != null && stream.url.isNotEmpty) { /* play via player */ }`
 
 - Episode stream
-  - `final stream = await StreamExtractor.getStream(tvShow: show, episode: ep);`
+  - `final stream = await StreamExtractorService.getStream(tvShow: show, episode: ep);`
   - `if (stream != null && stream.url.isNotEmpty) { /* play via player */ }`
 
 - Listing servers for a settings screen
-  - `final servers = StreamExtractor.streamingServers;`
+  - `final servers = StreamExtractorService.streamingServers;`
   - `await AppPreferencesService().setStreamingServer(servers[index]);`
 
 **Extensibility**

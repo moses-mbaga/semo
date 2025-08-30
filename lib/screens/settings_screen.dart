@@ -18,7 +18,7 @@ import "package:semo/models/streaming_server.dart";
 import "package:semo/screens/open_source_libraries_screen.dart";
 import "package:semo/screens/subtitles_preferences_screen.dart";
 import "package:semo/services/auth_service.dart";
-import "package:semo/services/stream_extractor_service/extractor.dart";
+import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/subtitle_service.dart";
 import "package:semo/utils/urls.dart";
@@ -38,7 +38,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
   Future<void> _openServerSelector() async {
     String savedServerName = _appPreferences.getStreamingServer();
-    List<StreamingServer> servers = StreamExtractor.streamingServers;
+    List<StreamingServer> servers = StreamExtractorService.streamingServers;
 
     await showModalBottomSheet(
       context: context,

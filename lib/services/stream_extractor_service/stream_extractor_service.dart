@@ -12,7 +12,7 @@ import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extrac
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 
-class StreamExtractor {
+class StreamExtractorService {
   static final Logger _logger = Logger();
   static final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),

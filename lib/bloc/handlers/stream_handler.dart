@@ -5,7 +5,7 @@ import "package:logger/logger.dart";
 import "package:semo/bloc/app_event.dart";
 import "package:semo/bloc/app_state.dart";
 import "package:semo/models/media_stream.dart";
-import "package:semo/services/stream_extractor_service/extractor.dart";
+import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 
 mixin StreamHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();
@@ -38,7 +38,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
     ));
 
     try {
-      final MediaStream? stream = await StreamExtractor.getStream(movie: event.movie);
+      final MediaStream? stream = await StreamExtractorService.getStream(movie: event.movie);
       
       if (stream == null || stream.url.isEmpty) {
         throw Exception("Stream is null");
@@ -91,7 +91,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
     ));
 
     try {
-      final MediaStream? stream = await StreamExtractor.getStream(
+      final MediaStream? stream = await StreamExtractorService.getStream(
         tvShow: event.tvShow,
         episode: event.episode,
       );
