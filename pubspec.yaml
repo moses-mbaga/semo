@@ -13,6 +13,7 @@ dependencies:
   cached_network_image: ^3.4.1
   carousel_slider: ^5.1.1
   cloud_firestore: ^6.0.0
+  diacritic: ^0.1.6
   dio: ^5.9.0
   envied: ^1.2.0
   firebase_analytics: ^12.0.0

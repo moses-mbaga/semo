@@ -7,6 +7,7 @@ import "package:pretty_dio_logger/pretty_dio_logger.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/helpers.dart";
 import "package:semo/services/stream_extractor_service/extractors/streaming_server_base_url_extractor.dart";
 
 class KissKhExtractor implements BaseStreamExtractor {
@@ -55,14 +56,14 @@ class KissKhExtractor implements BaseStreamExtractor {
 
     for (String title in referenceTitles) {
       try {
-        Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => "${result["title"]}".toLowerCase() == title.toLowerCase());
+        Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => normalizeForComparison("${result["title"]}") == normalizeForComparison(title));
         int? id = result["id"];
         return id?.toString();
       } catch (_) {}
     }
 
     // Fallback
-    Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => "${result["title"]}".toLowerCase().contains(options.title.toLowerCase()));
+    Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => normalizeForComparison("${result["title"]}").contains(normalizeForComparison(options.title)));
     int? id = result["id"];
     return id?.toString();
   }
