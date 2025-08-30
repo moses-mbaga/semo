@@ -122,6 +122,68 @@ class MultiExtractor implements BaseStreamExtractor {
     return catalog;
   }
 
+  Future<String?> _findEpisodeUrl(String tvShowUrl, int seasonNumber, int episodeNumber) async {
+    final Response<dynamic> response = await _dio.get(tvShowUrl);
+    final Document document = html_parser.parse(response.data);
+    List<Map<String, String>> episodes = _parseEpisodesFromDocument(document);
+
+    if (episodes.isEmpty) {
+      throw Exception("No episodes found for $tvShowUrl");
+    }
+
+    String? targetEpisodeUrl;
+
+    for (final Map<String, String> episode in episodes) {
+      if (episode["season"] == "$seasonNumber" && episode["episode"] == "$episodeNumber") {
+        targetEpisodeUrl = episode["link"];
+        break;
+      }
+    }
+
+    return targetEpisodeUrl;
+  }
+
+  List<Map<String, String>> _parseEpisodesFromDocument(Document document) {
+    final List<Map<String, String>> catalog = <Map<String, String>>[];
+    final List<Element> items = document.querySelectorAll("#episodes,#seasons");
+
+    for (final Element item in items) {
+      final List<Element> children = item.children;
+
+      for (final Element element in children) {
+        final List<Element> seasonElements = element.children;
+
+        for (final Element seasonElement in seasonElements) {
+          final List<Element> episodeElements = seasonElement.querySelectorAll(".se-a,ul,li");
+
+          for (final Element episodeElement in episodeElements) {
+            final Element? episodeNumberElement = episodeElement.querySelector(".numerando");
+            final Element? linkElement = episodeElement.querySelector("a");
+
+            if (episodeNumberElement == null || linkElement == null) {
+              continue;
+            }
+
+            final List<String> seasonEpisodeNumber = normalizeForComparison(episodeNumberElement.text).split("-");
+            final String seasonNumber = seasonEpisodeNumber[0].trim();
+            final String episodeNumber = seasonEpisodeNumber[1].trim();
+            final String? link = linkElement.attributes["href"];
+
+            if (link != null) {
+              catalog.add(<String, String>{
+                "season": seasonNumber,
+                "episode": episodeNumber,
+                "link": link,
+              });
+            }
+          }
+        }
+      }
+    }
+
+    return catalog;
+  }
+
   Future<MediaStream?> _extractStream(String url) async {
     try {
       final Response<dynamic> response = await _dio.get(url);
@@ -341,11 +403,16 @@ class MultiExtractor implements BaseStreamExtractor {
         throw Exception("Failed to find external URL for $_providerKey");
       }
 
-      // TODO: Handle episode-specific logic. Currently only works for movies.
-      // There should be a step here to find the correct episode link if options contains season and episode info.
-      // The episode link should then be passed to _extractStream instead of the general externalUrl.
-
-      return _extractStream(externalUrl);
+      if (options.season != null && options.episode != null) {
+        final String? episodeUrl = await _findEpisodeUrl(externalUrl, options.season!, options.episode!);
+        if (episodeUrl != null) {
+          return await _extractStream(episodeUrl);
+        } else {
+          throw Exception("Failed to find episode URL for ${options.title} S${options.season}E${options.episode}");
+        }
+      } else {
+        return _extractStream(externalUrl);
+      }
     } catch (e, s) {
       _logger.e("Error in MultiExtractor", error: e, stackTrace: s);
     }
