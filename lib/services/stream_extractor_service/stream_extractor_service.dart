@@ -37,11 +37,7 @@ class StreamExtractorService {
       StreamExtractorOptions? streamExtractorOptions;
 
       if (movie != null) {
-        streamExtractorOptions = StreamExtractorOptions(
-          tmdbId: movie.id,
-          title: movie.title,
-          movieReleaseYear: movie.releaseDate.split("-")[0]
-        );
+        streamExtractorOptions = StreamExtractorOptions(tmdbId: movie.id, title: movie.title, movieReleaseYear: movie.releaseDate.split("-")[0]);
       } else if (tvShow != null && episode != null) {
         streamExtractorOptions = StreamExtractorOptions(
           tmdbId: episode.id,
@@ -55,7 +51,7 @@ class StreamExtractorService {
         throw Exception("StreamExtractorOptions is null");
       }
 
-      while (stream?.url == null && _streamingServers.isNotEmpty) {
+      while ((stream?.url == null || stream!.url.isEmpty) && _streamingServers.isNotEmpty) {
         int randomIndex = random.nextInt(_streamingServers.length);
 
         if (serverName == "Random" && extractor == null) {
@@ -63,11 +59,19 @@ class StreamExtractorService {
           extractor = server.extractor;
         }
 
-        stream = await extractor?.getStream(streamExtractorOptions);
+        String? externalLink = await extractor?.getExternalLink(streamExtractorOptions);
+
+        if (externalLink == null || externalLink.isEmpty) {
+          throw Exception("Failed to retrieve external link for ${streamExtractorOptions.title} in $serverName");
+        }
+
+        stream = await extractor?.getStream(externalLink, streamExtractorOptions);
 
         if (stream == null || stream.url.isEmpty) {
           _logger.w("Stream not found.\nStreamingServer: $serverName");
+
           stream = null;
+
           if (serverName == "Random") {
             _streamingServers.removeAt(randomIndex);
           } else {
@@ -76,7 +80,9 @@ class StreamExtractorService {
         }
       }
 
-      _logger.i("Stream found.\nStreamingServer: $serverName\nUrl: ${stream?.url}");
+      if (stream != null && stream.url.isNotEmpty) {
+        _logger.i("Stream found.\nStreamingServer: $serverName\nUrl: ${stream.url}");
+      }
 
       return stream;
     } catch (e, s) {

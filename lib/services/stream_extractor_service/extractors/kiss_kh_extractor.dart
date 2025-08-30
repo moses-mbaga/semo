@@ -35,7 +35,40 @@ class KissKhExtractor implements BaseStreamExtractor {
   );
   final Logger _logger = Logger();
 
-  Future<String?> _findExternalId(String baseUrl, StreamExtractorOptions options) async {
+  Future<String?> _findEpisodeId(String baseUrl, String externalId, StreamExtractorOptions options) async {
+    String url = "$baseUrl/api/DramaList/Drama/$externalId?isq=false";
+
+    final Response<dynamic> response = await _dio.get(url);
+    final Map<String, dynamic> results = response.data as Map<String, dynamic>;
+
+    if (results.isEmpty) {
+      throw Exception("Failed to retrieve info for $externalId");
+    }
+
+    List<Map<String, dynamic>>? episodes = (results["episodes"] as List<dynamic>).cast<Map<String, dynamic>>();
+
+    if (episodes.isEmpty) {
+      throw Exception("No episodes found for $externalId");
+    }
+
+    try {
+      Map<String, dynamic> episode = episodes.firstWhere((Map<String, dynamic> episode) => episode["number"] == (options.episode ?? 1));
+      int? id = episode["id"];
+      return id?.toString();
+    } catch (e, s) {
+      _logger.e("Error finding episode ID for external ID: $externalId", error: e, stackTrace: s);
+    }
+
+    return null;
+  }
+
+  @override
+  Future<String?> getExternalLink(StreamExtractorOptions options) async {
+    final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
+    if (baseUrl == null || baseUrl.isEmpty) {
+      throw Exception("Failed to get base URL for $_providerKey");
+    }
+
     String searchQuery = Uri.encodeComponent(options.title);
     String searchUrl = "$baseUrl/api/DramaList/Search?q=$searchQuery&type=0";
 
@@ -68,51 +101,18 @@ class KissKhExtractor implements BaseStreamExtractor {
     return id?.toString();
   }
 
-  Future<String?> _findEpisodeId(String baseUrl, String externalId, StreamExtractorOptions options) async {
-    String url = "$baseUrl/api/DramaList/Drama/$externalId?isq=false";
-
-    final Response<dynamic> response = await _dio.get(url);
-    final Map<String, dynamic> results = response.data as Map<String, dynamic>;
-
-    if (results.isEmpty) {
-      throw Exception("Failed to retrieve info for $externalId");
-    }
-
-    List<Map<String, dynamic>>? episodes = (results["episodes"] as List<dynamic>).cast<Map<String, dynamic>>();
-
-    if (episodes.isEmpty) {
-      throw Exception("No episodes found for $externalId");
-    }
-
-    try {
-      Map<String, dynamic> episode = episodes.firstWhere((Map<String, dynamic> episode) => episode["number"] == (options.episode ?? 1));
-      int? id = episode["id"];
-      return id?.toString();
-    } catch(e, s) {
-      _logger.e("Error finding episode ID for external ID: $externalId", error: e, stackTrace: s);
-    }
-
-    return null;
-  }
-
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options) async {
+  Future<MediaStream?> getStream(String externalLink, StreamExtractorOptions options) async {
     try {
       final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null || baseUrl.isEmpty) {
         throw Exception("Failed to get base URL for $_providerKey");
       }
 
-      final String? externalId = await _findExternalId(baseUrl, options);
-
-      if (externalId == null || externalId.isEmpty) {
-        throw Exception("Failed to find external ID for $_providerKey");
-      }
-
-      final String? episodeId = await _findEpisodeId(baseUrl, externalId, options);
+      final String? episodeId = await _findEpisodeId(baseUrl, externalLink, options);
 
       if (episodeId == null || episodeId.isEmpty) {
-        throw Exception("Failed to extract episode ID for $_providerKey with external ID: $externalId");
+        throw Exception("Failed to extract episode ID for $_providerKey with external ID: $externalLink");
       }
 
       final String streamUrl = "https://adorable-salamander-ecbb21.netlify.app/api/kisskh/video?id=$episodeId";

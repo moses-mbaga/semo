@@ -30,57 +30,16 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
   final String _providerKey = "multi";
   final StreamingServerBaseUrlExtractor _streamingServerBaseUrlExtractor = StreamingServerBaseUrlExtractor();
   final Dio _dio = Dio(
-    BaseOptions(
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
-      headers: <String, String>{
-        "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Microsoft Edge";v="120"',
-        "sec-ch-ua-mobile": "?0",
-        "sec-ch-ua-platform": '"Windows"',
-        "Referer": "https://multimovies.online/",
-        "Sec-Fetch-User": "?1",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
-      }
-    ),
+    BaseOptions(connectTimeout: const Duration(seconds: 30), receiveTimeout: const Duration(seconds: 30), sendTimeout: const Duration(seconds: 30), headers: <String, String>{
+      "sec-ch-ua": '"Not_A Brand";v="8", "Chromium";v="120", "Microsoft Edge";v="120"',
+      "sec-ch-ua-mobile": "?0",
+      "sec-ch-ua-platform": '"Windows"',
+      "Referer": "https://multimovies.online/",
+      "Sec-Fetch-User": "?1",
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36 Edg/120.0.0.0",
+    }),
   );
   final Logger _logger = Logger();
-
-  Future<String?> _findExternalUrl(String baseUrl, StreamExtractorOptions options) async {
-    String searchQuery = options.title;
-
-    searchQuery = Uri.encodeComponent(searchQuery);
-    String searchUrl = "$baseUrl/?s=$searchQuery";
-
-    final Response<dynamic> response = await _dio.get(searchUrl);
-    final Document document = html_parser.parse(response.data);
-    List<Map<String, String>> posts = _parsePostsFromDocument(document);
-
-    if (posts.isEmpty) {
-      throw Exception("No search results found for ${options.title}");
-    }
-
-    String? targetPostUrl;
-
-    for (final Map<String, String> post in posts) {
-      final String lowerPostTitle = normalizeForComparison("${post["title"]}");
-      final String lowerSearchTitle = normalizeForComparison(options.title);
-
-      if (options.movieReleaseYear != null) {
-        if (lowerPostTitle.contains(lowerSearchTitle) && "${post["year"]}" == options.movieReleaseYear!) {
-          targetPostUrl = post["link"];
-          break;
-        }
-      }
-
-      if (lowerPostTitle == lowerSearchTitle || lowerPostTitle.contains(lowerSearchTitle)) {
-        targetPostUrl = post["link"];
-        break;
-      }
-    }
-
-    return targetPostUrl;
-  }
 
   List<Map<String, String>> _parsePostsFromDocument(Document document) {
     final List<Map<String, String>> catalog = <Map<String, String>>[];
@@ -390,28 +349,57 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options) async {
+  Future<String?> getExternalLink(StreamExtractorOptions options) async {
+    final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
+    if (baseUrl == null || baseUrl.isEmpty) {
+      throw Exception("Failed to get base URL for $_providerKey");
+    }
+
+    String searchQuery = Uri.encodeComponent(options.title);
+    String searchUrl = "$baseUrl/?s=$searchQuery";
+
+    final Response<dynamic> response = await _dio.get(searchUrl);
+    final Document document = html_parser.parse(response.data);
+    List<Map<String, String>> posts = _parsePostsFromDocument(document);
+
+    if (posts.isEmpty) {
+      throw Exception("No search results found for ${options.title}");
+    }
+
+    String? targetPostUrl;
+
+    for (final Map<String, String> post in posts) {
+      final String lowerPostTitle = normalizeForComparison("${post["title"]}");
+      final String lowerSearchTitle = normalizeForComparison(options.title);
+
+      if (options.movieReleaseYear != null) {
+        if (lowerPostTitle.contains(lowerSearchTitle) && "${post["year"]}" == options.movieReleaseYear!) {
+          targetPostUrl = post["link"];
+          break;
+        }
+      }
+
+      if (lowerPostTitle == lowerSearchTitle || lowerPostTitle.contains(lowerSearchTitle)) {
+        targetPostUrl = post["link"];
+        break;
+      }
+    }
+
+    return targetPostUrl;
+  }
+
+  @override
+  Future<MediaStream?> getStream(String externalLink, StreamExtractorOptions options) async {
     try {
-      final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
-      if (baseUrl == null || baseUrl.isEmpty) {
-        throw Exception("Failed to get base URL for $_providerKey");
-      }
-
-      final String? externalUrl = await _findExternalUrl(baseUrl, options);
-
-      if (externalUrl == null || externalUrl.isEmpty) {
-        throw Exception("Failed to find external URL for $_providerKey");
-      }
-
       if (options.season != null && options.episode != null) {
-        final String? episodeUrl = await _findEpisodeUrl(externalUrl, options.season!, options.episode!);
+        final String? episodeUrl = await _findEpisodeUrl(externalLink, options.season!, options.episode!);
         if (episodeUrl != null) {
           return await _extractStream(episodeUrl);
         } else {
           throw Exception("Failed to find episode URL for ${options.title} S${options.season}E${options.episode}");
         }
       } else {
-        return _extractStream(externalUrl);
+        return _extractStream(externalLink);
       }
     } catch (e, s) {
       _logger.e("Error in MultiMoviesExtractor", error: e, stackTrace: s);
