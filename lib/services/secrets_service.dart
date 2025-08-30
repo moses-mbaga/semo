@@ -9,4 +9,7 @@ abstract class SecretsService {
 
   @EnviedField(varName: "SUBDL_API_KEY", obfuscate: true)
   static String subdlApiKey = _SecretsService.subdlApiKey;
+
+  @EnviedField(varName: "CLOUDFLARE_WORKER_PROXY", obfuscate: true)
+  static String cloudflareWorkerProxy = _SecretsService.cloudflareWorkerProxy;
 }
