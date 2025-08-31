@@ -11,6 +11,7 @@ import "package:semo/enums/media_type.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
+import "package:semo/services/stream_extractor_service/extractors/movie_box_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 
 class StreamExtractorService {
@@ -19,6 +20,7 @@ class StreamExtractorService {
     const StreamingServer(name: "Random", extractor: null),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
+    StreamingServer(name: "MovieBox", extractor: MovieBoxExtractor()),
   ];
 
   static List<StreamingServer> get streamingServers => _streamingServers;
