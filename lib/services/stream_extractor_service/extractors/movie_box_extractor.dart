@@ -73,6 +73,14 @@ class MovieBoxExtractor implements BaseStreamExtractor {
       (Map<String, dynamic> result) {
         bool matchedTitle = normalizeForComparison("${result["title"]}") == normalizeForComparison(options.title);
 
+        if (!matchedTitle) {
+          matchedTitle = normalizeForComparison("${result["title"]}").contains(normalizeForComparison(options.title));
+
+          if (!matchedTitle) {
+            matchedTitle = normalizeForComparison(options.title).contains(normalizeForComparison("${result["title"]}"));
+          }
+        }
+
         if (options.movieReleaseYear != null) {
           bool matchedReleaseYear = normalizeForComparison("${result["releaseDate"]}").split("-")[0] == options.movieReleaseYear;
           return matchedTitle && matchedReleaseYear;
