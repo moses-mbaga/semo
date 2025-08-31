@@ -46,16 +46,19 @@ class SubtitleService {
     try {
       final List<File> srtFiles = <File>[];
       final Directory directory = await getTemporaryDirectory();
-      String destinationDirectoryPath = "${directory.path}/$locale";
 
       if (!directory.existsSync()) {
         await directory.create(recursive: true);
       }
 
+      final String mediaType = seasonNumber != null && episodeNumber != null ? "tv_shows" : "movies";
+      String destinationDirectoryPath = "${directory.path}/subtitles/$mediaType/$tmdbId";
+
       if (seasonNumber != null && episodeNumber != null) {
-        destinationDirectoryPath = "${directory.path}/$tmdbId/$locale/$seasonNumber/$episodeNumber";
+        destinationDirectoryPath += "/$seasonNumber/$episodeNumber";
       }
 
+      destinationDirectoryPath += "/$locale";
       Directory destinationDirectory = Directory(destinationDirectoryPath);
 
       if (destinationDirectory.existsSync()) {
@@ -152,7 +155,10 @@ class SubtitleService {
     final Directory directory = await getTemporaryDirectory();
 
     if (directory.existsSync()) {
-      await directory.delete(recursive: true);
+      Directory destinationDirectory = Directory("${directory.path}/subtitles");
+      if (destinationDirectory.existsSync()) {
+        await destinationDirectory.delete(recursive: true);
+      }
     }
   }
 }
