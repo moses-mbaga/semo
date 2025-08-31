@@ -7,6 +7,7 @@ import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/tv_show.dart";
+import "package:semo/enums/media_type.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
@@ -29,9 +30,19 @@ class StreamExtractorService {
       MediaStream? stream;
       BaseStreamExtractor? extractor;
 
+      final MediaType requestedMediaType = movie != null ? MediaType.movies : (tvShow != null && episode != null ? MediaType.tvShows : MediaType.none);
+
+      if (requestedMediaType == MediaType.none) {
+        throw Exception("Unable to determine media type for extraction");
+      }
+
       if (serverName != "Random") {
-        StreamingServer server = _streamingServers.firstWhere((StreamingServer server) => server.name == serverName);
+        final StreamingServer server = _streamingServers.firstWhere((StreamingServer server) => server.name == serverName);
         extractor = server.extractor;
+
+        if (extractor == null || !extractor.acceptedMediaTypes.contains(requestedMediaType)) {
+          throw Exception("Selected server '$serverName' does not support ${requestedMediaType.toString()}");
+        }
       }
 
       StreamExtractorOptions? streamExtractorOptions;
@@ -51,12 +62,16 @@ class StreamExtractorService {
         throw Exception("StreamExtractorOptions is null");
       }
 
-      while ((stream?.url == null || stream!.url.isEmpty) && _streamingServers.isNotEmpty) {
-        int randomIndex = random.nextInt(_streamingServers.length);
+      final List<StreamingServer> availableServers = _streamingServers.where((StreamingServer s) => s.extractor != null && s.extractor!.acceptedMediaTypes.contains(requestedMediaType)).toList();
+
+      while ((stream?.url == null || stream!.url.isEmpty) && (serverName != "Random" || availableServers.isNotEmpty)) {
+        int randomIndex = -1;
 
         if (serverName == "Random" && extractor == null) {
-          StreamingServer server = _streamingServers[randomIndex];
+          randomIndex = random.nextInt(availableServers.length);
+          final StreamingServer server = availableServers[randomIndex];
           extractor = server.extractor;
+          serverName = server.name;
         }
 
         String? externalLink = await extractor?.getExternalLink(streamExtractorOptions);
@@ -73,7 +88,12 @@ class StreamExtractorService {
           stream = null;
 
           if (serverName == "Random") {
-            _streamingServers.removeAt(randomIndex);
+            // Remove this server from the local pool and try another
+            if (randomIndex >= 0 && randomIndex < availableServers.length) {
+              availableServers.removeAt(randomIndex);
+            }
+            extractor = null;
+            serverName = "Random";
           } else {
             break;
           }

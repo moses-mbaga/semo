@@ -8,6 +8,7 @@ import "package:html/parser.dart" as html_parser;
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
 import "package:semo/models/media_stream.dart";
+import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/helpers.dart";
@@ -347,6 +348,9 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
 
     return streamMatch?.group(0);
   }
+
+  @override
+  List<MediaType> get acceptedMediaTypes => <MediaType>[MediaType.movies, MediaType.tvShows];
 
   @override
   Future<String?> getExternalLink(StreamExtractorOptions options) async {
