@@ -25,9 +25,7 @@ class PlayerScreen extends BaseScreen {
     this.subtitle,
     required this.stream,
     required this.mediaType,
-  }) : assert(mediaType != MediaType.tvShows || (seasonId != null && episodeId != null),
-  "seasonId and episodeId must be provided when mediaType is tvShows"
-  );
+  }) : assert(mediaType != MediaType.tvShows || (seasonId != null && episodeId != null), "seasonId and episodeId must be provided when mediaType is tvShows");
 
   final int tmdbId;
   final int? seasonId;
@@ -49,20 +47,20 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
     try {
       if (widget.mediaType == MediaType.movies) {
         context.read<AppBloc>().add(
-          UpdateMovieProgress(
-            widget.tmdbId,
-            progressSeconds,
-          ),
-        );
+              UpdateMovieProgress(
+                widget.tmdbId,
+                progressSeconds,
+              ),
+            );
       } else {
         context.read<AppBloc>().add(
-          UpdateEpisodeProgress(
-            widget.tmdbId,
-            widget.seasonId!,
-            widget.episodeId!,
-            progressSeconds,
-          ),
-        );
+              UpdateEpisodeProgress(
+                widget.tmdbId,
+                widget.seasonId!,
+                widget.episodeId!,
+                progressSeconds,
+              ),
+            );
       }
     } catch (_) {}
   }
@@ -94,11 +92,11 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
     }
   }
 
-  //ignore: avoid_annotating_with_dynamic
-  void _onError(dynamic error) {
+  void _onError(Object? error) {
     logger.e("Playback error", error: error);
     if (mounted) {
-      Navigator.pop(context, <String, dynamic>{"error": error});
+      context.read<AppBloc>().add(const AddError("An error occurred during playback."));
+      Navigator.pop(context);
     }
   }
 
@@ -126,53 +124,53 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
 
   @override
   Widget buildContent(BuildContext context) => BlocConsumer<AppBloc, AppState>(
-    listener: (BuildContext context, AppState state) {
-      if (mounted) {
-        if (widget.mediaType == MediaType.movies) {
-          setState(() => _subtitleFiles = state.movieSubtitles?["${widget.tmdbId}"]);
-        } else {
-          setState(() => _subtitleFiles = state.episodeSubtitles?["${widget.episodeId}"]);
-        }
-      }
+        listener: (BuildContext context, AppState state) {
+          if (mounted) {
+            if (widget.mediaType == MediaType.movies) {
+              setState(() => _subtitleFiles = state.movieSubtitles?["${widget.tmdbId}"]);
+            } else {
+              setState(() => _subtitleFiles = state.episodeSubtitles?["${widget.episodeId}"]);
+            }
+          }
 
-      if (state.error != null) {
-        showSnackBar(context, state.error!);
-        context.read<AppBloc>().add(ClearError());
-      }
-    },
-    builder: (BuildContext context, AppState state) {
-      int progressSeconds;
+          if (state.error != null) {
+            showSnackBar(context, state.error!);
+            context.read<AppBloc>().add(ClearError());
+          }
+        },
+        builder: (BuildContext context, AppState state) {
+          int progressSeconds;
 
-      if (widget.mediaType == MediaType.movies) {
-        progressSeconds = _recentlyWatchedService.getMovieProgress(widget.tmdbId, state.recentlyWatched);
-      } else {
-        progressSeconds = _recentlyWatchedService.getEpisodeProgress(
-          widget.tmdbId,
-          widget.seasonId!,
-          widget.episodeId!,
-          state.recentlyWatched,
-        );
-      }
+          if (widget.mediaType == MediaType.movies) {
+            progressSeconds = _recentlyWatchedService.getMovieProgress(widget.tmdbId, state.recentlyWatched);
+          } else {
+            progressSeconds = _recentlyWatchedService.getEpisodeProgress(
+              widget.tmdbId,
+              widget.seasonId!,
+              widget.episodeId!,
+              state.recentlyWatched,
+            );
+          }
 
-      if (widget.mediaType == MediaType.movies) {
-        _subtitleFiles = state.movieSubtitles?["${widget.tmdbId}"];
-      } else {
-        _subtitleFiles = state.episodeSubtitles?["${widget.episodeId}"];
-      }
+          if (widget.mediaType == MediaType.movies) {
+            _subtitleFiles = state.movieSubtitles?["${widget.tmdbId}"];
+          } else {
+            _subtitleFiles = state.episodeSubtitles?["${widget.episodeId}"];
+          }
 
-      return Scaffold(
-        body: SemoPlayer(
-          stream: widget.stream,
-          title: widget.title,
-          subtitle: widget.subtitle,
-          subtitleFiles: _subtitleFiles,
-          initialProgress: progressSeconds,
-          onProgress: _onProgress,
-          onPlaybackComplete: _saveThenGoBack,
-          onBack: _saveThenGoBack,
-          onError: _onError,
-        ),
+          return Scaffold(
+            body: SemoPlayer(
+              stream: widget.stream,
+              title: widget.title,
+              subtitle: widget.subtitle,
+              subtitleFiles: _subtitleFiles,
+              initialProgress: progressSeconds,
+              onProgress: _onProgress,
+              onPlaybackComplete: _saveThenGoBack,
+              onBack: _saveThenGoBack,
+              onError: _onError,
+            ),
+          );
+        },
       );
-    },
-  );
 }

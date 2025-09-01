@@ -12,8 +12,7 @@ import "package:subtitle_wrapper_package/subtitle_wrapper_package.dart";
 import "package:video_player/video_player.dart";
 
 typedef OnProgressCallback = void Function(Duration progress, Duration total);
-//ignore: avoid_annotating_with_dynamic
-typedef OnErrorCallback = void Function(dynamic error);
+typedef OnErrorCallback = void Function(Object? error);
 typedef OnSeekCallback = Future<void> Function(Duration target);
 
 class SemoPlayer extends StatefulWidget {
@@ -293,36 +292,36 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   Future<void> _showSubtitleSelector() async => showDialog(
-    context: context,
-    builder: (BuildContext context) => AlertDialog(
-      title: const Text("Select subtitle"),
-      content: Container(
-        width: double.maxFinite,
-        child: ListView.builder(
-          shrinkWrap: true,
-          itemCount: widget.subtitleFiles?.length,
-          itemBuilder: (BuildContext context, int index) {
-            bool isSelected = index == _selectedSubtitle;
-            return ListTile(
-              title: Text(
-                "English ${index + 1}",
-                style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  color: isSelected ? Theme.of(context).primaryColor : Colors.white,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-              ),
-              onTap: () async {
-                await _setSubtitle(index);
-                if (context.mounted) {
-                  Navigator.pop(context);
-                }
+        context: context,
+        builder: (BuildContext context) => AlertDialog(
+          title: const Text("Select subtitle"),
+          content: Container(
+            width: double.maxFinite,
+            child: ListView.builder(
+              shrinkWrap: true,
+              itemCount: widget.subtitleFiles?.length,
+              itemBuilder: (BuildContext context, int index) {
+                bool isSelected = index == _selectedSubtitle;
+                return ListTile(
+                  title: Text(
+                    "English ${index + 1}",
+                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                          color: isSelected ? Theme.of(context).primaryColor : Colors.white,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                  ),
+                  onTap: () async {
+                    await _setSubtitle(index);
+                    if (context.mounted) {
+                      Navigator.pop(context);
+                    }
+                  },
+                );
               },
-            );
-          },
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 
   void _handleTap() {
     if (_mediaProgress.total.inSeconds <= 0) {
@@ -385,190 +384,195 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   Widget _buildPlayer() => SubtitleWrapper(
-    subtitleController: _subtitleController,
-    videoPlayerController: _videoPlayerController,
-    subtitleStyle: _subtitleStyle,
-    videoChild: ScaleTransition(
-      scale: _scaleVideoAnimation,
-      child: Center(
-        child: AspectRatio(
-          aspectRatio: _videoPlayerController.value.aspectRatio,
-          child: AspectRatio(
-            aspectRatio: 16 / 9,
-            child: VideoPlayer(_videoPlayerController),
+        subtitleController: _subtitleController,
+        videoPlayerController: _videoPlayerController,
+        subtitleStyle: _subtitleStyle,
+        videoChild: ScaleTransition(
+          scale: _scaleVideoAnimation,
+          child: Center(
+            child: AspectRatio(
+              aspectRatio: _videoPlayerController.value.aspectRatio,
+              child: AspectRatio(
+                aspectRatio: 16 / 9,
+                child: VideoPlayer(_videoPlayerController),
+              ),
+            ),
           ),
         ),
-      ),
-    ),
-  );
+      );
 
   Widget _buildControls() => AnimatedOpacity(
-    opacity: _showControls ? 1 : 0,
-    duration: const Duration(milliseconds: 300),
-    child: Container(
-      width: double.infinity,
-      height: double.infinity,
-      color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
-      child: Stack(
-        children: <Widget>[
-          // Top controls
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.topCenter,
-              child: SafeArea(
-                top: false,
-                bottom: false,
-                child: AppBar(
-                  backgroundColor: Colors.transparent,
-                  leading: widget.showBackButton ? BackButton(
-                    onPressed: () {
-                      widget.onBack?.call(_mediaProgress.progress.inSeconds);
-                    },
-                  ) : null,
-                  title: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: <Widget>[
-                      Text(
-                        widget.title,
-                        style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                          fontSize: 20,
-                        ),
+        opacity: _showControls ? 1 : 0,
+        duration: const Duration(milliseconds: 300),
+        child: Container(
+          width: double.infinity,
+          height: double.infinity,
+          color: Theme.of(context).scaffoldBackgroundColor.withValues(alpha: 0.5),
+          child: Stack(
+            children: <Widget>[
+              // Top controls
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.topCenter,
+                  child: SafeArea(
+                    top: false,
+                    bottom: false,
+                    child: AppBar(
+                      backgroundColor: Colors.transparent,
+                      leading: widget.showBackButton
+                          ? BackButton(
+                              onPressed: () {
+                                widget.onBack?.call(_mediaProgress.progress.inSeconds);
+                              },
+                            )
+                          : null,
+                      title: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: <Widget>[
+                          Text(
+                            widget.title,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                                  fontSize: 20,
+                                ),
+                          ),
+                          const SizedBox(height: 5),
+                          Text(
+                            widget.subtitle ?? "",
+                            style: Theme.of(context).textTheme.displaySmall,
+                          ),
+                        ],
                       ),
-                      const SizedBox(height: 5),
-                      Text(
-                        widget.subtitle ?? "",
-                        style: Theme.of(context).textTheme.displaySmall,
+                      actions: <Widget>[
+                        if (widget.subtitleFiles != null && widget.subtitleFiles!.isNotEmpty)
+                          InkWell(
+                            borderRadius: BorderRadius.circular(1000),
+                            onTap: () async {
+                              if (_showSubtitles) {
+                                if (_isPlaying) {
+                                  await _videoPlayerController.pause();
+                                }
+
+                                await _showSubtitleSelector();
+                                await _videoPlayerController.play();
+                              } else {
+                                await _setSubtitle(0);
+                                setState(() => _showSubtitles = true);
+                              }
+                            },
+                            onLongPress: () => _setSubtitle(-1),
+                            child: Padding(
+                              padding: const EdgeInsets.all(8),
+                              child: Icon(_showSubtitles ? Icons.closed_caption_rounded : Icons.closed_caption_off),
+                            ),
+                          ),
+                        IconButton(
+                          icon: Icon(!_isZoomedIn ? Icons.zoom_out_map : Icons.zoom_in_map),
+                          onPressed: () => setState(() {
+                            if (_mediaProgress.total.inSeconds <= 0) {
+                              return;
+                            }
+
+                            if (_isZoomedIn) {
+                              _scaleVideoAnimationController.reverse();
+                            } else {
+                              _scaleVideoAnimationController.forward();
+                            }
+
+                            if (mounted) {
+                              setState(() {
+                                _isZoomedIn = !_isZoomedIn;
+                                _lastZoomGestureScale = 1.0;
+                              });
+                            }
+                          }),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              // Center controls
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.center,
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: <Widget>[
+                      IconButton(
+                        icon: const FaIcon(
+                          FontAwesomeIcons.rotateLeft,
+                          color: Colors.white,
+                          size: 25,
+                        ),
+                        onPressed: () => _mediaProgress.total.inSeconds > 0 ? seekBack() : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 30),
+                        child: !_mediaProgress.isBuffering
+                            ? IconButton(
+                                icon: Icon(
+                                  _isPlaying ? Icons.pause : Icons.play_arrow,
+                                  color: Colors.white,
+                                  size: 42,
+                                ),
+                                onPressed: () => playPause(),
+                              )
+                            : const CircularProgressIndicator(),
+                      ),
+                      IconButton(
+                        icon: const FaIcon(
+                          FontAwesomeIcons.rotateRight,
+                          color: Colors.white,
+                          size: 25,
+                        ),
+                        onPressed: () => _mediaProgress.total.inSeconds > 0 ? seekForward() : null,
                       ),
                     ],
                   ),
-                  actions: <Widget>[
-                    if (widget.subtitleFiles != null && widget.subtitleFiles!.isNotEmpty) InkWell(
-                      borderRadius: BorderRadius.circular(1000),
-                      onTap: () async {
-                        if (_showSubtitles) {
-                          if (_isPlaying) {
-                            await _videoPlayerController.pause();
-                          }
-
-                          await _showSubtitleSelector();
-                          await _videoPlayerController.play();
-                        } else {
-                          await _setSubtitle(0);
-                          setState(() => _showSubtitles = true);
-                        }
-                      },
-                      onLongPress: () => _setSubtitle(-1),
-                      child: Padding(
-                        padding: const EdgeInsets.all(8),
-                        child: Icon(_showSubtitles ? Icons.closed_caption_rounded : Icons.closed_caption_off),
-                      ),
-                    ),
-                    IconButton(
-                      icon: Icon(!_isZoomedIn ? Icons.zoom_out_map : Icons.zoom_in_map),
-                      onPressed: () => setState(() {
-                        if (_mediaProgress.total.inSeconds <= 0) {
-                          return;
-                        }
-
-                        if (_isZoomedIn) {
-                          _scaleVideoAnimationController.reverse();
-                        } else {
-                          _scaleVideoAnimationController.forward();
-                        }
-
-                        if (mounted) {
-                          setState(() {
-                            _isZoomedIn = !_isZoomedIn;
-                            _lastZoomGestureScale = 1.0;
-                          });
-                        }
-                      }),
-                    ),
-                  ],
                 ),
               ),
-            ),
-          ),
-          // Center controls
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.center,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: <Widget>[
-                  IconButton(
-                    icon: const FaIcon(
-                      FontAwesomeIcons.rotateLeft,
-                      color: Colors.white,
-                      size: 25,
-                    ),
-                    onPressed: () => _mediaProgress.total.inSeconds > 0 ? seekBack() : null,
-                  ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 30),
-                    child: !_mediaProgress.isBuffering ? IconButton(
-                      icon: Icon(
-                        _isPlaying ? Icons.pause : Icons.play_arrow,
-                        color: Colors.white,
-                        size: 42,
+              // Bottom progress bar
+              Positioned.fill(
+                child: Align(
+                  alignment: Alignment.bottomCenter,
+                  child: Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(18).copyWith(top: 0),
+                    child: SafeArea(
+                      top: false,
+                      bottom: false,
+                      child: ProgressBar(
+                        progress: _mediaProgress.progress,
+                        total: _mediaProgress.total,
+                        progressBarColor: Theme.of(context).primaryColor,
+                        baseBarColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                        bufferedBarColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                        thumbColor: Theme.of(context).primaryColor,
+                        timeLabelTextStyle: Theme.of(context).textTheme.displaySmall,
+                        timeLabelPadding: 10,
+                        onSeek: (Duration target) => seek(target),
                       ),
-                      onPressed: () => playPause(),
-                    ) : const CircularProgressIndicator(),
-                  ),
-                  IconButton(
-                    icon: const FaIcon(
-                      FontAwesomeIcons.rotateRight,
-                      color: Colors.white,
-                      size: 25,
                     ),
-                    onPressed: () => _mediaProgress.total.inSeconds > 0 ? seekForward() : null,
-                  ),
-                ],
-              ),
-            ),
-          ),
-          // Bottom progress bar
-          Positioned.fill(
-            child: Align(
-              alignment: Alignment.bottomCenter,
-              child: Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(18).copyWith(top: 0),
-                child: SafeArea(
-                  top: false,
-                  bottom: false,
-                  child: ProgressBar(
-                    progress: _mediaProgress.progress,
-                    total: _mediaProgress.total,
-                    progressBarColor: Theme.of(context).primaryColor,
-                    baseBarColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                    bufferedBarColor: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-                    thumbColor: Theme.of(context).primaryColor,
-                    timeLabelTextStyle: Theme.of(context).textTheme.displaySmall,
-                    timeLabelPadding: 10,
-                    onSeek: (Duration target) => seek(target),
                   ),
                 ),
               ),
-            ),
+            ],
           ),
-        ],
-      ),
-    ),
-  );
+        ),
+      );
 
   @override
   Widget build(BuildContext context) => GestureDetector(
-    onTap: _handleTap,
-    onScaleUpdate: _handleScaleUpdate,
-    onScaleEnd: _handleScaleEnd,
-    onDoubleTapDown: _handleDoubleTap,
-    child: Stack(
-      children: <Widget>[
-        Container(color: Colors.black),
-        _buildPlayer(),
-        _buildControls(),
-      ],
-    ),
-  );
+        onTap: _handleTap,
+        onScaleUpdate: _handleScaleUpdate,
+        onScaleEnd: _handleScaleEnd,
+        onDoubleTapDown: _handleDoubleTap,
+        child: Stack(
+          children: <Widget>[
+            Container(color: Colors.black),
+            _buildPlayer(),
+            _buildControls(),
+          ],
+        ),
+      );
 }
