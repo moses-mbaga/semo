@@ -4,6 +4,7 @@ import "package:semo/models/stream_extractor_options.dart";
 
 abstract class BaseStreamExtractor {
   List<MediaType> get acceptedMediaTypes;
+  bool get needsExternalLink;
   Future<String?> getExternalLink(StreamExtractorOptions options);
-  Future<MediaStream?> getStream(String externalLink, StreamExtractorOptions options);
+  Future<MediaStream?> getStream(String? externalLink, StreamExtractorOptions options);
 }

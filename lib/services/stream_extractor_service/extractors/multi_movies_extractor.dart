@@ -358,6 +358,9 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
   List<MediaType> get acceptedMediaTypes => <MediaType>[MediaType.movies, MediaType.tvShows];
 
   @override
+  bool get needsExternalLink => true;
+
+  @override
   Future<String?> getExternalLink(StreamExtractorOptions options) async {
     final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
     if (baseUrl == null || baseUrl.isEmpty) {
@@ -398,8 +401,12 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(String externalLink, StreamExtractorOptions options) async {
+  Future<MediaStream?> getStream(String? externalLink, StreamExtractorOptions options) async {
     try {
+      if (externalLink == null || externalLink.isEmpty) {
+        throw Exception("External link is required for $_providerKey");
+      }
+
       if (options.season != null && options.episode != null) {
         final String? episodeUrl = await _findEpisodeUrl(externalLink, options.season!, options.episode!);
         if (episodeUrl != null) {
