@@ -37,9 +37,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
   void _toggleFavorite() {
     try {
       Timer(const Duration(milliseconds: 500), () {
-        AppEvent event = _isFavorite
-          ? RemoveFavorite(_movie, MediaType.movies)
-          : AddFavorite(_movie, MediaType.movies);
+        AppEvent event = _isFavorite ? RemoveFavorite(_movie, MediaType.movies) : AddFavorite(_movie, MediaType.movies);
         context.read<AppBloc>().add(event);
       });
     } catch (_) {}
@@ -56,6 +54,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
       PlayerScreen(
         tmdbId: _movie.id,
         title: _movie.title,
+        subtitle: "Movie",
         stream: stream,
         mediaType: MediaType.movies,
       ),
@@ -85,42 +84,44 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
   }
 
   Widget _buildPlayButton(MediaStream? stream) => Container(
-    width: double.infinity,
-    height: 50,
-    margin: const EdgeInsets.only(top: 30),
-    child: ElevatedButton(
-      onPressed: !_isExtractingStream ? () {
-        if (stream != null && stream.url.isNotEmpty) {
-          _playMovie(stream);
-        } else if (!_isExtractingStream) {
-          _extractMovieStream();
-        }
-      } : null,
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).primaryColor,
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(10),
-        ),
-      ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: <Widget>[
-          const Icon(
-            Icons.play_arrow,
-            size: 28,
-            color: Colors.white,
-          ),
-          const SizedBox(width: 5),
-          Text(
-            !_isExtractingStream ? "Play" : "Loading...",
-            style: Theme.of(context).textTheme.titleSmall?.copyWith(
-              fontSize: 22,
+        width: double.infinity,
+        height: 50,
+        margin: const EdgeInsets.only(top: 30),
+        child: ElevatedButton(
+          onPressed: !_isExtractingStream
+              ? () {
+                  if (stream != null && stream.url.isNotEmpty) {
+                    _playMovie(stream);
+                  } else if (!_isExtractingStream) {
+                    _extractMovieStream();
+                  }
+                }
+              : null,
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
             ),
           ),
-        ],
-      ),
-    ),
-  );
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: <Widget>[
+              const Icon(
+                Icons.play_arrow,
+                size: 28,
+                color: Colors.white,
+              ),
+              const SizedBox(width: 5),
+              Text(
+                !_isExtractingStream ? "Play" : "Loading...",
+                style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                      fontSize: 22,
+                    ),
+              ),
+            ],
+          ),
+        ),
+      );
 
   Widget _buildPersonCardHorizontalList(List<Person>? cast) {
     if (cast == null || cast.isEmpty) {
@@ -165,98 +166,104 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
 
   @override
   Widget buildContent(BuildContext context) => BlocConsumer<AppBloc, AppState>(
-    listener: (BuildContext context, AppState state) {
-      if (mounted) {
-        setState(() {
-          _isLoading = state.isMovieLoading?[_movie.id.toString()] ?? true;
-          _movie = state.movies?.firstWhere((Movie m) => m.id == widget.movie.id,
-              orElse: () => widget.movie,
-          ) ?? widget.movie;
-          _isFavorite = state.favoriteMovies?.any((Movie m) => m.id == _movie.id) ?? false;
-          _isExtractingStream = state.isExtractingMovieStream?[_movie.id.toString()] ?? false;
-        });
-      }
+        listener: (BuildContext context, AppState state) {
+          if (mounted) {
+            setState(() {
+              _isLoading = state.isMovieLoading?[_movie.id.toString()] ?? true;
+              _movie = state.movies?.firstWhere(
+                    (Movie m) => m.id == widget.movie.id,
+                    orElse: () => widget.movie,
+                  ) ??
+                  widget.movie;
+              _isFavorite = state.favoriteMovies?.any((Movie m) => m.id == _movie.id) ?? false;
+              _isExtractingStream = state.isExtractingMovieStream?[_movie.id.toString()] ?? false;
+            });
+          }
 
-      final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
+          final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
 
-      if (_isPlayTriggered && !_isExtractingStream && stream != null) {
-        if (mounted) {
-          setState(() => _isPlayTriggered = false);
-        }
-        _playMovie(stream);
-      }
+          if (_isPlayTriggered && !_isExtractingStream && stream != null) {
+            if (mounted) {
+              setState(() => _isPlayTriggered = false);
+            }
+            _playMovie(stream);
+          }
 
-      if (state.error != null) {
-        showSnackBar(context, state.error!);
-        context.read<AppBloc>().add(ClearError());
-      }
-    },
-    builder: (BuildContext context, AppState state) {
-      final Movie displayMovie = state.movies?.firstWhere((Movie m) => m.id == widget.movie.id,
-        orElse: () => _movie,
-      ) ?? _movie;
-      final bool isMovieLoaded = state.movies?.any((Movie m) => m.id == widget.movie.id) ?? false;
-      final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
+          if (state.error != null) {
+            showSnackBar(context, state.error!);
+            context.read<AppBloc>().add(ClearError());
+          }
+        },
+        builder: (BuildContext context, AppState state) {
+          final Movie displayMovie = state.movies?.firstWhere(
+                (Movie m) => m.id == widget.movie.id,
+                orElse: () => _movie,
+              ) ??
+              _movie;
+          final bool isMovieLoaded = state.movies?.any((Movie m) => m.id == widget.movie.id) ?? false;
+          final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
 
-      return Scaffold(
-        appBar: AppBar(
-          leading: BackButton(
-            onPressed: () => Navigator.pop(context),
-          ),
-          actions: <Widget>[
-            IconButton(
-              icon: Icon(
-                _isFavorite ? Icons.favorite : Icons.favorite_border,
+          return Scaffold(
+            appBar: AppBar(
+              leading: BackButton(
+                onPressed: () => Navigator.pop(context),
               ),
-              color: _isFavorite ? Colors.red : Colors.white,
-              onPressed: _toggleFavorite,
-            ),
-          ],
-        ),
-        body: (isMovieLoaded || !_isLoading) ? SafeArea(
-          child: RefreshIndicator(
-            onRefresh: _refreshData,
-            color: Theme.of(context).primaryColor,
-            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-            child: SingleChildScrollView(
-              child: Column(
-                children: <Widget>[
-                  MediaPoster(
-                    backdropPath: displayMovie.backdropPath,
-                    trailerUrl: state.movieTrailers?[displayMovie.id.toString()],
+              actions: <Widget>[
+                IconButton(
+                  icon: Icon(
+                    _isFavorite ? Icons.favorite : Icons.favorite_border,
                   ),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(
-                      horizontal: 10,
-                      vertical: 18,
-                    ),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: <Widget>[
-                        MediaInfo(
-                          title: displayMovie.title,
-                          subtitle: "${displayMovie.releaseDate.split("-").first} · ${_formatDuration(Duration(minutes: displayMovie.duration))}",
-                          overview: displayMovie.overview,
-                        ),
-                        _buildPlayButton(stream),
-                        _buildPersonCardHorizontalList(state.movieCast?[displayMovie.id.toString()]),
-                        _buildMediaCardHorizontalList(
-                          title: "Recommendations",
-                          controller: state.movieRecommendationsPagingControllers?[displayMovie.id.toString()],
-                        ),
-                        _buildMediaCardHorizontalList(
-                          title: "Similar",
-                          controller: state.similarMoviesPagingControllers?[displayMovie.id.toString()],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
+                  color: _isFavorite ? Colors.red : Colors.white,
+                  onPressed: _toggleFavorite,
+                ),
+              ],
             ),
-          ),
-        ) : const Center(child: CircularProgressIndicator()),
+            body: (isMovieLoaded || !_isLoading)
+                ? SafeArea(
+                    child: RefreshIndicator(
+                      onRefresh: _refreshData,
+                      color: Theme.of(context).primaryColor,
+                      backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+                      child: SingleChildScrollView(
+                        child: Column(
+                          children: <Widget>[
+                            MediaPoster(
+                              backdropPath: displayMovie.backdropPath,
+                              trailerUrl: state.movieTrailers?[displayMovie.id.toString()],
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 10,
+                                vertical: 18,
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: <Widget>[
+                                  MediaInfo(
+                                    title: displayMovie.title,
+                                    subtitle: "${displayMovie.releaseDate.split("-").first} · ${_formatDuration(Duration(minutes: displayMovie.duration))}",
+                                    overview: displayMovie.overview,
+                                  ),
+                                  _buildPlayButton(stream),
+                                  _buildPersonCardHorizontalList(state.movieCast?[displayMovie.id.toString()]),
+                                  _buildMediaCardHorizontalList(
+                                    title: "Recommendations",
+                                    controller: state.movieRecommendationsPagingControllers?[displayMovie.id.toString()],
+                                  ),
+                                  _buildMediaCardHorizontalList(
+                                    title: "Similar",
+                                    controller: state.similarMoviesPagingControllers?[displayMovie.id.toString()],
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : const Center(child: CircularProgressIndicator()),
+          );
+        },
       );
-    },
-  );
 }
