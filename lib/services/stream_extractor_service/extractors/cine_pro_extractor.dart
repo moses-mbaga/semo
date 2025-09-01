@@ -48,6 +48,8 @@ class CineProExtractor implements BaseStreamExtractor {
   @override
   Future<MediaStream?> getStream(String? externalLink, StreamExtractorOptions options) async {
     try {
+      // The CinePro backend API is open source and should be self hosted
+      // Documentation: https://github.com/cinepro-org/backend
       final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null) {
         _logger.e("No base URL found for provider: $_providerKey");
