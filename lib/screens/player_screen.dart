@@ -95,6 +95,11 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   void _onError(Object? error) {
     logger.e("Playback error", error: error);
     if (mounted) {
+      if (widget.mediaType == MediaType.movies) {
+        context.read<AppBloc>().add(RemoveMovieStream(widget.tmdbId));
+      } else if (widget.mediaType == MediaType.tvShows) {
+        context.read<AppBloc>().add(RemoveEpisodeStream(widget.episodeId!));
+      }
       context.read<AppBloc>().add(const AddError("An error occurred during playback."));
       Navigator.pop(context);
     }

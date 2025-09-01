@@ -223,6 +223,18 @@ class ExtractEpisodeStream extends AppEvent {
   final Episode episode;
 }
 
+class RemoveMovieStream extends AppEvent {
+  const RemoveMovieStream(this.movieId);
+
+  final int movieId;
+}
+
+class RemoveEpisodeStream extends AppEvent {
+  const RemoveEpisodeStream(this.episodeId);
+
+  final int episodeId;
+}
+
 // Subtitles
 
 class LoadMovieSubtitles extends AppEvent {

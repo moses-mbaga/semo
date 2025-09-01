@@ -102,6 +102,8 @@ class AppBloc extends Bloc<AppEvent, AppState>
     // Streams
     on<ExtractMovieStream>(onExtractMovieStream);
     on<ExtractEpisodeStream>(onExtractEpisodeStream);
+    on<RemoveMovieStream>(onRemoveMovieStream);
+    on<RemoveEpisodeStream>(onRemoveEpisodeStream);
 
     // Subtitles
     on<LoadMovieSubtitles>(onLoadMovieSubtitles);

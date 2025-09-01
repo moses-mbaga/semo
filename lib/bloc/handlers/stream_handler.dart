@@ -39,11 +39,11 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
 
     try {
       final MediaStream? stream = await StreamExtractorService.getStream(movie: event.movie);
-      
+
       if (stream == null || stream.url.isEmpty) {
         throw Exception("Stream is null");
       }
-      
+
       final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.movieStreams ?? <String, MediaStream>{});
       updatedStreams[movieId] = stream;
 
@@ -117,5 +117,25 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         error: "Failed to extract stream",
       ));
     }
+  }
+
+  void onRemoveMovieStream(RemoveMovieStream event, Emitter<AppState> emit) {
+    final String movieId = event.movieId.toString();
+    final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.movieStreams ?? <String, MediaStream>{});
+    updatedStreams.remove(movieId);
+
+    emit(state.copyWith(
+      movieStreams: updatedStreams,
+    ));
+  }
+
+  void onRemoveEpisodeStream(RemoveEpisodeStream event, Emitter<AppState> emit) {
+    final String episodeId = event.episodeId.toString();
+    final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.episodeStreams ?? <String, MediaStream>{});
+    updatedStreams.remove(episodeId);
+
+    emit(state.copyWith(
+      episodeStreams: updatedStreams,
+    ));
   }
 }
