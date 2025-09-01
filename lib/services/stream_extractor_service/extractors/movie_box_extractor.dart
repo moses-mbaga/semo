@@ -50,6 +50,10 @@ class MovieBoxExtractor implements BaseStreamExtractor {
       throw Exception("Failed to get base URL for $_providerKey");
     }
 
+    // You need a proxy
+    // You can host your own proxy
+    // Demo setup: https://github.com/himanshu8443/Cf-Workers/blob/main/src/dob-worker/index.js
+
     String proxyUrl = SecretsService.cloudflareWorkerProxy;
     String searchUrl = "$baseUrl/wefeed-mobile-bff/subject-api/search/v2";
 
