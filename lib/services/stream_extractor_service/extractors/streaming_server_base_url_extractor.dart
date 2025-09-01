@@ -32,7 +32,9 @@ class StreamingServerBaseUrlExtractor {
   final Duration _cacheExpireTime = const Duration(hours: 1);
 
   final Map<String, String> _cachedBaseUrls = <String, String>{};
-  final Map<String, DateTime> _cacheTimestamps = <String, DateTime>{};
+  DateTime? _cacheTimestamp;
+
+  static const Map<String, String> _manualBaseUrls = <String, String>{};
 
   final Logger _logger = Logger();
   final Dio _dio = Dio(
@@ -44,70 +46,48 @@ class StreamingServerBaseUrlExtractor {
   bool _isDioLoggerInitialized = false;
 
   Future<String?> getBaseUrl(String serverKey) async {
-    if (isCached(serverKey)) {
-      return _cachedBaseUrls[serverKey]!;
+    await _ensureCache();
+    if (_cachedBaseUrls.containsKey(serverKey)) {
+      return _cachedBaseUrls[serverKey];
     }
-
-    try {
-      final Response<dynamic> response = await _dio.get(_configUrl);
-
-      if (response.statusCode != 200) {
-        throw Exception("Failed to fetch base URL config: ${response.statusCode}");
-      }
-
-      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
-      final Map<String, dynamic>? serverData = data[serverKey] as Map<String, dynamic>?;
-
-      if (serverData == null) {
-        throw Exception("Provider data not found for: $serverKey");
-      }
-
-      final String? baseUrl = serverData["url"] as String?;
-
-      if (baseUrl == null || baseUrl.isEmpty) {
-        throw Exception("Base URL is empty for server: $serverKey");
-      }
-
-      // Cache the result
-      _cachedBaseUrls[serverKey] = baseUrl;
-      _cacheTimestamps[serverKey] = DateTime.now();
-
-      return baseUrl;
-    } catch (e, s) {
-      _logger.e("Error fetching base URL for $serverKey", error: e, stackTrace: s);
-    }
-
     return null;
-  }
-
-  void clearCache(String serverKey) {
-    _cachedBaseUrls.remove(serverKey);
-    _cacheTimestamps.remove(serverKey);
   }
 
   void clearAllCache() {
     _cachedBaseUrls.clear();
-    _cacheTimestamps.clear();
+    _cacheTimestamp = null;
   }
 
-  bool isCached(String serverKey) => _cachedBaseUrls.containsKey(serverKey) &&
-        _cacheTimestamps.containsKey(serverKey) &&
-        DateTime.now().difference(_cacheTimestamps[serverKey]!).compareTo(_cacheExpireTime) < 0;
+  bool _isCacheValid() => _cachedBaseUrls.isNotEmpty && _cacheTimestamp != null && DateTime.now().difference(_cacheTimestamp!).compareTo(_cacheExpireTime) < 0;
 
-  Future<List<String>> getAvailableProviders() async {
+  Future<void> _ensureCache() async {
+    if (_isCacheValid()) {
+      return;
+    } else {
+      clearAllCache();
+    }
+
     try {
       final Response<dynamic> response = await _dio.get(_configUrl);
-
       if (response.statusCode != 200) {
         throw Exception("Failed to fetch base URL config: ${response.statusCode}");
       }
 
-      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
-      return data.keys.toList();
-    } catch (e, s) {
-      _logger.e("Error fetching available servers", error: e, stackTrace: s);
-    }
+      final Map<String, dynamic>? data = response.data?.cast<Map<String, dynamic>>();
 
-    return <String>[];
+      // ignore: avoid_annotating_with_dynamic
+      data?.forEach((String key, dynamic value) {
+        final String? url = value["url"] as String?;
+        if (url != null && url.isNotEmpty) {
+          _cachedBaseUrls[key] = url;
+        }
+      });
+
+      _cachedBaseUrls.addAll(_manualBaseUrls);
+
+      _cacheTimestamp = DateTime.now();
+    } catch (e, s) {
+      _logger.e("Error building base URL cache", error: e, stackTrace: s);
+    }
   }
 }
