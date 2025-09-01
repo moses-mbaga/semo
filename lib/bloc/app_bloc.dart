@@ -19,24 +19,26 @@ import "package:semo/bloc/handlers/tv_show_handler.dart";
 import "package:semo/bloc/handlers/tv_shows_handler.dart";
 import "package:semo/services/auth_service.dart";
 
-class AppBloc extends Bloc<AppEvent, AppState> with
-    GeneralHandler,
-    CacheHandler,
-    MoviesHandler,
-    TvShowsHandler,
-    StreamingPlatformsHandler,
-    GenresHandler,
-    RecentlyWatchedHandler,
-    FavoritesHandler,
-    MovieHandler,
-    TvShowHandler,
-    PersonHandler,
-    RecentSearchesHandler,
-    StreamHandler,
-    SubtitlesHandler {
+class AppBloc extends Bloc<AppEvent, AppState>
+    with
+        GeneralHandler,
+        CacheHandler,
+        MoviesHandler,
+        TvShowsHandler,
+        StreamingPlatformsHandler,
+        GenresHandler,
+        RecentlyWatchedHandler,
+        FavoritesHandler,
+        MovieHandler,
+        TvShowHandler,
+        PersonHandler,
+        RecentSearchesHandler,
+        StreamHandler,
+        SubtitlesHandler {
   AppBloc() : super(const AppState()) {
     // General
     on<LoadInitialData>(onLoadInitialData);
+    on<AddError>(onAddError);
     on<ClearError>(onClearError);
 
     // Cache

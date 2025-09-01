@@ -11,7 +11,15 @@ abstract class AppEvent {
 
 class LoadInitialData extends AppEvent {}
 
+class AddError extends AppEvent {
+  const AddError(this.error);
+
+  final String error;
+}
+
 class ClearError extends AppEvent {}
+
+// Cache
 
 class InitCacheTimer extends AppEvent {}
 
@@ -226,12 +234,12 @@ class LoadMovieSubtitles extends AppEvent {
 
 class LoadEpisodeSubtitles extends AppEvent {
   const LoadEpisodeSubtitles(
-      this.tvShowId, {
-        required this.seasonNumber,
-        required this.episodeId,
-        required this.episodeNumber,
-        this.locale = "EN",
-      });
+    this.tvShowId, {
+    required this.seasonNumber,
+    required this.episodeId,
+    required this.episodeNumber,
+    this.locale = "EN",
+  });
 
   final int tvShowId;
   final int seasonNumber;

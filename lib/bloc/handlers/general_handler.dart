@@ -16,6 +16,12 @@ mixin GeneralHandler on Bloc<AppEvent, AppState> {
     add(InitCacheTimer());
   }
 
+  void onAddError(AddError event, Emitter<AppState> emit) {
+    emit(state.copyWith(
+      error: event.error,
+    ));
+  }
+
   void onClearError(ClearError event, Emitter<AppState> emit) {
     emit(state.copyWith(
       error: null,
