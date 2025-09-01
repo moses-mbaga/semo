@@ -12,4 +12,7 @@ abstract class SecretsService {
 
   @EnviedField(varName: "CLOUDFLARE_WORKER_PROXY", obfuscate: true)
   static String cloudflareWorkerProxy = _SecretsService.cloudflareWorkerProxy;
+
+  @EnviedField(varName: "CINEPRO_BASE_URL", obfuscate: true)
+  static String cineProBaseUrl = _SecretsService.cineProBaseUrl;
 }

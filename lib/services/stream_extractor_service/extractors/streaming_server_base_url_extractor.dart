@@ -2,6 +2,7 @@ import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
+import "package:semo/services/secrets_service.dart";
 
 class StreamingServerBaseUrlExtractor {
   factory StreamingServerBaseUrlExtractor() {
@@ -34,7 +35,9 @@ class StreamingServerBaseUrlExtractor {
   final Map<String, String> _cachedBaseUrls = <String, String>{};
   DateTime? _cacheTimestamp;
 
-  static const Map<String, String> _manualBaseUrls = <String, String>{};
+  static final Map<String, String> _manualBaseUrls = <String, String>{
+    "semo_cinepro": SecretsService.cineProBaseUrl,
+  };
 
   final Logger _logger = Logger();
   final Dio _dio = Dio(
@@ -73,10 +76,10 @@ class StreamingServerBaseUrlExtractor {
         throw Exception("Failed to fetch base URL config: ${response.statusCode}");
       }
 
-      final Map<String, dynamic>? data = response.data?.cast<Map<String, dynamic>>();
+      final Map<String, dynamic> data = response.data as Map<String, dynamic>;
 
       // ignore: avoid_annotating_with_dynamic
-      data?.forEach((String key, dynamic value) {
+      data.forEach((String key, dynamic value) {
         final String? url = value["url"] as String?;
         if (url != null && url.isNotEmpty) {
           _cachedBaseUrls[key] = url;

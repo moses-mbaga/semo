@@ -13,7 +13,7 @@ import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extrac
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/movie_box_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/ringz_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/cine_pro_extractor.dart";
 
 class StreamExtractorService {
   static final Logger _logger = Logger();
@@ -21,7 +21,7 @@ class StreamExtractorService {
     const StreamingServer(name: "Random", extractor: null),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
-    StreamingServer(name: "Ringz", extractor: RingzExtractor()),
+    StreamingServer(name: "CinePro", extractor: CineProExtractor()),
     StreamingServer(name: "MovieBox", extractor: MovieBoxExtractor()),
   ];
 
@@ -55,7 +55,7 @@ class StreamExtractorService {
         streamExtractorOptions = StreamExtractorOptions(tmdbId: movie.id, title: movie.title, movieReleaseYear: movie.releaseDate.split("-")[0]);
       } else if (tvShow != null && episode != null) {
         streamExtractorOptions = StreamExtractorOptions(
-          tmdbId: episode.id,
+          tmdbId: tvShow.id,
           season: episode.season,
           episode: episode.number,
           title: tvShow.name,
