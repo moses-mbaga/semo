@@ -4,16 +4,16 @@ on:
   workflow_dispatch:
     inputs:
       version:
-        description: 'Release version (e.g., v1.0.0)'
+        description: "Release version (e.g., v1.0.0)"
         required: true
         type: string
       release_notes:
-        description: 'Release notes'
+        description: "Release notes"
         required: false
         type: string
-        default: 'New release'
+        default: "New release"
       ios_ipa_url:
-        description: 'Public download URL for iOS .ipa file'
+        description: "Public download URL for iOS .ipa file"
         required: true
         type: string
 
@@ -125,25 +125,12 @@ jobs:
           set -o pipefail
           { flutter build apk --release --split-per-abi; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      - name: Build web
-        if: ${{ success() }}
-        run: |
-          set -o pipefail
-          { flutter build web --release; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
-
       - name: Upload APKs artifact
         if: ${{ success() }}
         uses: actions/upload-artifact@v4
         with:
           name: app-release-apks
           path: build/app/outputs/flutter-apk/*.apk
-
-      - name: Upload web artifact
-        if: ${{ success() }}
-        uses: actions/upload-artifact@v4
-        with:
-          name: web-build
-          path: build/web/
 
   release-and-deploy:
     name: "Release and Deploy"
@@ -167,12 +154,6 @@ jobs:
         with:
           name: app-release-apks
           path: ./artifacts/
-
-      - name: Download web artifact
-        uses: actions/download-artifact@v4
-        with:
-          name: web-build
-          path: ./build/web/
 
       - name: Download iOS IPA
         run: |
@@ -211,18 +192,3 @@ jobs:
             echo "IPA not found. Failing the job as IPA is required."
             exit 1
           fi
-
-      - name: Deploy to Vercel
-        uses: amondnet/vercel-action@v25
-        env:
-          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
-          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
-          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
-        with:
-          vercel-token: ${{ env.VERCEL_TOKEN }}
-          github-token: ${{ secrets.GITHUB_TOKEN }}
-          vercel-org-id: ${{ env.VERCEL_ORG_ID }}
-          vercel-project-id: ${{ env.VERCEL_PROJECT_ID }}
-          working-directory: ./build/web
-          vercel-args: '--prod'
-          github-comment: false

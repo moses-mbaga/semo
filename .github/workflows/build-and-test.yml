@@ -114,12 +114,6 @@ jobs:
           set -o pipefail
           { flutter build apk --release --split-per-abi; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      - name: Build web
-        if: ${{ success() }}
-        run: |
-          set -o pipefail
-          { flutter build web --release; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
-
       - name: Upload logs artifact
         if: ${{ always() }}
         uses: actions/upload-artifact@v4
