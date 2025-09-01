@@ -23,7 +23,7 @@ class TMDBService {
         PrettyDioLogger(
           requestHeader: true,
           requestBody: true,
-          responseBody: true,
+          responseBody: false,
           responseHeader: false,
           error: true,
           compact: true,
@@ -60,14 +60,14 @@ class TMDBService {
   Future<SearchResults?> getTopRatedMovies(int page) async => _search(MediaType.movies, Urls.topRatedMovies, page);
   Future<SearchResults?> discoverMovies(int page, {Map<String, String>? parameters}) => _search(MediaType.movies, Urls.discoverMovie, page, parameters: parameters);
   Future<SearchResults?> searchMovies(String query, int page) => _search(
-    MediaType.movies,
-    Urls.searchMovies,
-    page,
-    parameters: <String, String>{
-      "query": query,
-      "include_adult": "false",
-    },
-  );
+        MediaType.movies,
+        Urls.searchMovies,
+        page,
+        parameters: <String, String>{
+          "query": query,
+          "include_adult": "false",
+        },
+      );
   Future<List<Genre>> getMovieGenres() => _getGenres(MediaType.movies);
 
   Future<Movie?> getMovie(int id) async {
@@ -93,14 +93,14 @@ class TMDBService {
   Future<SearchResults?> getTopRatedTvShows(int page) => _search(MediaType.tvShows, Urls.topRatedTvShows, page);
   Future<SearchResults?> discoverTvShows(int page, {Map<String, String>? parameters}) => _search(MediaType.tvShows, Urls.discoverTvShow, page, parameters: parameters);
   Future<SearchResults?> searchTvShows(String query, int page) => _search(
-    MediaType.tvShows,
-    Urls.searchTvShows,
-    page,
-    parameters: <String, String>{
-      "query": query,
-      "include_adult": "false",
-    },
-  );
+        MediaType.tvShows,
+        Urls.searchTvShows,
+        page,
+        parameters: <String, String>{
+          "query": query,
+          "include_adult": "false",
+        },
+      );
   Future<List<Genre>> getTvShowGenres() => _getGenres(MediaType.tvShows);
 
   Future<TvShow?> getTvShow(int id) async {
@@ -223,17 +223,13 @@ class TMDBService {
     bool isMovie = mediaType == MediaType.movies;
 
     try {
-      final SearchResults? result = isMovie
-          ? await discoverMovies(1, parameters: <String, String>{"with_genres": "${genre.id}"})
-          : await discoverTvShows(1, parameters: <String, String>{"with_genres": "${genre.id}"});
+      final SearchResults? result = isMovie ? await discoverMovies(1, parameters: <String, String>{"with_genres": "${genre.id}"}) : await discoverTvShows(1, parameters: <String, String>{"with_genres": "${genre.id}"});
 
       if ((isMovie ? result?.movies : result?.tvShows) != null && (isMovie ? result!.movies!.isNotEmpty : result!.tvShows!.isNotEmpty)) {
         final Random random = Random();
         final List<dynamic> items = isMovie ? result.movies! : result.tvShows!;
         final int randomIndex = random.nextInt(items.length);
-        final String backdropPath = isMovie
-            ? (items[randomIndex] as Movie).backdropPath
-            : (items[randomIndex] as TvShow).backdropPath;
+        final String backdropPath = isMovie ? (items[randomIndex] as Movie).backdropPath : (items[randomIndex] as TvShow).backdropPath;
 
         return backdropPath;
       }
@@ -247,32 +243,24 @@ class TMDBService {
   }
 
   Future<SearchResults?> getRecommendations(MediaType mediaType, int id, int page) {
-    final String url = mediaType == MediaType.movies
-        ? Urls.getMovieRecommendations(id)
-        : Urls.getTvShowRecommendations(id);
+    final String url = mediaType == MediaType.movies ? Urls.getMovieRecommendations(id) : Urls.getTvShowRecommendations(id);
     return _search(mediaType, url, page);
   }
 
   Future<SearchResults?> getSimilar(MediaType mediaType, int id, int page) {
-    final String url = mediaType == MediaType.movies
-        ? Urls.getMovieSimilar(id)
-        : Urls.getTvShowSimilar(id);
+    final String url = mediaType == MediaType.movies ? Urls.getMovieSimilar(id) : Urls.getTvShowSimilar(id);
     return _search(mediaType, url, page);
   }
-  
+
   Future<String?> getTrailerUrl(MediaType mediaType, int mediaId) async {
     try {
-      final String url = mediaType == MediaType.movies
-          ? Urls.getMovieVideosUrl(mediaId)
-          : Urls.getTvShowVideosUrl(mediaId);
+      final String url = mediaType == MediaType.movies ? Urls.getMovieVideosUrl(mediaId) : Urls.getTvShowVideosUrl(mediaId);
 
       final Response<dynamic> response = await _dio.get(url);
 
       if (response.statusCode == 200 && response.data.isNotEmpty) {
         final List<Map<String, dynamic>> videos = (response.data["results"] as List<dynamic>).cast<Map<String, dynamic>>();
-        final List<Map<String, dynamic>> youtubeVideos = videos
-            .where((Map<String, dynamic> video) => video["site"] == "YouTube" && video["type"] == "Trailer" && video["official"] == true)
-            .toList();
+        final List<Map<String, dynamic>> youtubeVideos = videos.where((Map<String, dynamic> video) => video["site"] == "YouTube" && video["type"] == "Trailer" && video["official"] == true).toList();
 
         if (youtubeVideos.isNotEmpty) {
           youtubeVideos.sort((Map<String, dynamic> a, Map<String, dynamic> b) => b["size"].compareTo(a["size"]));
@@ -291,9 +279,7 @@ class TMDBService {
 
   Future<List<Person>> getCast(MediaType mediaType, int mediaId) async {
     try {
-      final String url = mediaType == MediaType.movies
-          ? Urls.getMovieCast(mediaId)
-          : Urls.getTvShowCast(mediaId);
+      final String url = mediaType == MediaType.movies ? Urls.getMovieCast(mediaId) : Urls.getTvShowCast(mediaId);
 
       final Response<dynamic> response = await _dio.get(url);
 
@@ -313,9 +299,7 @@ class TMDBService {
 
   Future<List<Map<String, dynamic>>> _getPersonMedia(int personId, MediaType mediaType) async {
     try {
-      final String url = mediaType == MediaType.movies
-          ? Urls.getPersonMovies(personId)
-          : Urls.getPersonTvShows(personId);
+      final String url = mediaType == MediaType.movies ? Urls.getPersonMovies(personId) : Urls.getPersonTvShows(personId);
 
       final Response<dynamic> response = await _dio.get(url);
 
