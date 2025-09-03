@@ -61,10 +61,6 @@ Future<void> _initializeRemoteConfig() async {
     });
 
     await remoteConfig.fetchAndActivate();
-
-    if (!kIsWeb) {
-      remoteConfig.onConfigUpdated.listen((RemoteConfigUpdate event) async => remoteConfig.activate());
-    }
   } catch (e, s) {
     Logger().e("Failed to initialize remote config", error: e, stackTrace: s);
   }
