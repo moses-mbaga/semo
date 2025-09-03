@@ -14,6 +14,7 @@ import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/movie_box_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/cine_pro_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/show_box_extractor.dart";
 
 class StreamExtractorService {
   static final Logger _logger = Logger();
@@ -23,6 +24,7 @@ class StreamExtractorService {
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
     StreamingServer(name: "MovieBox", extractor: MovieBoxExtractor()),
+    StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()),
   ];
 
   static List<StreamingServer> get streamingServers => _streamingServers;
