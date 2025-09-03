@@ -70,6 +70,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   double _lastZoomGestureScale = 1.0;
   Timer? _hideControlsTimer;
   Timer? _progressTimer;
+  static const double _eps = 1e-3;
 
   @override
   void initState() {
@@ -119,13 +120,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       });
 
       if (mounted) {
-        final Size screenSize = MediaQuery.of(context).size;
-        final Size videoSize = _videoPlayerController.value.size;
-
-        if (videoSize.width > 0) {
-          final double newTargetScale = screenSize.width / (videoSize.width * screenSize.height / videoSize.height);
-          _setTargetNativeScale(newTargetScale);
-        }
+        // Compute zoom-in target scale (screen AR / video AR)
+        final double targetScale = _computeZoomInScale();
+        _setTargetNativeScale(targetScale);
 
         if (widget.autoPlay) {
           await _videoPlayerController.play();
@@ -160,6 +157,18 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         ),
       );
     });
+  }
+
+  double _computeZoomInScale() {
+    final Size screenSize = MediaQuery.of(context).size;
+    final double videoAR = _videoPlayerController.value.aspectRatio;
+
+    if (screenSize.height == 0 || videoAR <= 0 || !videoAR.isFinite) {
+      return 1.0;
+    }
+
+    final double screenAR = screenSize.width / screenSize.height;
+    return screenAR / videoAR;
   }
 
   Future<void> _playerListener() async {
@@ -346,16 +355,24 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return;
     }
 
-    if (_lastZoomGestureScale < 1.0) {
-      setState(() {
-        _isZoomedIn = true;
-        _scaleVideoAnimationController.forward();
-      });
-    } else if (_lastZoomGestureScale > 1.0) {
-      setState(() {
-        _isZoomedIn = false;
-        _scaleVideoAnimationController.reverse();
-      });
+    final double targetScale = _computeZoomInScale();
+    // Pinch in (<1.0) => zoom out (reverse) if currently zoomed-in
+    if (_lastZoomGestureScale < 1.0 - _eps) {
+      if (_isZoomedIn) {
+        setState(() {
+          _isZoomedIn = false;
+          _scaleVideoAnimationController.reverse();
+        });
+      }
+    }
+    // Pinch out (>1.0) => zoom in (forward) only if zooming-in makes sense
+    else if (_lastZoomGestureScale > 1.0 + _eps) {
+      if (!_isZoomedIn && targetScale > 1.0 + _eps) {
+        setState(() {
+          _isZoomedIn = true;
+          _scaleVideoAnimationController.forward();
+        });
+      }
     }
 
     _lastZoomGestureScale = 1.0;
@@ -465,26 +482,37 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                               child: Icon(_showSubtitles ? Icons.closed_caption_rounded : Icons.closed_caption_off),
                             ),
                           ),
-                        IconButton(
-                          icon: Icon(!_isZoomedIn ? Icons.zoom_out_map : Icons.zoom_in_map),
-                          onPressed: () => setState(() {
-                            if (_mediaProgress.total.inSeconds <= 0) {
-                              return;
-                            }
+                        Builder(
+                          builder: (BuildContext context) {
+                            final bool canOperate = _mediaProgress.total.inSeconds > 0;
+                            final double targetScale = _computeZoomInScale();
+                            final bool canZoomIn = targetScale > 1.0 + _eps;
+                            final VoidCallback? onPressed = !_isZoomedIn
+                                ? (canOperate && canZoomIn
+                                    ? () {
+                                        // Only zoom in if targetScale would enlarge the video
+                                        _scaleVideoAnimationController.forward();
+                                        setState(() {
+                                          _isZoomedIn = true;
+                                          _lastZoomGestureScale = 1.0;
+                                        });
+                                      }
+                                    : null)
+                                : (canOperate
+                                    ? () {
+                                        _scaleVideoAnimationController.reverse();
+                                        setState(() {
+                                          _isZoomedIn = false;
+                                          _lastZoomGestureScale = 1.0;
+                                        });
+                                      }
+                                    : null);
 
-                            if (_isZoomedIn) {
-                              _scaleVideoAnimationController.reverse();
-                            } else {
-                              _scaleVideoAnimationController.forward();
-                            }
-
-                            if (mounted) {
-                              setState(() {
-                                _isZoomedIn = !_isZoomedIn;
-                                _lastZoomGestureScale = 1.0;
-                              });
-                            }
-                          }),
+                            return IconButton(
+                              icon: Icon(!_isZoomedIn ? Icons.zoom_out_map : Icons.zoom_in_map),
+                              onPressed: onPressed,
+                            );
+                          },
                         ),
                       ],
                     ),
