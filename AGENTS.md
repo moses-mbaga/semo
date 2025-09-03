@@ -24,6 +24,12 @@
 - Tests: `flutter test` (optionally `--coverage`).
 - Release builds: `flutter build aab --release`, `flutter build apk --release`, `flutter build ios --release`.
 
+## Linting
+- Run `dart analyze` regularly to catch issues early.
+- Abide by the lint rules in `analysis_options.yaml` (extends `flutter_lints`).
+- Keep PRs lint-clean; fix all reported lints before merging.
+- Apply available fixes with `dart fix --apply` and format with `dart format .` when needed.
+
 ## Coding Style & Naming
 - Follow `analysis_options.yaml` (extends `flutter_lints`). Key prefs: double quotes, explicit types, package imports, constructors first, const where possible.
 - Files: `snake_case.dart` (`file_names` lint). Classes: `PascalCase`. Fields/locals: `camelCase`.
