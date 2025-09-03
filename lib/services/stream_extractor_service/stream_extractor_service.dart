@@ -20,10 +20,10 @@ class StreamExtractorService {
   static final Logger _logger = Logger();
   static final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
-    StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
-    StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
+    StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MovieBox", extractor: MovieBoxExtractor()),
+    StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()),
   ];
 
