@@ -42,6 +42,8 @@ class PlayerScreen extends BaseScreen {
 class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   final RecentlyWatchedService _recentlyWatchedService = RecentlyWatchedService();
   List<File>? _subtitleFiles;
+  bool _initialLandscapeLike = false;
+  bool _forcedLandscape = false;
 
   void _updateRecentlyWatched(int progressSeconds) {
     try {
@@ -65,18 +67,28 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
     } catch (_) {}
   }
 
-  Future<void> _forceLandscape() async {
-    await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
-      DeviceOrientation.landscapeRight,
-      DeviceOrientation.landscapeLeft,
-    ]);
+  Future<void> _applyLandscapeIfNeeded() async {
+    final Size size = MediaQuery.of(context).size;
+    _initialLandscapeLike = size.width >= size.height; // Robust across TVs/tablets
+
+    if (!_initialLandscapeLike) {
+      await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
+        DeviceOrientation.landscapeRight,
+        DeviceOrientation.landscapeLeft,
+      ]);
+      _forcedLandscape = true;
+    }
+
     await SystemChrome.setEnabledSystemUIMode(SystemUiMode.immersiveSticky);
   }
 
-  Future<void> _forcePortrait() async {
-    await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
-      DeviceOrientation.portraitUp,
-    ]);
+  Future<void> _restoreOnExit() async {
+    if (_forcedLandscape) {
+      await SystemChrome.setPreferredOrientations(<DeviceOrientation>[
+        DeviceOrientation.portraitUp,
+      ]);
+    }
+
     await SystemChrome.setEnabledSystemUIMode(
       SystemUiMode.manual,
       overlays: SystemUiOverlay.values,
@@ -118,12 +130,12 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   @override
   Future<void> initializeScreen() async {
     await WakelockPlus.enable();
-    await _forceLandscape();
+    await _applyLandscapeIfNeeded();
   }
 
   @override
   void handleDispose() {
-    _forcePortrait();
+    _restoreOnExit();
     WakelockPlus.disable();
   }
 
