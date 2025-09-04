@@ -1,5 +1,5 @@
+import "package:animated_read_more_text/animated_read_more_text.dart";
 import "package:flutter/material.dart";
-import "package:readmore/readmore.dart";
 
 class MediaInfo extends StatelessWidget {
   const MediaInfo({
@@ -37,21 +37,19 @@ class MediaInfo extends StatelessWidget {
             ),
           ),
           if (progressIndicator != null) progressIndicator!,
-          if (overview != null)
+          if (overview != null && overview!.isNotEmpty)
             Container(
               width: double.infinity,
               margin: const EdgeInsets.only(top: 20),
-              child: ReadMoreText(
+              child: AnimatedReadMoreText(
                 overview!,
-                trimMode: TrimMode.Line,
-                trimLines: 3,
-                colorClickableText: Theme.of(context).primaryColor,
-                trimCollapsedText: " Show more",
-                trimExpandedText: " Show less",
-                textAlign: TextAlign.justify,
-                moreStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
+                maxLines: 3,
+                readMoreText: "Read more",
+                readLessText: "Read less",
+                textStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
                       color: Colors.white54,
                     ),
+                buttonTextStyle: TextStyle(color: Theme.of(context).primaryColor),
               ),
             ),
         ],
