@@ -48,6 +48,9 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
   /// Override this method to provide the screen name for Firebase Analytics
   String get screenName;
 
+  /// Optional screen parameters to be logged alongside the screen view
+  Map<String, Object?> get screenParameters => <String, Object?>{};
+
   /// Override this method to handle initialization logic
   /// Called after initState and connectivity check
   Future<void> initializeScreen() async {}
@@ -98,7 +101,7 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
         ),
       );
 
-  /// Update required widget (similar to no internet)
+  /// Update required widget
   Widget _buildUpdateRequiredWidget() => Scaffold(
         body: Center(
           child: Column(
@@ -154,9 +157,15 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
   /// Log screen view to Firebase Analytics
   Future<void> _logScreenView() async {
     try {
+      final Map<String, Object?> params = <String, Object?>{
+        "screen_name": screenName,
+        ...screenParameters,
+      }..removeWhere((String key, Object? value) => value == null);
+
       await _analytics.logScreenView(
         screenName: screenName,
         screenClass: widget.runtimeType.toString(),
+        parameters: params.cast<String, Object>(),
       );
     } catch (e, s) {
       logger.e("Failed to log screen view", error: e, stackTrace: s);

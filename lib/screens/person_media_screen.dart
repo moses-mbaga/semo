@@ -9,7 +9,7 @@ import "package:semo/components/media_card.dart";
 import "package:semo/components/vertical_media_list.dart";
 import "package:semo/models/movie.dart";
 import "package:semo/models/person.dart";
-import "package:semo/models/tv_show.dart" ;
+import "package:semo/models/tv_show.dart";
 import "package:semo/screens/base_screen.dart";
 import "package:semo/screens/movie_screen.dart";
 import "package:semo/screens/tv_show_screen.dart";
@@ -26,13 +26,7 @@ class PersonMediaScreen extends BaseScreen {
 
 class _PersonMediaScreenState extends BaseScreenState<PersonMediaScreen> with TickerProviderStateMixin {
   late final TabController _tabController = TabController(length: 2, vsync: this);
-  MediaType _mediaType = MediaType.movies;
   bool _isLoading = true;
-
-  void onTabChanged() {
-    MediaType mediaType = _tabController.index == 0 ? MediaType.movies : MediaType.tvShows;
-    setState(() => _mediaType = mediaType);
-  }
 
   // ignore: avoid_annotating_with_dynamic
   Future<void> _navigateToMediaScreen(dynamic media, MediaType mediaType) async {
@@ -44,102 +38,106 @@ class _PersonMediaScreenState extends BaseScreenState<PersonMediaScreen> with Ti
   }
 
   Widget _buildList(List<dynamic>? media, MediaType mediaType, {bool isLoading = false}) => VerticalMediaList<dynamic>(
-    isLoading: isLoading,
-    items: media ?? <dynamic>[],
-    // ignore: avoid_annotating_with_dynamic
-    itemBuilder: (BuildContext context, dynamic media, int index) {
-      String posterPath = media.posterPath ?? "";
-      double voteAverage = media.voteAverage ?? 0;
-      return MediaCard(
-        posterPath: posterPath,
-        voteAverage: voteAverage,
-        onTap: () => _navigateToMediaScreen(media, mediaType),
+        isLoading: isLoading,
+        items: media ?? <dynamic>[],
+        // ignore: avoid_annotating_with_dynamic
+        itemBuilder: (BuildContext context, dynamic media, int index) {
+          String posterPath = media.posterPath ?? "";
+          double voteAverage = media.voteAverage ?? 0;
+          return MediaCard(
+            posterPath: posterPath,
+            voteAverage: voteAverage,
+            onTap: () => _navigateToMediaScreen(media, mediaType),
+          );
+        },
+        emptyStateMessage: "No ${mediaType.toString()} found",
+        errorMessage: "Failed to load ${mediaType.toString()}",
+        shrinkWrap: true,
+        physics: const AlwaysScrollableScrollPhysics(),
       );
-    },
-    emptyStateMessage: "No ${mediaType.toString()} found",
-    errorMessage: "Failed to load ${mediaType.toString()}",
-    shrinkWrap: true,
-    physics: const AlwaysScrollableScrollPhysics(),
-  );
 
   @override
-  String get screenName => "${widget.person.name} - ${_mediaType.toString()}";
+  String get screenName => "Person";
+
+  @override
+  Map<String, Object?> get screenParameters => <String, Object?>{
+        "person_id": widget.person.id,
+        "person_name": widget.person.name,
+      };
 
   @override
   Future<void> initializeScreen() async {
-    _tabController.addListener(onTabChanged);
     context.read<AppBloc>().add(LoadPersonMedia(widget.person.id));
   }
 
   @override
   void handleDispose() {
-    _tabController.removeListener(onTabChanged);
     _tabController.dispose();
   }
 
   @override
   Widget buildContent(BuildContext context) => BlocConsumer<AppBloc, AppState>(
-    listener: (BuildContext context, AppState state) {
-      if (mounted) {
-        setState(() {
-          _isLoading = state.isLoadingPersonMedia?[widget.person.id.toString()] ?? true;
-        });
-      }
+        listener: (BuildContext context, AppState state) {
+          if (mounted) {
+            setState(() {
+              _isLoading = state.isLoadingPersonMedia?[widget.person.id.toString()] ?? true;
+            });
+          }
 
-      if (state.error != null) {
-        context.read<AppBloc>().add(ClearError());
-      }
-    },
-    builder: (BuildContext context, AppState state) {
-      List<Movie> movies = state.personMovies?[widget.person.id.toString()] ?? <Movie>[];
-      List<TvShow> tvShows = state.personTvShows?[widget.person.id.toString()] ?? <TvShow>[];
-      bool isPersonMediaLoaded = movies.isNotEmpty && tvShows.isNotEmpty;
+          if (state.error != null) {
+            context.read<AppBloc>().add(ClearError());
+          }
+        },
+        builder: (BuildContext context, AppState state) {
+          List<Movie> movies = state.personMovies?[widget.person.id.toString()] ?? <Movie>[];
+          List<TvShow> tvShows = state.personTvShows?[widget.person.id.toString()] ?? <TvShow>[];
+          bool isPersonMediaLoaded = movies.isNotEmpty && tvShows.isNotEmpty;
 
-      if (mounted && isPersonMediaLoaded) {
-         _isLoading = false;
-      }
+          if (mounted && isPersonMediaLoaded) {
+            _isLoading = false;
+          }
 
-      return Scaffold(
-        appBar: AppBar(
-          title: Text(widget.person.name),
-          bottom: TabBar(
-            controller: _tabController,
-            tabs: const <Tab>[
-              Tab(
-                icon: Icon(Icons.movie),
-                text: "Movies",
+          return Scaffold(
+            appBar: AppBar(
+              title: Text(widget.person.name),
+              bottom: TabBar(
+                controller: _tabController,
+                tabs: const <Tab>[
+                  Tab(
+                    icon: Icon(Icons.movie),
+                    text: "Movies",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.video_library),
+                    text: "TV Shows",
+                  ),
+                ],
               ),
-              Tab(
-                icon: Icon(Icons.video_library),
-                text: "TV Shows",
+            ),
+            body: SafeArea(
+              child: Container(
+                margin: const EdgeInsets.symmetric(
+                  horizontal: 10,
+                  vertical: 18,
+                ),
+                child: TabBarView(
+                  controller: _tabController,
+                  children: <Widget>[
+                    _buildList(
+                      movies,
+                      MediaType.movies,
+                      isLoading: _isLoading,
+                    ),
+                    _buildList(
+                      tvShows,
+                      MediaType.tvShows,
+                      isLoading: _isLoading,
+                    ),
+                  ],
+                ),
               ),
-            ],
-          ),
-        ),
-        body: SafeArea(
-          child: Container(
-            margin: const EdgeInsets.symmetric(
-              horizontal: 10,
-              vertical: 18,
             ),
-            child: TabBarView(
-              controller: _tabController,
-              children: <Widget>[
-                _buildList(
-                  movies,
-                  MediaType.movies,
-                  isLoading: _isLoading,
-                ),
-                _buildList(
-                  tvShows,
-                  MediaType.tvShows,
-                  isLoading: _isLoading,
-                ),
-              ],
-            ),
-          ),
-        ),
+          );
+        },
       );
-    },
-  );
 }

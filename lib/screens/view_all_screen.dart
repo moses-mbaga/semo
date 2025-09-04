@@ -19,10 +19,10 @@ class ViewAllScreen extends BaseScreen {
     this.pagingController,
     this.items,
   }) : assert(
-    (pagingController == null && items != null) || (pagingController != null && items == null),
-    "Either pagingController or items must be provided.",
-  );
-  
+          (pagingController == null && items != null) || (pagingController != null && items == null),
+          "Either pagingController or items must be provided.",
+        );
+
   final MediaType mediaType;
   final String title;
   final PagingController<int, dynamic>? pagingController;
@@ -43,41 +43,47 @@ class _ViewAllScreenState extends BaseScreenState<ViewAllScreen> {
   }
 
   Widget _buildGrid() => VerticalMediaList<dynamic>(
-    pagingController: widget.pagingController,
-    items: widget.items,
-    //ignore: avoid_annotating_with_dynamic
-    itemBuilder: (BuildContext context, dynamic media, int index) {
-      String posterPath = media.posterPath ?? "";
-      double voteAverage = media.voteAverage ?? 0;
+        pagingController: widget.pagingController,
+        items: widget.items,
+        //ignore: avoid_annotating_with_dynamic
+        itemBuilder: (BuildContext context, dynamic media, int index) {
+          String posterPath = media.posterPath ?? "";
+          double voteAverage = media.voteAverage ?? 0;
 
-      return MediaCard(
-        posterPath: posterPath,
-        voteAverage: voteAverage,
-        onTap: () => _navigateToMedia(media),
+          return MediaCard(
+            posterPath: posterPath,
+            voteAverage: voteAverage,
+            onTap: () => _navigateToMedia(media),
+          );
+        },
+        padding: EdgeInsets.zero,
+        emptyStateMessage: "No ${widget.mediaType.toString()} found",
+        errorMessage: "Failed to load ${widget.mediaType.toString()}",
       );
-    },
-    padding: EdgeInsets.zero,
-    emptyStateMessage: "No ${widget.mediaType.toString()} found",
-    errorMessage: "Failed to load ${widget.mediaType.toString()}",
-  );
 
   @override
-  String get screenName => "View All - ${widget.title}";
+  String get screenName => "View All";
+
+  @override
+  Map<String, Object?> get screenParameters => <String, Object?>{
+        "media_type": widget.mediaType.toJsonField(),
+        "title": widget.title,
+      };
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
-    resizeToAvoidBottomInset: false,
-    appBar: AppBar(
-      title: Text(widget.title),
-    ),
-    body: SafeArea(
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 18,
+        resizeToAvoidBottomInset: false,
+        appBar: AppBar(
+          title: Text(widget.title),
         ),
-        child: _buildGrid(),
-      ),
-    ),
-  );
+        body: SafeArea(
+          child: Container(
+            margin: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 18,
+            ),
+            child: _buildGrid(),
+          ),
+        ),
+      );
 }

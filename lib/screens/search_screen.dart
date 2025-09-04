@@ -22,7 +22,7 @@ class SearchScreen extends BaseScreen {
   const SearchScreen({
     super.key,
     required this.mediaType,
-  }): super(shouldLogScreenView: false);
+  }) : super(shouldLogScreenView: false);
 
   final MediaType mediaType;
 
@@ -42,13 +42,9 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
         return <dynamic>[];
       }
 
-      final SearchResults? result = widget.mediaType == MediaType.movies
-          ? await _tmdbService.searchMovies(_currentQuery, pageKey)
-          : await _tmdbService.searchTvShows(_currentQuery, pageKey);
+      final SearchResults? result = widget.mediaType == MediaType.movies ? await _tmdbService.searchMovies(_currentQuery, pageKey) : await _tmdbService.searchTvShows(_currentQuery, pageKey);
 
-      return widget.mediaType == MediaType.movies
-          ? (result?.movies ?? <Movie>[])
-          : (result?.tvShows ?? <TvShow>[]);
+      return widget.mediaType == MediaType.movies ? (result?.movies ?? <Movie>[]) : (result?.tvShows ?? <TvShow>[]);
     },
   );
 
@@ -92,7 +88,7 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
 
   AppBar _buildSearchAppBar() {
     List<Widget> actions = <Widget>[];
-    
+
     if (_isSearched) {
       actions.add(
         IconButton(
@@ -101,7 +97,7 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
         ),
       );
     }
-    
+
     return AppBar(
       leading: BackButton(
         onPressed: () => Navigator.pop(context),
@@ -115,8 +111,8 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
         decoration: InputDecoration(
           hintText: "Type here...",
           hintStyle: Theme.of(context).textTheme.displayMedium?.copyWith(
-            color: Colors.white54,
-          ),
+                color: Colors.white54,
+              ),
           border: InputBorder.none,
         ),
         onTapOutside: (PointerDownEvent event) => FocusManager.instance.primaryFocus?.unfocus(),
@@ -141,8 +137,8 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
             Text(
               "Search for ${widget.mediaType.toString()}",
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                color: Colors.white54,
-              ),
+                    color: Colors.white54,
+                  ),
             ),
           ],
         ),
@@ -176,25 +172,30 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
   }
 
   Widget _buildSearchResults() => VerticalMediaList<dynamic>(
-    pagingController: _searchPagingController,
-    //ignore: avoid_annotating_with_dynamic
-    itemBuilder: (BuildContext context, dynamic media, int index) {
-      String posterPath = media.posterPath ?? "";
-      double voteAverage = media.voteAverage ?? 0;
-      return MediaCard(
-        posterPath: posterPath,
-        voteAverage: voteAverage,
-        onTap: () => _navigateToMediaScreen(media),
+        pagingController: _searchPagingController,
+        //ignore: avoid_annotating_with_dynamic
+        itemBuilder: (BuildContext context, dynamic media, int index) {
+          String posterPath = media.posterPath ?? "";
+          double voteAverage = media.voteAverage ?? 0;
+          return MediaCard(
+            posterPath: posterPath,
+            voteAverage: voteAverage,
+            onTap: () => _navigateToMediaScreen(media),
+          );
+        },
+        emptyStateMessage: "No results found for $_currentQuery",
+        errorMessage: "Failed to load search results",
+        shrinkWrap: false,
+        physics: const AlwaysScrollableScrollPhysics(),
       );
-    },
-    emptyStateMessage: "No results found for $_currentQuery",
-    errorMessage: "Failed to load search results",
-    shrinkWrap: false,
-    physics: const AlwaysScrollableScrollPhysics(),
-  );
 
   @override
-  String get screenName => "Search - ${widget.mediaType.toString()}";
+  String get screenName => "Search";
+
+  @override
+  Map<String, Object?> get screenParameters => <String, Object?>{
+        "media_type": widget.mediaType.toJsonField(),
+      };
 
   @override
   void handleDispose() {
@@ -204,27 +205,25 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
 
   @override
   Widget buildContent(BuildContext context) => BlocConsumer<AppBloc, AppState>(
-    listener: (BuildContext context, AppState state) {
-      if (state.error != null) {
-        showSnackBar(context, state.error!);
-        context.read<AppBloc>().add(ClearError());
-      }
-    },
-    builder: (BuildContext context, AppState state) {
-      List<String>? recentSearches = widget.mediaType == MediaType.movies
-          ? state.moviesRecentSearches
-          : state.tvShowsRecentSearches;
+        listener: (BuildContext context, AppState state) {
+          if (state.error != null) {
+            showSnackBar(context, state.error!);
+            context.read<AppBloc>().add(ClearError());
+          }
+        },
+        builder: (BuildContext context, AppState state) {
+          List<String>? recentSearches = widget.mediaType == MediaType.movies ? state.moviesRecentSearches : state.tvShowsRecentSearches;
 
-      return Scaffold(
-        resizeToAvoidBottomInset: false,
-        appBar: _buildSearchAppBar(),
-        body: SafeArea(
-          child: Container(
-            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
-            child: _isSearched ? _buildSearchResults() : _buildRecentSearches(recentSearches),
-          ),
-        ),
+          return Scaffold(
+            resizeToAvoidBottomInset: false,
+            appBar: _buildSearchAppBar(),
+            body: SafeArea(
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 18),
+                child: _isSearched ? _buildSearchResults() : _buildRecentSearches(recentSearches),
+              ),
+            ),
+          );
+        },
       );
-    },
-  );
 }

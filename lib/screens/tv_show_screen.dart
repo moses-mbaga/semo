@@ -231,7 +231,13 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
   }
 
   @override
-  String get screenName => "TV Show - ${widget.tvShow.name}";
+  String get screenName => "TV Show";
+
+  @override
+  Map<String, Object?> get screenParameters => <String, Object?>{
+        "tv_show_id": widget.tvShow.id,
+        "tv_show_name": widget.tvShow.name,
+      };
 
   @override
   Future<void> initializeScreen() async {

@@ -186,7 +186,13 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
   }
 
   @override
-  String get screenName => "Movie - ${widget.movie.title}";
+  String get screenName => "Movie";
+
+  @override
+  Map<String, Object?> get screenParameters => <String, Object?>{
+        "movie_id": widget.movie.id,
+        "movie_title": widget.movie.title,
+      };
 
   @override
   Future<void> initializeScreen() async {

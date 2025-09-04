@@ -125,7 +125,17 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   }
 
   @override
-  String get screenName => "Semo Player - ${widget.tmdbId}";
+  String get screenName => "Player";
+
+  @override
+  Map<String, Object?> get screenParameters => <String, Object?>{
+        "media_id": widget.tmdbId,
+        "media_type": widget.mediaType.toJsonField(),
+        if (widget.seasonId != null) "season_id": widget.seasonId,
+        if (widget.episodeId != null) "episode_id": widget.episodeId,
+        "title": widget.title,
+        if (widget.subtitle != null) "subtitle": widget.subtitle,
+      };
 
   @override
   Future<void> initializeScreen() async {
