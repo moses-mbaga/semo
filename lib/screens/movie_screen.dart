@@ -17,6 +17,7 @@ import "package:semo/models/person.dart";
 import "package:semo/screens/base_screen.dart";
 import "package:semo/screens/player_screen.dart";
 import "package:semo/enums/media_type.dart";
+import "package:semo/services/recently_watched_service.dart";
 
 class MovieScreen extends BaseScreen {
   const MovieScreen(this.movie, {super.key});
@@ -33,6 +34,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
   bool _isLoading = true;
   bool _isPlayTriggered = false;
   bool _isExtractingStream = false;
+  final RecentlyWatchedService _recentlyWatchedService = RecentlyWatchedService();
 
   void _toggleFavorite() {
     try {
@@ -83,45 +85,72 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
     return "$mins ${mins == 1 ? "min" : "mins"}";
   }
 
-  Widget _buildPlayButton(MediaStream? stream) => Container(
-        width: double.infinity,
-        height: 50,
-        margin: const EdgeInsets.only(top: 30),
-        child: ElevatedButton(
-          onPressed: !_isExtractingStream
-              ? () {
-                  if (stream != null && stream.url.isNotEmpty) {
-                    _playMovie(stream);
-                  } else if (!_isExtractingStream) {
-                    _extractMovieStream();
-                  }
-                }
-              : null,
-          style: ElevatedButton.styleFrom(
-            backgroundColor: Theme.of(context).primaryColor,
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(10),
+  Widget _buildPlayButton(MediaStream? stream, {required int progressSeconds, required int durationSeconds}) {
+    final double progress = durationSeconds > 0 ? (progressSeconds / durationSeconds).clamp(0.0, 1.0) : 0.0;
+    final bool isRecentlyWatched = progressSeconds > 0 && progress < 1.0;
+
+    final String label = _isExtractingStream ? "Loading..." : (isRecentlyWatched ? "Resume" : "Play");
+
+    return Container(
+      width: double.infinity,
+      height: 50,
+      margin: const EdgeInsets.only(top: 30),
+      child: Stack(
+        children: <Widget>[
+          // Progress background
+          ClipRRect(
+            borderRadius: BorderRadius.circular(10),
+            child: LinearProgressIndicator(
+              value: progress,
+              minHeight: 50,
+              backgroundColor: Theme.of(context).primaryColor.withValues(alpha: 0.25),
+              color: Theme.of(context).primaryColor,
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: <Widget>[
-              const Icon(
-                Icons.play_arrow,
-                size: 28,
-                color: Colors.white,
+          // Clickable layer
+          Positioned.fill(
+            child: ElevatedButton(
+              onPressed: !_isExtractingStream
+                  ? () {
+                      if (stream != null && stream.url.isNotEmpty) {
+                        _playMovie(stream);
+                      } else if (!_isExtractingStream) {
+                        _extractMovieStream();
+                      }
+                    }
+                  : null,
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.transparent,
+                disabledBackgroundColor: Colors.transparent,
+                shadowColor: Colors.transparent,
+                surfaceTintColor: Colors.transparent,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
               ),
-              const SizedBox(width: 5),
-              Text(
-                !_isExtractingStream ? "Play" : "Loading...",
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontSize: 22,
-                    ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: <Widget>[
+                  const Icon(
+                    Icons.play_arrow,
+                    size: 28,
+                    color: Colors.white,
+                  ),
+                  const SizedBox(width: 5),
+                  Text(
+                    label,
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          fontSize: 22,
+                        ),
+                  ),
+                ],
               ),
-            ],
+            ),
           ),
-        ),
-      );
+        ],
+      ),
+    );
+  }
 
   Widget _buildPersonCardHorizontalList(List<Person>? cast) {
     if (cast == null || cast.isEmpty) {
@@ -244,7 +273,11 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
                                     subtitle: "${displayMovie.releaseDate.split("-").first} · ${_formatDuration(Duration(minutes: displayMovie.duration))}",
                                     overview: displayMovie.overview,
                                   ),
-                                  _buildPlayButton(stream),
+                                  _buildPlayButton(
+                                    stream,
+                                    progressSeconds: _recentlyWatchedService.getMovieProgress(displayMovie.id, state.recentlyWatched),
+                                    durationSeconds: (displayMovie.duration) * 60,
+                                  ),
                                   _buildPersonCardHorizontalList(state.movieCast?[displayMovie.id.toString()]),
                                   _buildMediaCardHorizontalList(
                                     title: "Recommendations",
