@@ -33,9 +33,15 @@ class _FavoritesScreenState extends BaseScreenState<FavoritesScreen> {
     VoidCallback onTap;
 
     if (widget.mediaType == MediaType.movies) {
-      onTap = () => navigate(MovieScreen(media as Movie));
+      onTap = () {
+        final Movie m = media as Movie;
+        navigate(MovieScreen(m));
+      };
     } else {
-      onTap = () => navigate(TvShowScreen(media as TvShow));
+      onTap = () {
+        final TvShow tv = media as TvShow;
+        navigate(TvShowScreen(tv));
+      };
     }
 
     String posterPath = media.posterPath ?? "";
@@ -49,6 +55,11 @@ class _FavoritesScreenState extends BaseScreenState<FavoritesScreen> {
       onRemove: () {
         // Delay the removal to escape dispose error
         Timer(const Duration(milliseconds: 500), () {
+          final Map<String, Object?> params = <String, Object?>{
+            "media_type": widget.mediaType.toJsonField(),
+            "tmdb_id": media.id,
+          };
+          unawaited(logEvent("favorite_remove", parameters: params));
           context.read<AppBloc>().add(
                 RemoveFavorite(media, widget.mediaType),
               );

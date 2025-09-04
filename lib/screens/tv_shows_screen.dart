@@ -32,12 +32,26 @@ class _TvShowsScreenState extends BaseScreenState<TvShowsScreen> {
 
   void _hideFromMenu(TvShow tvShow) {
     Timer(const Duration(milliseconds: 500), () {
+      unawaited(logEvent(
+        "recently_watched_hide",
+        parameters: <String, Object?>{
+          "media_type": "tv",
+          "tv_show_id": tvShow.id,
+        },
+      ));
       context.read<AppBloc>().add(HideTvShowProgress(tvShow.id));
     });
   }
 
   void _removeFromRecentlyWatched(TvShow tvShow) {
     Timer(const Duration(milliseconds: 500), () {
+      unawaited(logEvent(
+        "recently_watched_remove",
+        parameters: <String, Object?>{
+          "media_type": "tv",
+          "tv_show_id": tvShow.id,
+        },
+      ));
       context.read<AppBloc>().add(DeleteTvShowProgress(tvShow.id));
     });
   }
@@ -62,8 +76,12 @@ class _TvShowsScreenState extends BaseScreenState<TvShowsScreen> {
     return CarouselSlider(
       items: onTheAir,
       currentItemIndex: _currentOnTheAirIndex,
-      onItemChanged: (int index) => setState(() => _currentOnTheAirIndex = index),
-      onItemTap: (int index) => navigate(TvShowScreen(onTheAir[index])),
+      onItemChanged: (int index) {
+        setState(() => _currentOnTheAirIndex = index);
+      },
+      onItemTap: (int index) {
+        navigate(TvShowScreen(onTheAir[index]));
+      },
       mediaType: MediaType.tvShows,
     );
   }
@@ -85,7 +103,9 @@ class _TvShowsScreenState extends BaseScreenState<TvShowsScreen> {
           child: MediaCard(
             posterPath: tvShow.posterPath,
             voteAverage: tvShow.voteAverage,
-            onTap: () => navigate(TvShowScreen(tvShow)),
+            onTap: () {
+              navigate(TvShowScreen(tvShow));
+            },
             showHideOption: true,
             onHide: () => _hideFromMenu(tvShow),
             showRemoveOption: true,
@@ -112,7 +132,10 @@ class _TvShowsScreenState extends BaseScreenState<TvShowsScreen> {
         pagingController: controller,
         mediaType: MediaType.tvShows,
         //ignore: avoid_annotating_with_dynamic
-        onTap: (dynamic media) => navigate(TvShowScreen(media as TvShow)),
+        onTap: (dynamic media) {
+          final TvShow tv = media as TvShow;
+          navigate(TvShowScreen(tv));
+        },
       ),
     );
   }
@@ -151,51 +174,53 @@ class _TvShowsScreenState extends BaseScreenState<TvShowsScreen> {
 
   @override
   Widget buildContent(BuildContext context) => BlocConsumer<AppBloc, AppState>(
-    listener: (BuildContext context, AppState state) {
-      if (state.error != null) {
-        showSnackBar(context, state.error!);
-        context.read<AppBloc>().add(ClearError());
-      }
-    },
-    builder: (BuildContext context, AppState state) => Scaffold(
-      body: RefreshIndicator(
-        color: Theme.of(context).primaryColor,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        onRefresh: _refreshData,
-        child: !state.isLoadingTvShows ? SingleChildScrollView(
-          child: SafeArea(
-            child: Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 18,
-              ),
-              child: Column(
-                children: <Widget>[
-                  _buildOnTheAir(state.onTheAirTvShows),
-                  _buildRecentlyWatchedSection(state.recentlyWatchedTvShows),
-                  _buildMediaCardHorizontalList(
-                    title: "Trending",
-                    controller: state.trendingTvShowsPagingController,
-                    viewAllSource: Urls.trendingTvShows,
-                  ),
-                  _buildMediaCardHorizontalList(
-                    title: "Popular",
-                    controller: state.popularTvShowsPagingController,
-                    viewAllSource: Urls.popularTvShows,
-                  ),
-                  _buildMediaCardHorizontalList(
-                    title: "Top rated",
-                    controller: state.topRatedTvShowsPagingController,
-                    viewAllSource: Urls.topRatedTvShows,
-                  ),
-                  _buildStreamingPlatforms(state.streamingPlatformTvShowsPagingControllers),
-                  _buildGenres(state.tvShowGenres, state.genreTvShowsPagingControllers),
-                ],
-              ),
-            ),
+        listener: (BuildContext context, AppState state) {
+          if (state.error != null) {
+            showSnackBar(context, state.error!);
+            context.read<AppBloc>().add(ClearError());
+          }
+        },
+        builder: (BuildContext context, AppState state) => Scaffold(
+          body: RefreshIndicator(
+            color: Theme.of(context).primaryColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            onRefresh: _refreshData,
+            child: !state.isLoadingTvShows
+                ? SingleChildScrollView(
+                    child: SafeArea(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 18,
+                        ),
+                        child: Column(
+                          children: <Widget>[
+                            _buildOnTheAir(state.onTheAirTvShows),
+                            _buildRecentlyWatchedSection(state.recentlyWatchedTvShows),
+                            _buildMediaCardHorizontalList(
+                              title: "Trending",
+                              controller: state.trendingTvShowsPagingController,
+                              viewAllSource: Urls.trendingTvShows,
+                            ),
+                            _buildMediaCardHorizontalList(
+                              title: "Popular",
+                              controller: state.popularTvShowsPagingController,
+                              viewAllSource: Urls.popularTvShows,
+                            ),
+                            _buildMediaCardHorizontalList(
+                              title: "Top rated",
+                              controller: state.topRatedTvShowsPagingController,
+                              viewAllSource: Urls.topRatedTvShows,
+                            ),
+                            _buildStreamingPlatforms(state.streamingPlatformTvShowsPagingControllers),
+                            _buildGenres(state.tvShowGenres, state.genreTvShowsPagingControllers),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : const Center(child: CircularProgressIndicator()),
           ),
-        ) : const Center(child: CircularProgressIndicator()),
-      ),
-    ),
-  );
+        ),
+      );
 }

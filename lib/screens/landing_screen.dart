@@ -22,20 +22,43 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProv
   AnimationController? _lottieController;
 
   Future<void> _authenticateWithGoogle() async {
+    await logEvent(
+      "auth_sign_in_start",
+      parameters: <String, Object?>{
+        "provider": "google",
+      },
+    );
     spinner.show();
 
     try {
       await _authService.signIn();
 
       if (mounted) {
-        context.read<AppBloc>().add(LoadInitialData());
+        await logEvent(
+          "auth_sign_in_success",
+          parameters: <String, Object?>{
+            "provider": "google",
+          },
+        );
+
+        if (mounted) {
+          context.read<AppBloc>().add(LoadInitialData());
+        }
 
         await navigate(
           const FragmentsScreen(),
           replace: true,
         );
       }
-    } catch (_) {
+    } catch (e, s) {
+      logger.e("Auth sign-in error", error: e, stackTrace: s);
+      await logEvent(
+        "auth_sign_in_error",
+        parameters: <String, Object?>{
+          "provider": "google",
+          "error": e.toString(),
+        },
+      );
       if (mounted) {
         showSnackBar(context, "An error occurred");
       }
@@ -45,129 +68,135 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProv
   }
 
   Widget _buildContinueWithGoogleButton() => Container(
-    width: double.infinity,
-    height: 60,
-    child: ElevatedButton(
-      style: ElevatedButton.styleFrom(
-        backgroundColor: Theme.of(context).primaryColor,
-        side: const BorderSide(
-          width: 3,
-          color: Colors.white,
-        ),
-        shape: RoundedRectangleBorder(
-          borderRadius: BorderRadius.circular(15),
-        ),
-      ),
-      onPressed: () async {
-        await _authenticateWithGoogle();
-      },
-      child: Container(
         width: double.infinity,
-        child: Stack(
-          children: <Widget>[
-            const Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: <Widget>[
-                FaIcon(
-                  FontAwesomeIcons.google,
-                  color: Colors.white,
-                  size: 20,
-                ),
-              ],
+        height: 60,
+        child: ElevatedButton(
+          style: ElevatedButton.styleFrom(
+            backgroundColor: Theme.of(context).primaryColor,
+            side: const BorderSide(
+              width: 3,
+              color: Colors.white,
             ),
-            const Padding(
-              padding: EdgeInsets.only(
-                right: 16,
-              ),
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(15),
             ),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
+          ),
+          onPressed: () async {
+            await logEvent(
+              "cta_click",
+              parameters: <String, Object?>{
+                "button": "continue_with_google",
+              },
+            );
+            await _authenticateWithGoogle();
+          },
+          child: Container(
+            width: double.infinity,
+            child: Stack(
               children: <Widget>[
-                Row(
+                const Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
                   children: <Widget>[
-                    const Spacer(),
-                    Text(
-                      "Continue with Google",
-                      style: Theme.of(context).textTheme.displayMedium,
+                    FaIcon(
+                      FontAwesomeIcons.google,
+                      color: Colors.white,
+                      size: 20,
                     ),
-                    const Spacer(),
+                  ],
+                ),
+                const Padding(
+                  padding: EdgeInsets.only(
+                    right: 16,
+                  ),
+                ),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: <Widget>[
+                    Row(
+                      children: <Widget>[
+                        const Spacer(),
+                        Text(
+                          "Continue with Google",
+                          style: Theme.of(context).textTheme.displayMedium,
+                        ),
+                        const Spacer(),
+                      ],
+                    ),
                   ],
                 ),
               ],
             ),
-          ],
-        ),
-      ),
-    ),
-  );
-
-  Widget _buildAnimation() => Expanded(
-    child: Lottie.asset(
-      Assets.lottie.watchingTv,
-      controller: _lottieController,
-      fit: BoxFit.fill,
-      onLoaded: (LottieComposition composition) async {
-        _lottieController = AnimationController(vsync: this);
-        _lottieController?.duration = const Duration(milliseconds: 3500);
-        await _lottieController?.repeat(reverse: true);
-      },
-    ),
-  );
-
-  Widget _buildContent() => Column(
-    children: <Widget>[
-      Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(
-          horizontal: 24,
-        ),
-        decoration: BoxDecoration(
-          color: Theme.of(context).primaryColor,
-          borderRadius: const BorderRadius.vertical(
-            top: Radius.circular(20),
           ),
         ),
-        child: Column(
-          children: <Widget>[
-            Padding(
-              padding: const EdgeInsets.only(top: 36),
-              child: Container(
-                width: double.infinity,
-                child: Text(
-                  "Welcome!",
-                  style: Theme.of(context).textTheme.titleLarge,
-                  textAlign: TextAlign.left,
-                ),
-              ),
-            ),
-            Container(
-              margin: const EdgeInsets.symmetric(vertical: 20),
-              child: Container(
-                width: double.infinity,
-                child: Text(
-                  "Discover a vast library of entertainment, from blockbuster hits to indie gems, all tailored to your tastes. Enjoy unlimited streaming on any device, create your personalized watchlist, and get ready for an unparalleled viewing experience.",
-                  style: Theme.of(context).textTheme.displayMedium,
-                  textAlign: TextAlign.left,
-                ),
-              ),
-            ),
-            SafeArea(
-              top: false,
-              left: false,
-              right: false,
-              bottom: true,
-              child: Container(
-                margin: const EdgeInsets.only(
-                  bottom: 18,
-                ),
-                child: _buildContinueWithGoogleButton(),
-              ),
-            ),
-          ],
+      );
+
+  Widget _buildAnimation() => Expanded(
+        child: Lottie.asset(
+          Assets.lottie.watchingTv,
+          controller: _lottieController,
+          fit: BoxFit.fill,
+          onLoaded: (LottieComposition composition) async {
+            _lottieController = AnimationController(vsync: this);
+            _lottieController?.duration = const Duration(milliseconds: 3500);
+            await _lottieController?.repeat(reverse: true);
+          },
         ),
-      ),
-    ],
-  );
+      );
+
+  Widget _buildContent() => Column(
+        children: <Widget>[
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(
+              horizontal: 24,
+            ),
+            decoration: BoxDecoration(
+              color: Theme.of(context).primaryColor,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(20),
+              ),
+            ),
+            child: Column(
+              children: <Widget>[
+                Padding(
+                  padding: const EdgeInsets.only(top: 36),
+                  child: Container(
+                    width: double.infinity,
+                    child: Text(
+                      "Welcome!",
+                      style: Theme.of(context).textTheme.titleLarge,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                ),
+                Container(
+                  margin: const EdgeInsets.symmetric(vertical: 20),
+                  child: Container(
+                    width: double.infinity,
+                    child: Text(
+                      "Discover a vast library of entertainment, from blockbuster hits to indie gems, all tailored to your tastes. Enjoy unlimited streaming on any device, create your personalized watchlist, and get ready for an unparalleled viewing experience.",
+                      style: Theme.of(context).textTheme.displayMedium,
+                      textAlign: TextAlign.left,
+                    ),
+                  ),
+                ),
+                SafeArea(
+                  top: false,
+                  left: false,
+                  right: false,
+                  bottom: true,
+                  child: Container(
+                    margin: const EdgeInsets.only(
+                      bottom: 18,
+                    ),
+                    child: _buildContinueWithGoogleButton(),
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      );
 
   @override
   String get screenName => "Landing";
@@ -179,11 +208,11 @@ class _LandingScreenState extends BaseScreenState<LandingScreen> with TickerProv
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
-    body: Column(
-      children: <Widget>[
-        _buildAnimation(),
-        _buildContent(),
-      ],
-    ),
-  );
+        body: Column(
+          children: <Widget>[
+            _buildAnimation(),
+            _buildContent(),
+          ],
+        ),
+      );
 }

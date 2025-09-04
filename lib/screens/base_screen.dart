@@ -14,7 +14,11 @@ import "package:url_launcher/url_launcher.dart";
 import "package:semo/utils/urls.dart";
 
 abstract class BaseScreen extends StatefulWidget {
-  const BaseScreen({super.key, this.shouldLogScreenView = true, this.shouldListenToAuthStateChanges = true});
+  const BaseScreen({
+    super.key,
+    this.shouldLogScreenView = true,
+    this.shouldListenToAuthStateChanges = true,
+  });
 
   final bool shouldLogScreenView;
   final bool shouldListenToAuthStateChanges;
@@ -181,6 +185,32 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
       );
     } catch (e, s) {
       logger.e("Failed to log analytics event", error: e, stackTrace: s);
+    }
+  }
+
+  /// Unified logging for UI/screen events.
+  /// Logs to console (info) and optionally to Firebase Analytics.
+  Future<void> logEvent(
+    String action, {
+    Map<String, Object?>? parameters,
+    bool sendToAnalytics = true,
+  }) async {
+    final Map<String, Object?> payload = <String, Object?>{
+      "screen": screenName,
+      ...?parameters,
+    }..removeWhere((String key, Object? value) => value == null);
+
+    logger.i(<String, Object?>{
+      "action": action,
+      ...payload,
+    });
+
+    if (sendToAnalytics) {
+      try {
+        await logAnalyticsEvent(action, payload.cast<String, Object>());
+      } catch (e, s) {
+        logger.e("Failed to send analytics event", error: e, stackTrace: s);
+      }
     }
   }
 

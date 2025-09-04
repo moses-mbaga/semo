@@ -38,6 +38,15 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
 
   void _toggleFavorite() {
     try {
+      final bool newState = !_isFavorite;
+      unawaited(logEvent(
+        "toggle_favorite",
+        parameters: <String, Object?>{
+          "media_type": "movie",
+          "movie_id": _movie.id,
+          "new_state": "$newState",
+        },
+      ));
       Timer(const Duration(milliseconds: 500), () {
         AppEvent event = _isFavorite ? RemoveFavorite(_movie, MediaType.movies) : AddFavorite(_movie, MediaType.movies);
         context.read<AppBloc>().add(event);
@@ -46,12 +55,31 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
   }
 
   Future<void> _extractMovieStream() async {
+    await logEvent(
+      "extract_movie_stream_start",
+      parameters: <String, Object?>{
+        "movie_id": _movie.id,
+      },
+    );
     setState(() => _isPlayTriggered = true);
-    context.read<AppBloc>().add(ExtractMovieStream(_movie));
+    if (mounted) {
+      context.read<AppBloc>().add(ExtractMovieStream(_movie));
+    }
   }
 
   Future<void> _playMovie(MediaStream stream) async {
-    context.read<AppBloc>().add(LoadMovieSubtitles(_movie.id));
+    await logEvent(
+      "play_movie",
+      parameters: <String, Object?>{
+        "movie_id": _movie.id,
+        "has_stream_url": stream.url.isNotEmpty,
+      },
+    );
+
+    if (mounted) {
+      context.read<AppBloc>().add(LoadMovieSubtitles(_movie.id));
+    }
+
     await navigate(
       PlayerScreen(
         tmdbId: _movie.id,
@@ -79,7 +107,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
     final int mins = d.inMinutes.remainder(60);
 
     if (hours > 0) {
-      return "$hours ${hours == 1 ? "hr" : "hrs"}${mins > 0 ? " $mins ${mins == 1 ? "min" : "mins"}" : ''}";
+      return "$hours ${hours == 1 ? "hr" : "hrs"}${mins > 0 ? " $mins ${mins == 1 ? "min" : "mins"}" : ""}";
     }
 
     return "$mins ${mins == 1 ? "min" : "mins"}";
@@ -112,6 +140,24 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
             child: ElevatedButton(
               onPressed: !_isExtractingStream
                   ? () {
+                      if (stream != null && stream.url.isNotEmpty) {
+                        unawaited(logEvent(
+                          "cta_click",
+                          parameters: <String, Object?>{
+                            "button": "play_movie",
+                            "movie_id": _movie.id,
+                            "resume": progress > 0 && progress < 1.0,
+                          },
+                        ));
+                      } else {
+                        unawaited(logEvent(
+                          "cta_click",
+                          parameters: <String, Object?>{
+                            "button": "extract_stream",
+                            "movie_id": _movie.id,
+                          },
+                        ));
+                      }
                       if (stream != null && stream.url.isNotEmpty) {
                         _playMovie(stream);
                       } else if (!_isExtractingStream) {

@@ -40,6 +40,15 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
 
   void _toggleFavorite() {
     try {
+      final bool newState = !_isFavorite;
+      unawaited(logEvent(
+        "toggle_favorite",
+        parameters: <String, Object?>{
+          "media_type": "tv",
+          "tv_show_id": widget.tvShow.id,
+          "new_state": "$newState",
+        },
+      ));
       Timer(const Duration(milliseconds: 500), () {
         AppEvent event = _isFavorite ? RemoveFavorite(widget.tvShow, MediaType.tvShows) : AddFavorite(widget.tvShow, MediaType.tvShows);
         context.read<AppBloc>().add(event);
@@ -48,19 +57,47 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
   }
 
   Future<void> _extractEpisodeStream(Season season, Episode episode) async {
+    await logEvent(
+      "extract_episode_stream_start",
+      parameters: <String, Object?>{
+        "tv_show_id": widget.tvShow.id,
+        "season_id": season.id,
+        "season_number": season.number,
+        "episode_id": episode.id,
+        "episode_number": episode.number,
+      },
+    );
     setState(() {
       _extractingEpisodeId = episode.id;
     });
-    context.read<AppBloc>().add(ExtractEpisodeStream(widget.tvShow, episode));
+
+    if (mounted) {
+      context.read<AppBloc>().add(ExtractEpisodeStream(widget.tvShow, episode));
+    }
   }
 
   Future<void> _playEpisode(Season season, Episode episode, MediaStream stream) async {
-    context.read<AppBloc>().add(LoadEpisodeSubtitles(
-          widget.tvShow.id,
-          seasonNumber: season.number,
-          episodeId: episode.id,
-          episodeNumber: episode.number,
-        ));
+    await logEvent(
+      "play_episode",
+      parameters: <String, Object?>{
+        "tv_show_id": widget.tvShow.id,
+        "season_id": season.id,
+        "season_number": season.number,
+        "episode_id": episode.id,
+        "episode_number": episode.number,
+        "has_stream_url": stream.url.isNotEmpty,
+      },
+    );
+
+    if (mounted) {
+      context.read<AppBloc>().add(LoadEpisodeSubtitles(
+            widget.tvShow.id,
+            seasonNumber: season.number,
+            episodeId: episode.id,
+            episodeNumber: episode.number,
+          ));
+    }
+
     await navigate(
       PlayerScreen(
         tmdbId: widget.tvShow.id,
@@ -75,6 +112,14 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
   }
 
   Future<void> _markEpisodeAsWatched(Season season, Episode episode) async {
+    unawaited(logEvent(
+      "mark_episode_watched",
+      parameters: <String, Object?>{
+        "tv_show_id": widget.tvShow.id,
+        "season_id": season.id,
+        "episode_id": episode.id,
+      },
+    ));
     context.read<AppBloc>().add(UpdateEpisodeProgress(
           widget.tvShow.id,
           season.id,
@@ -84,6 +129,14 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
   }
 
   Future<void> _removeEpisodeFromRecentlyWatched(Season season, Episode episode) async {
+    unawaited(logEvent(
+      "remove_episode_recently_watched",
+      parameters: <String, Object?>{
+        "tv_show_id": widget.tvShow.id,
+        "season_id": season.id,
+        "episode_id": episode.id,
+      },
+    ));
     context.read<AppBloc>().add(DeleteEpisodeProgress(
           widget.tvShow.id,
           season.id,
@@ -95,6 +148,14 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
     final int selectedSeasonIndex = seasons.indexOf(season);
 
     if (selectedSeasonIndex != -1) {
+      unawaited(logEvent(
+        "change_season",
+        parameters: <String, Object?>{
+          "tv_show_id": widget.tvShow.id,
+          "season_id": season.id,
+          "season_number": season.number,
+        },
+      ));
       setState(() => _currentSeasonIndex = selectedSeasonIndex);
       context.read<AppBloc>().add(LoadSeasonEpisodes(widget.tvShow.id, season.number));
     }
@@ -182,6 +243,16 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
           onTap: (disableAll || isExtracting)
               ? null
               : () {
+                  unawaited(logEvent(
+                    "cta_click",
+                    parameters: <String, Object?>{
+                      "button": "episode_${stream == null ? "extract" : "stream"}",
+                      "tv_show_id": widget.tvShow.id,
+                      "season_id": selectedSeason.id,
+                      "episode_id": episode.id,
+                      "has_stream": stream != null && stream.url.isNotEmpty,
+                    },
+                  ));
                   if (stream == null) {
                     _extractEpisodeStream(selectedSeason, episode);
                   } else {

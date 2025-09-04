@@ -44,6 +44,8 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   List<File>? _subtitleFiles;
   bool _initialLandscapeLike = false;
   bool _forcedLandscape = false;
+  bool _didLogPlaybackStart = false;
+  bool _didLogSubtitlesAvailable = false;
 
   void _updateRecentlyWatched(int progressSeconds) {
     try {
@@ -98,6 +100,16 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   void _onProgress(Duration progress, Duration total) {
     if (total.inSeconds > 0) {
       final int progressSeconds = progress.inSeconds;
+      if (!_didLogPlaybackStart && progressSeconds > 0) {
+        _didLogPlaybackStart = true;
+        unawaited(logEvent(
+          "playback_start",
+          parameters: <String, Object?>{
+            "tmdb_id": widget.tmdbId,
+            "media_type": widget.mediaType.toJsonField(),
+          },
+        ));
+      }
       if (progressSeconds > 0) {
         _updateRecentlyWatched(progressSeconds);
       }
@@ -106,6 +118,14 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
 
   void _onError(Object? error) {
     logger.e("Playback error", error: error);
+    unawaited(logEvent(
+      "player_error",
+      parameters: <String, Object?>{
+        "tmdb_id": widget.tmdbId,
+        "media_type": widget.mediaType.toJsonField(),
+        "error": error?.toString(),
+      },
+    ));
     if (mounted) {
       if (widget.mediaType == MediaType.movies) {
         context.read<AppBloc>().add(RemoveMovieStream(widget.tmdbId));
@@ -118,10 +138,34 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   }
 
   Future<void> _saveThenGoBack(int progressSeconds) async {
+    unawaited(logEvent(
+      "player_exit",
+      parameters: <String, Object?>{
+        "tmdb_id": widget.tmdbId,
+        "media_type": widget.mediaType.toJsonField(),
+        "progress_seconds": progressSeconds,
+      },
+    ));
     if (mounted) {
       _updateRecentlyWatched(progressSeconds);
       Navigator.pop(context);
     }
+  }
+
+  Future<void> _onPlaybackComplete(int progressSeconds) async {
+    unawaited(logEvent(
+      "player_complete",
+      parameters: <String, Object?>{
+        "tmdb_id": widget.tmdbId,
+        "media_type": widget.mediaType.toJsonField(),
+        "progress_seconds": progressSeconds,
+      },
+    ));
+    await _saveThenGoBack(progressSeconds);
+  }
+
+  Future<void> _onBack(int progressSeconds) async {
+    await _saveThenGoBack(progressSeconds);
   }
 
   @override
@@ -141,6 +185,18 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   Future<void> initializeScreen() async {
     await WakelockPlus.enable();
     await _applyLandscapeIfNeeded();
+    try {
+      final Uri? uri = Uri.tryParse(widget.stream.url);
+      await logEvent(
+        "player_open",
+        parameters: <String, Object?>{
+          "tmdb_id": widget.tmdbId,
+          "media_type": widget.mediaType.toJsonField(),
+          "has_stream_url": widget.stream.url.isNotEmpty,
+          if (uri != null) "stream_host": uri.host,
+        },
+      );
+    } catch (_) {}
   }
 
   @override
@@ -157,6 +213,17 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
               setState(() => _subtitleFiles = state.movieSubtitles?["${widget.tmdbId}"]);
             } else {
               setState(() => _subtitleFiles = state.episodeSubtitles?["${widget.episodeId}"]);
+            }
+            if (!_didLogSubtitlesAvailable && (_subtitleFiles?.isNotEmpty ?? false)) {
+              _didLogSubtitlesAvailable = true;
+              unawaited(logEvent(
+                "subtitles_available",
+                parameters: <String, Object?>{
+                  "tmdb_id": widget.tmdbId,
+                  "media_type": widget.mediaType.toJsonField(),
+                  "count": _subtitleFiles!.length,
+                },
+              ));
             }
           }
 
@@ -193,8 +260,8 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
               subtitleFiles: _subtitleFiles,
               initialProgress: progressSeconds,
               onProgress: _onProgress,
-              onPlaybackComplete: _saveThenGoBack,
-              onBack: _saveThenGoBack,
+              onPlaybackComplete: _onPlaybackComplete,
+              onBack: _onBack,
               onError: _onError,
             ),
           );

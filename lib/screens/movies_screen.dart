@@ -32,6 +32,13 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
 
   void _removeFromRecentlyWatched(Movie movie) {
     Timer(const Duration(milliseconds: 500), () {
+      unawaited(logEvent(
+        "recently_watched_remove",
+        parameters: <String, Object?>{
+          "media_type": "movie",
+          "movie_id": movie.id,
+        },
+      ));
       context.read<AppBloc>().add(DeleteMovieProgress(movie.id));
     });
   }
@@ -56,8 +63,12 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
     return CarouselSlider(
       items: nowPlaying,
       currentItemIndex: _currentNowPlayingIndex,
-      onItemChanged: (int index) => setState(() => _currentNowPlayingIndex = index),
-      onItemTap: (int index) => navigate(MovieScreen(nowPlaying[index])),
+      onItemChanged: (int index) {
+        setState(() => _currentNowPlayingIndex = index);
+      },
+      onItemTap: (int index) {
+        navigate(MovieScreen(nowPlaying[index]));
+      },
       mediaType: MediaType.movies,
     );
   }
@@ -79,7 +90,9 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
           child: MediaCard(
             posterPath: movie.posterPath,
             voteAverage: movie.voteAverage,
-            onTap: () => navigate(MovieScreen(movie)),
+            onTap: () {
+              navigate(MovieScreen(movie));
+            },
             showRemoveOption: true,
             onRemove: () => _removeFromRecentlyWatched(movie),
           ),
@@ -104,7 +117,10 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
         pagingController: controller,
         mediaType: MediaType.movies,
         //ignore: avoid_annotating_with_dynamic
-        onTap: (dynamic media) => navigate(MovieScreen(media as Movie)),
+        onTap: (dynamic media) {
+          final Movie m = media as Movie;
+          navigate(MovieScreen(m));
+        },
       ),
     );
   }
@@ -143,51 +159,53 @@ class _MoviesScreenState extends BaseScreenState<MoviesScreen> {
 
   @override
   Widget buildContent(BuildContext context) => BlocConsumer<AppBloc, AppState>(
-    listener: (BuildContext context, AppState state) {
-      if (state.error != null) {
-        showSnackBar(context, state.error!);
-        context.read<AppBloc>().add(ClearError());
-      }
-    },
-    builder: (BuildContext context, AppState state) => Scaffold(
-      body: RefreshIndicator(
-        color: Theme.of(context).primaryColor,
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        onRefresh: _refreshData,
-        child: !state.isLoadingMovies ? SingleChildScrollView(
-          child: SafeArea(
-            child: Container(
-              margin: const EdgeInsets.symmetric(
-                horizontal: 10,
-                vertical: 18,
-              ),
-              child: Column(
-                children: <Widget>[
-                  _buildNowPlaying(state.nowPlayingMovies),
-                  _buildRecentlyWatched(state.recentlyWatchedMovies),
-                  _buildMediaCardHorizontalList(
-                    title: "Trending",
-                    controller: state.trendingMoviesPagingController,
-                    viewAllSource: Urls.trendingMovies,
-                  ),
-                  _buildMediaCardHorizontalList(
-                    title: "Popular",
-                    controller: state.popularMoviesPagingController,
-                    viewAllSource: Urls.popularMovies,
-                  ),
-                  _buildMediaCardHorizontalList(
-                    title: "Top rated",
-                    controller: state.topRatedMoviesPagingController,
-                    viewAllSource: Urls.topRatedMovies,
-                  ),
-                  _buildStreamingPlatforms(state.streamingPlatformMoviesPagingControllers),
-                  _buildGenres(state.movieGenres, state.genreMoviesPagingControllers),
-                ],
-              ),
-            ),
+        listener: (BuildContext context, AppState state) {
+          if (state.error != null) {
+            showSnackBar(context, state.error!);
+            context.read<AppBloc>().add(ClearError());
+          }
+        },
+        builder: (BuildContext context, AppState state) => Scaffold(
+          body: RefreshIndicator(
+            color: Theme.of(context).primaryColor,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            onRefresh: _refreshData,
+            child: !state.isLoadingMovies
+                ? SingleChildScrollView(
+                    child: SafeArea(
+                      child: Container(
+                        margin: const EdgeInsets.symmetric(
+                          horizontal: 10,
+                          vertical: 18,
+                        ),
+                        child: Column(
+                          children: <Widget>[
+                            _buildNowPlaying(state.nowPlayingMovies),
+                            _buildRecentlyWatched(state.recentlyWatchedMovies),
+                            _buildMediaCardHorizontalList(
+                              title: "Trending",
+                              controller: state.trendingMoviesPagingController,
+                              viewAllSource: Urls.trendingMovies,
+                            ),
+                            _buildMediaCardHorizontalList(
+                              title: "Popular",
+                              controller: state.popularMoviesPagingController,
+                              viewAllSource: Urls.popularMovies,
+                            ),
+                            _buildMediaCardHorizontalList(
+                              title: "Top rated",
+                              controller: state.topRatedMoviesPagingController,
+                              viewAllSource: Urls.topRatedMovies,
+                            ),
+                            _buildStreamingPlatforms(state.streamingPlatformMoviesPagingControllers),
+                            _buildGenres(state.movieGenres, state.genreMoviesPagingControllers),
+                          ],
+                        ),
+                      ),
+                    ),
+                  )
+                : const Center(child: CircularProgressIndicator()),
           ),
-        ) : const Center(child: CircularProgressIndicator()),
-      ),
-    ),
-  );
+        ),
+      );
 }

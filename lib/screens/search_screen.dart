@@ -57,6 +57,14 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
 
     final String trimmedQuery = query.trim();
 
+    unawaited(logEvent(
+      "search_submit",
+      parameters: <String, Object?>{
+        "query": trimmedQuery,
+        "media_type": widget.mediaType.toJsonField(),
+      },
+    ));
+
     setState(() {
       _searchController.text = trimmedQuery;
       _isSearched = true;
@@ -69,6 +77,12 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
   }
 
   void _clearSearch() {
+    unawaited(logEvent(
+      "search_clear",
+      parameters: <String, Object?>{
+        "media_type": widget.mediaType.toJsonField(),
+      },
+    ));
     setState(() {
       _isSearched = false;
       _currentQuery = "";
@@ -79,6 +93,14 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
 
   //ignore: avoid_annotating_with_dynamic
   Future<void> _navigateToMediaScreen(dynamic media) async {
+    unawaited(logEvent(
+      "open_media_from_search",
+      parameters: <String, Object?>{
+        "media_type": widget.mediaType == MediaType.movies ? "movie" : "tv",
+        "tmdb_id": widget.mediaType == MediaType.movies ? (media as Movie).id : (media as TvShow).id,
+        "query": _currentQuery,
+      },
+    ));
     if (widget.mediaType == MediaType.movies) {
       await navigate(MovieScreen(media as Movie));
     } else {
@@ -163,9 +185,27 @@ class _SearchScreenState extends BaseScreenState<SearchScreen> {
               Icons.close,
               color: Colors.white54,
             ),
-            onPressed: () => context.read<AppBloc>().add(RemoveRecentSearch(query, widget.mediaType)),
+            onPressed: () {
+              unawaited(logEvent(
+                "recent_search_remove",
+                parameters: <String, Object?>{
+                  "query": query,
+                  "media_type": widget.mediaType.toJsonField(),
+                },
+              ));
+              context.read<AppBloc>().add(RemoveRecentSearch(query, widget.mediaType));
+            },
           ),
-          onTap: () => _submitSearch(query),
+          onTap: () {
+            unawaited(logEvent(
+              "recent_search_select",
+              parameters: <String, Object?>{
+                "query": query,
+                "media_type": widget.mediaType.toJsonField(),
+              },
+            ));
+            _submitSearch(query);
+          },
         );
       },
     );
