@@ -139,7 +139,9 @@ mixin RecentlyWatchedHandler on Bloc<AppEvent, AppState> {
       );
 
       List<TvShow> updatedRecentlyWatchedTvShows = state.recentlyWatchedTvShows ?? <TvShow>[];
-      if (state.recentlyWatched != null && !state.recentlyWatched!.containsKey("${event.tvShowId}")) {
+      final Map<String, dynamic>? updatedTvShowsMap = (updatedRecentlyWatched["tv_shows"] is Map) ? Map<String, dynamic>.from(updatedRecentlyWatched["tv_shows"]) : null;
+
+      if (updatedTvShowsMap == null || !updatedTvShowsMap.containsKey("${event.tvShowId}")) {
         updatedRecentlyWatchedTvShows.removeWhere((TvShow tvShow) => tvShow.id == event.tvShowId);
       }
 

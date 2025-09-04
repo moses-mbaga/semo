@@ -204,11 +204,25 @@ class RecentlyWatchedService {
 
       watchedEpisodes.remove("$episodeId");
 
-      tvShows["$tvShowId"]!["$seasonId"] = watchedEpisodes;
-      tvShows["$tvShowId"] = <String, dynamic>{
-        "visibleInMenu": true,
-        ...tvShows["$tvShowId"]!
-      };
+      // If no more episodes in the season, remove the season
+      if (watchedEpisodes.isEmpty) {
+        tvShows["$tvShowId"]!.remove("$seasonId");
+      } else {
+        tvShows["$tvShowId"]!["$seasonId"] = watchedEpisodes;
+      }
+
+      // If no more seasons in the show, remove the show
+      final Map<String, dynamic> seasonsForShow = Map<String, dynamic>.from(tvShows["$tvShowId"]!);
+      seasonsForShow.remove("visibleInMenu");
+      if (seasonsForShow.isEmpty) {
+        tvShows.remove("$tvShowId");
+      } else {
+        // Keep the show visible since it still has content
+        tvShows["$tvShowId"] = <String, dynamic>{
+          "visibleInMenu": true,
+          ...tvShows["$tvShowId"]!
+        };
+      }
 
       recentlyWatched["tv_shows"] = tvShows;
 
