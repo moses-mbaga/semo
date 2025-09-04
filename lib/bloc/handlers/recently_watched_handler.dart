@@ -137,7 +137,11 @@ mixin RecentlyWatchedHandler on Bloc<AppEvent, AppState> {
         event.episodeId,
         recentlyWatched: state.recentlyWatched,
       );
-      final List<TvShow> updatedRecentlyWatchedTvShows = state.recentlyWatchedTvShows?.where((TvShow tvShow) => tvShow.id != event.tvShowId).toList() ?? <TvShow>[];
+
+      List<TvShow> updatedRecentlyWatchedTvShows = state.recentlyWatchedTvShows ?? <TvShow>[];
+      if (state.recentlyWatched != null && state.recentlyWatched!.containsKey("${event.tvShowId}")) {
+        updatedRecentlyWatchedTvShows.where((TvShow tvShow) => tvShow.id != event.tvShowId);
+      }
 
       emit(state.copyWith(
         recentlyWatched: updatedRecentlyWatched,
