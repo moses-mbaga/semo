@@ -171,6 +171,8 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
         screenClass: widget.runtimeType.toString(),
         parameters: params.cast<String, Object>(),
       );
+
+      logger.i(params.cast<String, Object>());
     } catch (e, s) {
       logger.e("Failed to log screen view", error: e, stackTrace: s);
     }
