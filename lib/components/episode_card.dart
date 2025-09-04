@@ -1,5 +1,6 @@
 import "package:cached_network_image/cached_network_image.dart";
 import "package:flutter/material.dart";
+import "package:readmore/readmore.dart";
 import "package:semo/models/episode.dart";
 import "package:semo/utils/urls.dart";
 
@@ -82,16 +83,18 @@ class EpisodeCard extends StatelessWidget {
                                 fit: BoxFit.cover,
                               ),
                             ),
-                            child: isRecentlyWatched ? Column(
-                              children: <Widget>[
-                                const Spacer(),
-                                LinearProgressIndicator(
-                                  value: watchedProgress / (episode.duration * 60),
-                                  valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                  backgroundColor: Colors.transparent,
-                                ),
-                              ],
-                            ) : Container(),
+                            child: isRecentlyWatched
+                                ? Column(
+                                    children: <Widget>[
+                                      const Spacer(),
+                                      LinearProgressIndicator(
+                                        value: watchedProgress / (episode.duration * 60),
+                                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                                        backgroundColor: Colors.transparent,
+                                      ),
+                                    ],
+                                  )
+                                : Container(),
                           ),
                         ),
                       ),
@@ -129,8 +132,8 @@ class EpisodeCard extends StatelessWidget {
                                 child: Text(
                                   episode.name,
                                   style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                                    fontWeight: FontWeight.w600,
-                                  ),
+                                        fontWeight: FontWeight.w600,
+                                      ),
                                   maxLines: 2,
                                 ),
                               ),
@@ -149,21 +152,15 @@ class EpisodeCard extends StatelessWidget {
                           if (episode.airDate != null)
                             Text(
                               episode.airDate!,
-                              style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                                color: Colors.white54,
-                                fontSize: 12
-                              ),
+                              style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white54, fontSize: 12),
                               maxLines: 1,
                             ),
-                            const Padding(
-                              padding: EdgeInsets.only(top: 4),
-                            ),
+                          const Padding(
+                            padding: EdgeInsets.only(top: 4),
+                          ),
                           Text(
                             isAired ? _formatDuration(Duration(minutes: episode.duration)) : "TBD",
-                            style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                              color: Colors.white54,
-                              fontSize: 12
-                            ),
+                            style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white54, fontSize: 12),
                             maxLines: 1,
                           ),
                         ],
@@ -203,11 +200,17 @@ class EpisodeCard extends StatelessWidget {
               Container(
                 width: double.infinity,
                 margin: const EdgeInsets.only(top: 18),
-                child: Text(
+                child: ReadMoreText(
                   episode.overview,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: Colors.white54,
-                  ),
+                  trimMode: TrimMode.Line,
+                  trimLines: 3,
+                  colorClickableText: Theme.of(context).primaryColor,
+                  trimCollapsedText: " Show more",
+                  trimExpandedText: " Show less",
+                  textAlign: TextAlign.justify,
+                  moreStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        color: Colors.white54,
+                      ),
                 ),
               ),
             ],
