@@ -3,6 +3,7 @@ import "package:firebase_auth/firebase_auth.dart";
 import "package:logger/logger.dart";
 import "package:semo/services/firestore_collection_names.dart";
 import "package:semo/enums/media_type.dart";
+import "package:semo/services/stream_extractor_service/extractors/helpers.dart";
 
 class RecentSearchesService {
   factory RecentSearchesService() => _instance;
@@ -20,9 +21,7 @@ class RecentSearchesService {
         throw Exception("User isn't authenticated");
       }
 
-      return _firestore
-          .collection(FirestoreCollection.recentSearches)
-          .doc(_auth.currentUser?.uid);
+      return _firestore.collection(FirestoreCollection.recentSearches).doc(_auth.currentUser?.uid);
     } catch (e, s) {
       _logger.e("Error getting recent searches document reference", error: e, stackTrace: s);
     }
@@ -59,9 +58,7 @@ class RecentSearchesService {
     final List<String> searches = await getRecentSearches(mediaType);
 
     // Remove duplicate entry
-    if (searches.contains(query)) {
-      searches.remove(query);
-    }
+    searches.removeWhere((String q) => normalizeForComparison(q) == normalizeForComparison(query));
 
     // Add to beginning
     searches.insert(0, query);
@@ -83,7 +80,7 @@ class RecentSearchesService {
     final List<String> searches = await getRecentSearches(mediaType);
 
     if (searches.contains(query)) {
-      searches.remove(query);
+      searches.removeWhere((String q) => normalizeForComparison(q) == normalizeForComparison(query));
       try {
         await _getDocReference().set(<String, dynamic>{fieldName: searches}, SetOptions(merge: true));
       } catch (e, s) {
