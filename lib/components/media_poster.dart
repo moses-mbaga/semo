@@ -21,16 +21,14 @@ class MediaPoster extends StatelessWidget {
   Widget build(BuildContext context) => LayoutBuilder(
         builder: (BuildContext context, BoxConstraints constraints) {
           final Size screen = MediaQuery.of(context).size;
-          final double width = constraints.maxWidth.isFinite
-              ? constraints.maxWidth
-              : screen.width;
-
-          // Backdrop height derived from width and responsive ratio.
+          final double width = constraints.maxWidth.isFinite ? constraints.maxWidth : screen.width;
           final double ratio = AspectRatios.backdropWidthOverHeight(context);
           final double desiredHeight = width / ratio;
-          final double height = desiredHeight
-              .clamp(160.0, screen.height * 0.4)
-              .toDouble();
+
+          // Ensure clamp bounds are ordered (min <= max)
+          final double minBound = (screen.height * 0.4) < 160.0 ? (screen.height * 0.4) : 160.0;
+          final double maxBound = (screen.height * 0.4) < 160.0 ? 160.0 : (screen.height * 0.4);
+          final double height = desiredHeight.clamp(minBound, maxBound).toDouble();
 
           final String base = Urls.getResponsiveImageUrlForWidth(width);
 
