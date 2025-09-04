@@ -4,6 +4,7 @@ import "package:semo/enums/media_type.dart";
 import "package:semo/models/genre.dart";
 import "package:semo/services/tmdb_service.dart";
 import "package:semo/utils/urls.dart";
+import "package:semo/utils/aspect_ratios.dart";
 
 class GenreCard extends StatefulWidget {
   const GenreCard({
@@ -22,7 +23,6 @@ class GenreCard extends StatefulWidget {
 }
 
 class _GenreCardState extends State<GenreCard> {
-  static const double _cardAspectRatio = 16 / 10;
   final TMDBService _tmdbService = TMDBService();
 
   late Genre _genre;
@@ -37,58 +37,80 @@ class _GenreCardState extends State<GenreCard> {
     }
   }
 
-  Widget _buildCardContent(BuildContext context, {ImageProvider? imageProvider}) => SizedBox(
-    width: MediaQuery.of(context).size.width * 0.6,
-    child: Column(
-      children: <Widget>[
-        Expanded(
-          child: AspectRatio(
-            aspectRatio: _cardAspectRatio,
-            child: Container(
+  Widget _buildCardContent(BuildContext context, {ImageProvider? imageProvider}) => LayoutBuilder(
+    builder: (BuildContext context, BoxConstraints constraints) {
+      final double totalHeight = constraints.maxHeight.isFinite
+          ? constraints.maxHeight
+          : MediaQuery.of(context).size.height * 0.22;
+      final double reservedForName = (totalHeight * 0.16).clamp(28.0, 40.0).toDouble();
+      final double imageHeight = (totalHeight - reservedForName).clamp(60.0, totalHeight).toDouble();
+      final double width = imageHeight * AspectRatios.genreCardWidthOverHeight;
+
+      return SizedBox(
+        width: width,
+        height: totalHeight,
+        child: Column(
+          children: <Widget>[
+            Container(
+              height: imageHeight,
+              width: width,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(12),
                 color: imageProvider == null ? Theme.of(context).cardColor : null,
-                image: imageProvider != null ? DecorationImage(
-                  image: imageProvider,
-                  fit: BoxFit.cover,
-                ) : null,
+                image: imageProvider != null
+                    ? DecorationImage(image: imageProvider, fit: BoxFit.cover)
+                    : null,
               ),
               child: InkWell(
                 customBorder: RoundedRectangleBorder(
                   borderRadius: BorderRadius.circular(12),
                 ),
                 onTap: widget.onTap,
-                child: imageProvider == null ? const Center(
-                  child: Icon(
-                    Icons.image,
-                    color: Colors.white54,
-                    size: 48,
-                  ),
-                ) : const SizedBox.shrink(),
+                child: imageProvider == null
+                    ? const Center(
+                        child: Icon(
+                          Icons.image,
+                          color: Colors.white54,
+                          size: 48,
+                        ),
+                      )
+                    : const SizedBox.shrink(),
               ),
             ),
-          ),
+            const SizedBox(height: 6),
+            SizedBox(
+              width: width,
+              child: Text(
+                _genre.name,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.displayMedium,
+                textAlign: TextAlign.center,
+              ),
+            ),
+          ],
         ),
-        const SizedBox(height: 10),
-        Text(
-          _genre.name,
-          maxLines: 1,
-          overflow: TextOverflow.ellipsis,
-          style: Theme.of(context).textTheme.displayMedium,
-          textAlign: TextAlign.center,
-        ),
-      ],
-    ),
+      );
+    },
   );
 
-  Widget _buildFallback(BuildContext context, {required Widget child}) => SizedBox(
-    width: MediaQuery.of(context).size.width * 0.6,
-    child: Column(
-      children: <Widget>[
-        Expanded(
-          child: AspectRatio(
-            aspectRatio: _cardAspectRatio,
-            child: Container(
+  Widget _buildFallback(BuildContext context, {required Widget child}) => LayoutBuilder(
+    builder: (BuildContext context, BoxConstraints constraints) {
+      final double totalHeight = constraints.maxHeight.isFinite
+          ? constraints.maxHeight
+          : MediaQuery.of(context).size.height * 0.22;
+      final double reservedForName = (totalHeight * 0.16).clamp(28.0, 40.0).toDouble();
+      final double imageHeight = (totalHeight - reservedForName).clamp(60.0, totalHeight).toDouble();
+      final double width = imageHeight * AspectRatios.genreCardWidthOverHeight;
+
+      return SizedBox(
+        width: width,
+        height: totalHeight,
+        child: Column(
+          children: <Widget>[
+            Container(
+              height: imageHeight,
+              width: width,
               decoration: BoxDecoration(
                 color: Theme.of(context).cardColor,
                 borderRadius: BorderRadius.circular(12),
@@ -101,12 +123,12 @@ class _GenreCardState extends State<GenreCard> {
                 child: Center(child: child),
               ),
             ),
-          ),
+            const SizedBox(height: 6),
+            const SizedBox(width: double.infinity),
+          ],
         ),
-        const SizedBox(height: 10),
-        const Text(""),
-      ],
-    ),
+      );
+    },
   );
 
   Widget _buildImage(String url) => CachedNetworkImage(

@@ -17,9 +17,10 @@ class HorizontalMediaList<T> extends StatelessWidget {
     this.isLoading = false,
     this.emptyStateMessage,
     this.errorMessage,
-  }) : assert((pagingController != null) || (items != null),
-  "Either provide pagingController for paginated list, or items for simple list",
-  );
+  }) : assert(
+          (pagingController != null) || (items != null),
+          "Either provide pagingController for paginated list, or items for simple list",
+        );
 
   final double? height;
   final String title;
@@ -97,29 +98,39 @@ class HorizontalMediaList<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    children: <Widget>[
-      Row(
         children: <Widget>[
-          Text(
-            title,
-            style: Theme.of(context).textTheme.titleSmall,
-          ),
-          const Spacer(),
-          if (onViewAllTap != null)
-            GestureDetector(
-              onTap: onViewAllTap,
-              child: Text(
-                "View all",
-                style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white54),
+          Row(
+            children: <Widget>[
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleSmall,
               ),
-            ),
+              const Spacer(),
+              if (onViewAllTap != null)
+                GestureDetector(
+                  onTap: onViewAllTap,
+                  child: Text(
+                    "View all",
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(color: Colors.white54),
+                  ),
+                ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            height: height ?? _defaultRowHeight(context),
+            child: _buildListView(context),
+          ),
         ],
-      ),
-      const SizedBox(height: 10),
-      SizedBox(
-        height: height ?? MediaQuery.of(context).size.height * 0.22,
-        child: _buildListView(context),
-      ),
-    ],
-  );
+      );
+
+  double _defaultRowHeight(BuildContext context) {
+    final Size size = MediaQuery.of(context).size;
+    final bool isLandscape = size.width > size.height;
+    double base = isLandscape ? size.height * 0.36 : size.height * 0.22;
+
+    final double minHeight = 140.0;
+    final double maxHeight = size.height * 0.6;
+    return base.clamp(minHeight, maxHeight);
+  }
 }

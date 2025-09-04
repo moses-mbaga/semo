@@ -50,8 +50,8 @@ class _FavoritesScreenState extends BaseScreenState<FavoritesScreen> {
         // Delay the removal to escape dispose error
         Timer(const Duration(milliseconds: 500), () {
           context.read<AppBloc>().add(
-            RemoveFavorite(media, widget.mediaType),
-          );
+                RemoveFavorite(media, widget.mediaType),
+              );
         });
       },
     );
@@ -62,45 +62,41 @@ class _FavoritesScreenState extends BaseScreenState<FavoritesScreen> {
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: Container(
-        margin: const EdgeInsets.symmetric(
-          horizontal: 10,
-          vertical: 18,
-        ),
-        child: BlocConsumer<AppBloc, AppState>(
-          listener: (BuildContext context, AppState state) {
-            if (state.error != null) {
-              showSnackBar(context, state.error!);
-              context.read<AppBloc>().add(ClearError());
-            }
-          },
-          builder: (BuildContext context, AppState state) {
-            List<dynamic> favorites = <dynamic>[];
+        body: SafeArea(
+          child: Container(
+            margin: const EdgeInsets.symmetric(
+              horizontal: 10,
+              vertical: 18,
+            ),
+            child: BlocConsumer<AppBloc, AppState>(
+              listener: (BuildContext context, AppState state) {
+                if (state.error != null) {
+                  showSnackBar(context, state.error!);
+                  context.read<AppBloc>().add(ClearError());
+                }
+              },
+              builder: (BuildContext context, AppState state) {
+                List<dynamic> favorites = <dynamic>[];
 
-            if (widget.mediaType == MediaType.movies) {
-              favorites = state.favoriteMovies ?? <Movie>[];
-            } else if (widget.mediaType == MediaType.tvShows) {
-              favorites = state.favoriteTvShows ?? <TvShow>[];
-            }
+                if (widget.mediaType == MediaType.movies) {
+                  favorites = state.favoriteMovies ?? <Movie>[];
+                } else if (widget.mediaType == MediaType.tvShows) {
+                  favorites = state.favoriteTvShows ?? <TvShow>[];
+                }
 
-            return VerticalMediaList<dynamic>(
-              isLoading: state.isLoadingFavorites,
-              items: favorites,
-              //ignore: avoid_annotating_with_dynamic
-              itemBuilder: (BuildContext context, dynamic media, int index) => _buildMediaCard(media, index),
-              crossAxisCount: 3,
-              childAspectRatio: 0.5,
-              crossAxisSpacing: 10,
-              mainAxisSpacing: 10,
-              emptyStateMessage: "You don't have any favorite ${widget.mediaType.toString()}",
-              errorMessage: "Failed to load favorite ${widget.mediaType.toString()}",
-              shrinkWrap: false,
-              physics: const AlwaysScrollableScrollPhysics(),
-            );
-          },
+                return VerticalMediaList<dynamic>(
+                  isLoading: state.isLoadingFavorites,
+                  items: favorites,
+                  //ignore: avoid_annotating_with_dynamic
+                  itemBuilder: (BuildContext context, dynamic media, int index) => _buildMediaCard(media, index),
+                  emptyStateMessage: "You don't have any favorite ${widget.mediaType.toString()}",
+                  errorMessage: "Failed to load favorite ${widget.mediaType.toString()}",
+                  shrinkWrap: false,
+                  physics: const AlwaysScrollableScrollPhysics(),
+                );
+              },
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }

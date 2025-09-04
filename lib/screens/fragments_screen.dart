@@ -18,7 +18,7 @@ class FragmentsScreen extends BaseScreen {
     this.initialPageIndex = 0,
     this.initialFavoritesTabIndex = 0,
   }) : super(shouldLogScreenView: false);
-  
+
   final int initialPageIndex;
   final int initialFavoritesTabIndex;
 
@@ -47,48 +47,44 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
           mediaType: MediaType.tvShows,
         ),
         FragmentScreen(
-          icon: Icons.favorite,
-          title: "Favorites",
-          widget: TabBarView(
-            controller: _tabController,
-            children: const <Widget>[
-              FavoritesScreen(mediaType: MediaType.movies),
-              FavoritesScreen(mediaType: MediaType.tvShows),
-            ],
-          )
-        ),
-        const FragmentScreen(
-          icon: Icons.settings,
-          title: "Settings",
-          widget: SettingsScreen()
-        ),
+            icon: Icons.favorite,
+            title: "Favorites",
+            widget: TabBarView(
+              controller: _tabController,
+              children: const <Widget>[
+                FavoritesScreen(mediaType: MediaType.movies),
+                FavoritesScreen(mediaType: MediaType.tvShows),
+              ],
+            )),
+        const FragmentScreen(icon: Icons.settings, title: "Settings", widget: SettingsScreen()),
       ];
     });
   }
 
   Widget _buildNavigationTile(int index) => Container(
-    margin: const EdgeInsets.symmetric(
-      horizontal: 18,
-    ),
-    child: ListTile(
-      iconColor: Colors.white,
-      selectedColor: Theme.of(context).primaryColor,
-      selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
-      titleTextStyle: Theme.of(context).textTheme.displayMedium?.copyWith(
-        fontWeight: _selectedPageIndex == index ? FontWeight.w900 : FontWeight.normal,
-      ),
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
-      selected: _selectedPageIndex == index,
-      leading: Icon(_fragmentScreens[index].icon),
-      title: Container(
-        padding: _selectedPageIndex == index ? const EdgeInsets.symmetric(vertical: 16) : EdgeInsets.zero,
-        child: Text(_fragmentScreens[index].title),
-      ),
-      onTap: () {
-        setState(() => _selectedPageIndex = index);
-        Navigator.pop(context);},
-    ),
-  );
+        margin: const EdgeInsets.symmetric(
+          horizontal: 18,
+        ),
+        child: ListTile(
+          iconColor: Colors.white,
+          selectedColor: Theme.of(context).primaryColor,
+          selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+          titleTextStyle: Theme.of(context).textTheme.displayMedium?.copyWith(
+                fontWeight: _selectedPageIndex == index ? FontWeight.w900 : FontWeight.normal,
+              ),
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(100)),
+          selected: _selectedPageIndex == index,
+          leading: Icon(_fragmentScreens[index].icon),
+          title: Container(
+            padding: _selectedPageIndex == index ? const EdgeInsets.symmetric(vertical: 16) : EdgeInsets.zero,
+            child: Text(_fragmentScreens[index].title),
+          ),
+          onTap: () {
+            setState(() => _selectedPageIndex = index);
+            Navigator.pop(context);
+          },
+        ),
+      );
 
   @override
   String get screenName => "Fragments";
@@ -107,7 +103,7 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
   @override
   Widget buildContent(BuildContext context) {
     if (_fragmentScreens.isEmpty) {
-     return const Scaffold();
+      return const Scaffold();
     }
 
     return Scaffold(
@@ -120,32 +116,36 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
             onPressed: () => Scaffold.of(context).openDrawer(),
           ),
         ),
-        bottom: _selectedPageIndex == 2 ? TabBar(
-          controller: _tabController,
-          tabs: const <Tab>[
-            Tab(
-              icon: Icon(Icons.movie),
-              text: "Movies",
-            ),
-            Tab(
-              icon: Icon(Icons.video_library),
-              text: "TV Shows",
-            ),
-          ],
-        ) : null,
+        bottom: _selectedPageIndex == 2
+            ? TabBar(
+                controller: _tabController,
+                tabs: const <Tab>[
+                  Tab(
+                    icon: Icon(Icons.movie),
+                    text: "Movies",
+                  ),
+                  Tab(
+                    icon: Icon(Icons.video_library),
+                    text: "TV Shows",
+                  ),
+                ],
+              )
+            : null,
         actions: <Widget>[
-          (isConnectedToInternet && _selectedPageIndex <= 1) ? IconButton(
-            icon: const Icon(
-              Icons.search,
-              color: Colors.white,
-            ),
-            onPressed: () {
-              NavigationHelper.navigate(
-                context,
-                SearchScreen(mediaType: _fragmentScreens[_selectedPageIndex].mediaType),
-              );
-            },
-          ) : Container(),
+          (isConnectedToInternet && _selectedPageIndex <= 1)
+              ? IconButton(
+                  icon: const Icon(
+                    Icons.search,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    NavigationHelper.navigate(
+                      context,
+                      SearchScreen(mediaType: _fragmentScreens[_selectedPageIndex].mediaType),
+                    );
+                  },
+                )
+              : Container(),
         ],
       ),
       body: _fragmentScreens[_selectedPageIndex].widget,
@@ -172,7 +172,13 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
                 padding: const EdgeInsets.only(bottom: 20),
                 child: Divider(color: Theme.of(context).cardColor),
               ),
-              for (final (int index, _) in _fragmentScreens.indexed) _buildNavigationTile(index),
+              SafeArea(
+                child: Column(
+                  children: <Widget>[
+                    for (final (int index, _) in _fragmentScreens.indexed) _buildNavigationTile(index),
+                  ],
+                ),
+              ),
             ],
           ),
         ),

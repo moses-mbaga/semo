@@ -1,6 +1,7 @@
 import "package:flutter/material.dart";
 import "package:infinite_scroll_pagination/infinite_scroll_pagination.dart";
 import "package:semo/components/helpers.dart";
+import "package:semo/utils/aspect_ratios.dart";
 
 class VerticalMediaList<T> extends StatelessWidget {
   const VerticalMediaList({
@@ -18,9 +19,10 @@ class VerticalMediaList<T> extends StatelessWidget {
     this.isLoading = false,
     this.emptyStateMessage,
     this.errorMessage,
-  }) : assert((pagingController != null) || (items != null),
-  "Either provide pagingController for paginated grid, or items for simple grid",
-  );
+  }) : assert(
+          (pagingController != null) || (items != null),
+          "Either provide pagingController for paginated grid, or items for simple grid",
+        );
 
   final PagingController<int, T>? pagingController;
   final Widget Function(BuildContext, T, int) itemBuilder;
@@ -38,15 +40,19 @@ class VerticalMediaList<T> extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) => Column(
-    children: <Widget>[
-      // Grid content
-      Flexible(
-        child: _buildGridView(context),
-      ),
-    ],
-  );
+        children: <Widget>[
+          Flexible(
+            child: _buildGridView(context),
+          ),
+        ],
+      );
 
   Widget _buildGridView(BuildContext context) {
+    final int responsiveCrossAxisCount = _responsiveCrossAxisCount(context);
+    final double responsiveAspectRatio = AspectRatios.posterWidthOverHeight;
+    final double effectiveCrossAxisSpacing = crossAxisSpacing;
+    final double effectiveMainAxisSpacing = mainAxisSpacing;
+
     // If pagingController is provided, use paginated grid
     if (pagingController != null) {
       return PagingListener<int, T>(
@@ -79,10 +85,10 @@ class VerticalMediaList<T> extends StatelessWidget {
             ),
           ),
           gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: crossAxisCount,
-            crossAxisSpacing: crossAxisSpacing,
-            mainAxisSpacing: mainAxisSpacing,
-            childAspectRatio: childAspectRatio,
+            crossAxisCount: responsiveCrossAxisCount,
+            crossAxisSpacing: effectiveCrossAxisSpacing,
+            mainAxisSpacing: effectiveMainAxisSpacing,
+            childAspectRatio: responsiveAspectRatio,
           ),
         ),
       );
@@ -103,10 +109,10 @@ class VerticalMediaList<T> extends StatelessWidget {
         physics: physics,
         padding: padding,
         gridDelegate: SliverGridDelegateWithFixedCrossAxisCount(
-          crossAxisCount: crossAxisCount,
-          crossAxisSpacing: crossAxisSpacing,
-          mainAxisSpacing: mainAxisSpacing,
-          childAspectRatio: childAspectRatio,
+          crossAxisCount: responsiveCrossAxisCount,
+          crossAxisSpacing: effectiveCrossAxisSpacing,
+          mainAxisSpacing: effectiveMainAxisSpacing,
+          childAspectRatio: responsiveAspectRatio,
         ),
         itemCount: items?.length,
         itemBuilder: (BuildContext context, int index) => itemBuilder(context, items![index], index),
@@ -115,5 +121,25 @@ class VerticalMediaList<T> extends StatelessWidget {
 
     // Fallback - should never reach here due to assertion
     return Container();
+  }
+
+  int _responsiveCrossAxisCount(BuildContext context) {
+    final Size size = MediaQuery.of(context).size;
+    final bool isPortrait = size.height >= size.width;
+    final bool isTablet = size.shortestSide >= 600;
+
+    // Estimate target item width for posters; adjust per device class.
+    final double targetWidth = isTablet ? (isPortrait ? 180 : 200) : (isPortrait ? 120 : 140);
+
+    final double paddingH = padding?.horizontal ?? 0;
+    final double availableWidth = size.width - paddingH;
+    final int count = (availableWidth / (targetWidth + crossAxisSpacing)).floor().clamp(2, 8);
+
+    // Ensure at least 3 in portrait phones if space allows; more in landscape/tablets.
+    if (isPortrait && !isTablet) {
+      return count < 3 ? 3 : count;
+    }
+
+    return count;
   }
 }

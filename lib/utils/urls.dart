@@ -52,26 +52,29 @@ class Urls {
 
   static String getResponsiveImageUrl(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
+    return getResponsiveImageUrlForWidth(screenWidth);
+  }
 
-    if (screenWidth <= 45) {
+  static String getResponsiveImageUrlForWidth(double width) {
+    if (width <= 45) {
       return image45;
-    } else if (screenWidth <= 92) {
+    } else if (width <= 92) {
       return image92;
-    } else if (screenWidth <= 154) {
+    } else if (width <= 154) {
       return image154;
-    } else if (screenWidth <= 185) {
+    } else if (width <= 185) {
       return image185;
-    } else if (screenWidth <= 300) {
+    } else if (width <= 300) {
       return image300;
-    } else if (screenWidth <= 342) {
+    } else if (width <= 342) {
       return image342;
-    } else if (screenWidth <= 500) {
+    } else if (width <= 500) {
       return image500;
-    } else if (screenWidth <= 632) {
+    } else if (width <= 632) {
       return image632;
-    } else if (screenWidth <= 780) {
+    } else if (width <= 780) {
       return image780;
-    } else if (screenWidth <= 1280) {
+    } else if (width <= 1280) {
       return image1280;
     } else {
       return imageOriginal;

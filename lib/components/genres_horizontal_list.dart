@@ -22,7 +22,6 @@ class GenresList extends StatelessWidget {
   @override
   Widget build(BuildContext context) => HorizontalMediaList<Genre>(
     title: "Genres",
-    height: MediaQuery.of(context).size.height * 0.2,
     items: genres,
     itemBuilder: (BuildContext context, Genre genre, int index) => Container(
       margin: EdgeInsets.only(

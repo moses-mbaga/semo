@@ -3,6 +3,7 @@ import "package:flutter/material.dart";
 import "package:semo/components/snack_bar.dart";
 import "package:url_launcher/url_launcher.dart";
 import "package:semo/utils/urls.dart";
+import "package:semo/utils/aspect_ratios.dart";
 
 class MediaPoster extends StatelessWidget {
   const MediaPoster({
@@ -17,60 +18,81 @@ class MediaPoster extends StatelessWidget {
   final String playTrailerText;
 
   @override
-  Widget build(BuildContext context) => CachedNetworkImage(
-    imageUrl: Urls.getResponsiveImageUrl(context) + backdropPath,
-    placeholder: (BuildContext context, String url) => Container(
-      width: double.infinity,
-      height: MediaQuery.of(context).size.width * 0.4,
-      child: const Align(
-        alignment: Alignment.center,
-        child: CircularProgressIndicator(),
-      ),
-    ),
-    imageBuilder: (BuildContext context, ImageProvider image) => Container(
-      width: double.infinity,
-      height: MediaQuery.of(context).size.height * 0.25,
-      decoration: BoxDecoration(
-        image: DecorationImage(
-          image: image,
-          fit: BoxFit.cover,
-        ),
-      ),
-      child: Container(
-        color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: <Widget>[
-            CircleAvatar(
-              radius: 25,
-              backgroundColor: Theme.of(context).primaryColor,
-              child: IconButton(
-                icon: const Icon(Icons.play_arrow),
-                color: Colors.white,
-                onPressed: () async {
-                  if (trailerUrl != null) {
-                    await launchUrl(
-                      Uri.parse(trailerUrl!),
-                      mode: LaunchMode.externalNonBrowserApplication,
-                    );
-                  } else {
-                    showSnackBar(context, "No trailer found");
-                  }
-                },
+  Widget build(BuildContext context) => LayoutBuilder(
+        builder: (BuildContext context, BoxConstraints constraints) {
+          final Size screen = MediaQuery.of(context).size;
+          final double width = constraints.maxWidth.isFinite
+              ? constraints.maxWidth
+              : screen.width;
+
+          // Backdrop height derived from width and responsive ratio.
+          final double ratio = AspectRatios.backdropWidthOverHeight(context);
+          final double desiredHeight = width / ratio;
+          final double height = desiredHeight
+              .clamp(160.0, screen.height * 0.4)
+              .toDouble();
+
+          final String base = Urls.getResponsiveImageUrlForWidth(width);
+
+          return CachedNetworkImage(
+            imageUrl: base + backdropPath,
+            placeholder: (BuildContext context, String url) => SizedBox(
+              width: width,
+              height: height,
+              child: const Center(child: CircularProgressIndicator()),
+            ),
+            imageBuilder: (BuildContext context, ImageProvider image) => SizedBox(
+              width: width,
+              height: height,
+              child: DecoratedBox(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: image,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: Container(
+                  color: Theme.of(context).primaryColor.withValues(alpha: 0.5),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    crossAxisAlignment: CrossAxisAlignment.center,
+                    children: <Widget>[
+                      CircleAvatar(
+                        radius: 25,
+                        backgroundColor: Theme.of(context).primaryColor,
+                        child: IconButton(
+                          icon: const Icon(Icons.play_arrow),
+                          color: Colors.white,
+                          onPressed: () async {
+                            if (trailerUrl != null) {
+                              await launchUrl(
+                                Uri.parse(trailerUrl!),
+                                mode: LaunchMode.externalNonBrowserApplication,
+                              );
+                            } else {
+                              showSnackBar(context, "No trailer found");
+                            }
+                          },
+                        ),
+                      ),
+                      Container(
+                        margin: const EdgeInsets.only(top: 10),
+                        child: Text(
+                          playTrailerText,
+                          style: Theme.of(context).textTheme.displayMedium,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ),
-            Container(
-              margin: const EdgeInsets.only(top: 10),
-              child: Text(
-                playTrailerText,
-                style: Theme.of(context).textTheme.displayMedium,
-              ),
+            errorWidget: (BuildContext context, String url, Object error) => SizedBox(
+              width: width,
+              height: height,
+              child: const Icon(Icons.error),
             ),
-          ],
-        ),
-      ),
-    ),
-    errorWidget: (BuildContext context, String url, Object error) => const Icon(Icons.error),
-  );
+          );
+        },
+      );
 }
