@@ -103,17 +103,6 @@ jobs:
           EOF
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      # - name: Create Firebase config files
-      #   if: ${{ success() }}
-      #   run: |
-      #     set -o pipefail
-      #     mkdir -p android/app ios/Runner lib
-      #     {
-      #       echo "${{ secrets.GOOGLE_SERVICES_JSON }}" | base64 -d > android/app/google-services.json
-      #       echo "${{ secrets.GOOGLE_SERVICE_INFO_PLIST }}" | base64 -d > ios/Runner/GoogleService-Info.plist
-      #       echo "${{ secrets.FIREBASE_OPTIONS_DART }}" | base64 -d > lib/firebase_options.dart
-      #     } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
-
       - name: Set up Firebase credentials
         run: |
           set -o pipefail
@@ -128,7 +117,8 @@ jobs:
           {
             flutterfire configure \
             --project=${{ secrets.FIREBASE_PROJECT_ID }} \
-            --platforms=android,ios
+            --platforms=android,ios \
+            --overwrite-firebase-options
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Build APKs
