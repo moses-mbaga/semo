@@ -127,7 +127,7 @@ jobs:
           set -o pipefail
           {
             flutterfire configure \
-            --project=my-firebase-project-id \
+            --project=${{ secrets.FIREBASE_PROJECT_ID }} \
             --platforms=android,ios
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
