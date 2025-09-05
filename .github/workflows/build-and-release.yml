@@ -12,10 +12,6 @@ on:
         required: false
         type: string
         default: "New release"
-      ios_ipa_url:
-        description: "Public download URL for iOS .ipa file"
-        required: true
-        type: string
 
 concurrency:
   group: build_and_release
@@ -168,15 +164,6 @@ jobs:
           name: app-release-apks
           path: ./artifacts/
 
-      - name: Download iOS IPA
-        run: |
-          set -o pipefail
-          mkdir -p ./artifacts
-          echo "Downloading IPA from: ${{ github.event.inputs.ios_ipa_url }}"
-          curl -L --fail --retry 3 --connect-timeout 60 \
-            -o ./artifacts/app-${{ github.event.inputs.version }}.ipa \
-            "${{ github.event.inputs.ios_ipa_url }}"
-
       - name: Create GitHub Release
         id: create_release
         uses: actions/create-release@v1
@@ -194,14 +181,3 @@ jobs:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           gh release upload ${{ github.event.inputs.version }} ./artifacts/*.apk --clobber
-
-      - name: Upload IPA to Release
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-        run: |
-          if [ -f ./artifacts/app-${{ github.event.inputs.version }}.ipa ]; then
-            gh release upload ${{ github.event.inputs.version }} ./artifacts/app-${{ github.event.inputs.version }}.ipa --clobber
-          else
-            echo "IPA not found. Failing the job as IPA is required."
-            exit 1
-          fi
