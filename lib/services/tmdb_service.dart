@@ -171,6 +171,26 @@ class TMDBService {
     return <Episode>[];
   }
 
+  Future<String?> getImdbId(MediaType mediaType, int id) async {
+    try {
+      final String url = mediaType == MediaType.movies ? Urls.getMovieExternalIds(id) : Urls.getTvShowExternalIds(id);
+      final Response<dynamic> response = await _dio.get(url);
+
+      if (response.statusCode == 200 && response.data is Map && response.data["imdb_id"] != null) {
+        final String imdbId = response.data["imdb_id"].toString();
+        if (imdbId.isNotEmpty && imdbId != "null") {
+          return imdbId;
+        }
+      }
+
+      throw Exception("IMDB id not found for ${mediaType.toString()} id=$id");
+    } catch (e, s) {
+      _logger.w("Error getting IMDB id for ${mediaType.toString()} id=$id", error: e, stackTrace: s);
+    }
+
+    return null;
+  }
+
   // Common methods for both movies and TV shows
   Future<SearchResults?> _search(MediaType mediaType, String url, int page, {Map<String, String>? parameters}) async {
     try {

@@ -43,6 +43,8 @@ class Urls {
   static String getTvShowVideosUrl(int id) => "$tmdbApiBase/tv/$id/videos";
   static String getMovieCast(int id) => "$tmdbApiBase/movie/$id/credits";
   static String getTvShowCast(int id) => "$tmdbApiBase/tv/$id/aggregate_credits";
+  static String getMovieExternalIds(int id) => "$tmdbApiBase/movie/$id/external_ids";
+  static String getTvShowExternalIds(int id) => "$tmdbApiBase/tv/$id/external_ids";
   static String getPersonMovies(int id) => "$tmdbApiBase/person/$id/movie_credits";
   static String getPersonTvShows(int id) => "$tmdbApiBase/person/$id/tv_credits";
   static String getMovieRecommendations(int id) => "$tmdbApiBase/movie/$id/recommendations";
