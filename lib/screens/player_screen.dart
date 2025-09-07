@@ -192,7 +192,7 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
         parameters: <String, Object?>{
           "tmdb_id": widget.tmdbId,
           "media_type": widget.mediaType.toJsonField(),
-          "has_stream_url": widget.stream.url.isNotEmpty,
+          "has_stream_url": "${widget.stream.url.isNotEmpty}",
           if (uri != null) "stream_host": uri.host,
         },
       );
@@ -216,14 +216,6 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
             }
             if (!_didLogSubtitlesAvailable && (_subtitleFiles?.isNotEmpty ?? false)) {
               _didLogSubtitlesAvailable = true;
-              unawaited(logEvent(
-                "subtitles_available",
-                parameters: <String, Object?>{
-                  "tmdb_id": widget.tmdbId,
-                  "media_type": widget.mediaType.toJsonField(),
-                  "count": _subtitleFiles!.length,
-                },
-              ));
             }
           }
 
