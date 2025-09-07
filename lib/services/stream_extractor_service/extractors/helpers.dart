@@ -3,6 +3,8 @@ import "dart:async";
 import "package:diacritic/diacritic.dart";
 import "package:flutter_inappwebview/flutter_inappwebview.dart";
 
+// ignore_for_file: unnecessary_string_escapes
+
 String normalizeForComparison(String text) => removeDiacritics(text)
     .replaceAll(RegExp("[–—−]"), "-") // Replace various dash types
     .replaceAll(RegExp(r"\s+"), " ") // Normalize whitespace
