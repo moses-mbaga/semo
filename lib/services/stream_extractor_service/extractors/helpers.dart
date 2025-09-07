@@ -17,6 +17,7 @@ Future<Map<String, dynamic>?> extractStreamFromPage(String pageUrl, {bool Functi
   Map<String, dynamic>? hlsCandidate;
   Map<String, dynamic>? mp4Candidate;
   Map<String, dynamic>? mkvCandidate;
+  bool readyToCapture = false;
 
   bool isHls(String url) {
     final String u = url.toLowerCase();
@@ -44,6 +45,9 @@ Future<Map<String, dynamic>?> extractStreamFromPage(String pageUrl, {bool Functi
   }
 
   void consider(String url, Map<String, String> headers) {
+    if (!readyToCapture) {
+      return;
+    }
     if (filter != null && !filter(url)) {
       return;
     }
@@ -61,6 +65,7 @@ Future<Map<String, dynamic>?> extractStreamFromPage(String pageUrl, {bool Functi
     }
   }
 
+// Find requests that contain m3u8, mp4 or mvk
   final String jsSniffer = """
 (() => {
   const notify = (url, headers) => {
@@ -106,6 +111,60 @@ Future<Map<String, dynamic>?> extractStreamFromPage(String pageUrl, {bool Functi
 })();
 """;
 
+  // Find and click a Skip button, wait until it is unlocked (no "Skip in X")
+  final String jsSkipAndReady = """
+(() => {
+  const notifyReady = () => { try { window.flutter_inappwebview.callHandler('skipReady'); } catch(e) {} };
+
+  function isUnlockedText(text) {
+    if (!text) return false;
+    const t = text.toLowerCase().trim();
+    if (!t.includes('skip')) return false;
+    return !(/skip\s*in\s*\d/.test(t));
+  }
+
+  function tryClick(el) {
+    try {
+      el.click();
+      try { el.dispatchEvent(new MouseEvent('click', {bubbles:true, cancelable:true, view: window})); } catch(e) {}
+      notifyReady();
+      return true;
+    } catch(e) {}
+    return false;
+  }
+
+  function scan() {
+    const nodes = Array.from(document.querySelectorAll('button, a, div, span'));
+    for (const el of nodes) {
+      const txt = (el.innerText || el.textContent || '').trim();
+      if (!txt || !/skip/i.test(txt)) continue;
+      if (isUnlockedText(txt)) {
+        if (tryClick(el)) return true;
+      } else {
+        try {
+          const obs = new MutationObserver(() => {
+            const t2 = (el.innerText || el.textContent || '').trim();
+            if (isUnlockedText(t2)) { tryClick(el); obs.disconnect(); }
+          });
+          obs.observe(el, {characterData: true, childList: true, subtree: true});
+        } catch(e) {}
+      }
+    }
+    return false;
+  }
+
+  let clicked = false;
+  if (scan()) clicked = true;
+  const interval = setInterval(() => {
+    if (clicked) { clearInterval(interval); return; }
+    if (scan()) { clicked = true; clearInterval(interval); }
+  }, 500);
+
+  // Safety timeout: if no Skip is found/unlocked, allow capture anyway
+  setTimeout(() => { if (!clicked) notifyReady(); }, 8000);
+})();
+""";
+
   headless = HeadlessInAppWebView(
     initialSettings: InAppWebViewSettings(
       javaScriptEnabled: true,
@@ -131,9 +190,17 @@ Future<Map<String, dynamic>?> extractStreamFromPage(String pageUrl, {bool Functi
           return null;
         },
       );
+      controller.addJavaScriptHandler(
+        handlerName: "skipReady",
+        callback: (List<dynamic> args) async {
+          readyToCapture = true;
+          return null;
+        },
+      );
     },
     onLoadStop: (InAppWebViewController controller, WebUri? url) async {
       await controller.evaluateJavascript(source: jsSniffer);
+      await controller.evaluateJavascript(source: jsSkipAndReady);
     },
     onLoadResource: (InAppWebViewController controller, LoadedResource resource) async {
       final String url = resource.url.toString();
@@ -160,8 +227,8 @@ Future<Map<String, dynamic>?> extractStreamFromPage(String pageUrl, {bool Functi
 
   await headless.run();
 
-  // Timeout: choose best candidate by preference order
-  await Future<void>.delayed(const Duration(seconds: 10), () => finish());
+  // Timeout: allow time for skip + stream to appear, then pick best
+  await Future<void>.delayed(const Duration(seconds: 20), () => finish());
 
   return completer.future;
 }
