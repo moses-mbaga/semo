@@ -37,6 +37,7 @@ class StreamingServerBaseUrlExtractor {
 
   static final Map<String, String> _manualBaseUrls = <String, String>{
     "semo_cinepro": SecretsService.cineProBaseUrl,
+    "semo_vidlink": "https://vidlink.pro",
   };
 
   final Logger _logger = Logger();
