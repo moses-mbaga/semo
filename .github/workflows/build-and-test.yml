@@ -75,6 +75,12 @@ jobs:
           set -o pipefail
           { dart run build_runner build --delete-conflicting-outputs; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
+      - name: Analyze with Dart
+        if: ${{ success() }}
+        run: |
+          set -o pipefail
+          { dart analyze; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+
       - name: Decode keystore
         if: ${{ success() }}
         run: |
