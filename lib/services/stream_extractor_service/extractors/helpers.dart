@@ -103,7 +103,7 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
       return;
     }
 
-    // Ready to capture: finish immediately with the first media seen after skip.
+    // Ready to capture: finish immediately with the first media seen after skip
     if (hls) {
       hlsCandidate ??= <String, dynamic>{"url": url, "headers": headers};
       unawaited(finish(hlsCandidate));
