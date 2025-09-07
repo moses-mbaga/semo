@@ -100,7 +100,7 @@ class MoviesApiExtractor implements BaseStreamExtractor {
         throw Exception("External link is required for $_providerKey");
       }
 
-      final Map<String, dynamic>? stream = await extractStreamFromPage(externalLink);
+      final Map<String, dynamic>? stream = await extractStreamFromPageRequests(externalLink);
       final String? url = stream?["url"];
       Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 

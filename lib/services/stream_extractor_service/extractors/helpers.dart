@@ -9,7 +9,7 @@ String normalizeForComparison(String text) => removeDiacritics(text)
     .toLowerCase()
     .trim();
 
-Future<Map<String, dynamic>?> extractStreamFromPage(String pageUrl, {bool Function(String url)? filter}) async {
+Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {bool Function(String url)? filter}) async {
   final Set<String> seen = <String>{};
   final Completer<Map<String, dynamic>?> completer = Completer<Map<String, dynamic>?>();
   HeadlessInAppWebView? headless;
