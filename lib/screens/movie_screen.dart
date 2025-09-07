@@ -72,7 +72,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
       "play_movie",
       parameters: <String, Object?>{
         "movie_id": _movie.id,
-        "has_stream_url": stream.url.isNotEmpty,
+        "has_stream_url": "${stream.url.isNotEmpty}",
       },
     );
 

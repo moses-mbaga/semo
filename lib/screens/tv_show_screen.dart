@@ -85,7 +85,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
         "season_number": season.number,
         "episode_id": episode.id,
         "episode_number": episode.number,
-        "has_stream_url": stream.url.isNotEmpty,
+        "has_stream_url": "${stream.url.isNotEmpty}",
       },
     );
 
