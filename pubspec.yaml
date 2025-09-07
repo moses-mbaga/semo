@@ -23,6 +23,7 @@ dependencies:
   firebase_remote_config: ^6.0.0
   flutter_bloc: ^8.1.6
   flutter_cache_manager: ^3.4.1
+  flutter_inappwebview: ^6.1.5
   flutter_settings_ui: ^3.0.1
   font_awesome_flutter: ^10.9.1
   google_fonts: ^6.3.0
