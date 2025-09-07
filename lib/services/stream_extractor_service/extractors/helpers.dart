@@ -17,6 +17,13 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {boo
   Map<String, dynamic>? hlsCandidate;
   Map<String, dynamic>? mp4Candidate;
   Map<String, dynamic>? mkvCandidate;
+
+  // Pre-skip candidates captured before ready
+  // Used as fallback
+  Map<String, dynamic>? preHlsCandidate;
+  Map<String, dynamic>? preMp4Candidate;
+  Map<String, dynamic>? preMkvCandidate;
+
   bool readyToCapture = false;
 
   bool isHls(String url) {
@@ -26,17 +33,17 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {boo
 
   bool isMp4(String url) {
     final String u = url.toLowerCase();
-    return u.contains(".mp4");
+    return u.contains("mp4");
   }
 
   bool isMkv(String url) {
     final String u = url.toLowerCase();
-    return u.contains(".mkv");
+    return u.contains("mkv");
   }
 
   Future<void> finish([Map<String, dynamic>? value]) async {
     if (!completer.isCompleted) {
-      value ??= hlsCandidate ?? mp4Candidate ?? mkvCandidate;
+      value ??= hlsCandidate ?? mp4Candidate ?? mkvCandidate ?? preHlsCandidate ?? preMp4Candidate ?? preMkvCandidate;
       completer.complete(value);
     }
     try {
@@ -45,13 +52,23 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {boo
   }
 
   void consider(String url, Map<String, String> headers) {
-    if (!readyToCapture) {
-      return;
-    }
     if (filter != null && !filter(url)) {
       return;
     }
     if (!seen.add(url)) {
+      return;
+    }
+
+    if (!readyToCapture) {
+      // Store as pre-skip candidates for fallback
+      if (isHls(url)) {
+        preHlsCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+      } else if (isMp4(url)) {
+        preMp4Candidate ??= <String, dynamic>{"url": url, "headers": headers};
+      } else if (isMkv(url)) {
+        preMkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+      }
+
       return;
     }
 
@@ -135,9 +152,11 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {boo
 
   function scan() {
     const nodes = Array.from(document.querySelectorAll('button, a, div, span'));
+    let sawSkip = false;
     for (const el of nodes) {
       const txt = (el.innerText || el.textContent || '').trim();
       if (!txt || !/skip/i.test(txt)) continue;
+      sawSkip = true;
       if (isUnlockedText(txt)) {
         if (tryClick(el)) return true;
       } else {
@@ -149,6 +168,11 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {boo
           obs.observe(el, {characterData: true, childList: true, subtree: true});
         } catch(e) {}
       }
+    }
+    if (!sawSkip) {
+      // No skip element currently on page
+      // Allow capture immediately
+      notifyReady();
     }
     return false;
   }
