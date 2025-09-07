@@ -1,3 +1,4 @@
+import "dart:async";
 import "dart:io";
 
 import "package:cached_network_image/cached_network_image.dart";
@@ -40,38 +41,40 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
     String savedServerName = _appPreferences.getStreamingServer();
     List<StreamingServer> servers = StreamExtractorService.streamingServers;
 
-    await showModalBottomSheet(
-      context: context,
-      builder: (BuildContext context) {
-        String serverName = savedServerName;
+    if (mounted) {
+      await showModalBottomSheet(
+        context: context,
+        builder: (BuildContext context) {
+          String serverName = savedServerName;
 
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setState) => ListView.builder(
-            shrinkWrap: true,
-            itemCount: servers.length,
-            itemBuilder: (BuildContext context, int index) {
-              StreamingServer server = servers[index];
-              bool isSelected = server.name == serverName;
+          return StatefulBuilder(
+            builder: (BuildContext context, StateSetter setState) => ListView.builder(
+              shrinkWrap: true,
+              itemCount: servers.length,
+              itemBuilder: (BuildContext context, int index) {
+                StreamingServer server = servers[index];
+                bool isSelected = server.name == serverName;
 
-              return ListTile(
-                selected: isSelected,
-                selectedColor: Theme.of(context).primaryColor,
-                selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                titleTextStyle: Theme.of(context).textTheme.displayMedium?.copyWith(
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                ),
-                title: Text(server.name),
-                leading: isSelected ? const Icon(Icons.check) : null,
-                onTap: () async {
-                  await _appPreferences.setStreamingServer(server);
-                  setState(() => serverName = server.name);
-                },
-              );
-            },
-          ),
-        );
-      },
-    );
+                return ListTile(
+                  selected: isSelected,
+                  selectedColor: Theme.of(context).primaryColor,
+                  selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                  titleTextStyle: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                  title: Text(server.name),
+                  leading: isSelected ? const Icon(Icons.check) : null,
+                  onTap: () async {
+                    await _appPreferences.setStreamingServer(server);
+                    setState(() => serverName = server.name);
+                  },
+                );
+              },
+            ),
+          );
+        },
+      );
+    }
   }
 
   Future<void> _openSeekDurationSelector() async {
@@ -85,27 +88,27 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
         return StatefulBuilder(
           builder: (BuildContext context, StateSetter setState) => ListView.builder(
-              shrinkWrap: true,
-              itemCount: seekDurations.length,
-              itemBuilder: (BuildContext context, int index) {
-                bool isSelected = seekDurations[index] == seekDuration;
+            shrinkWrap: true,
+            itemCount: seekDurations.length,
+            itemBuilder: (BuildContext context, int index) {
+              bool isSelected = seekDurations[index] == seekDuration;
 
-                return ListTile(
-                  selected: isSelected,
-                  selectedColor: Theme.of(context).primaryColor,
-                  selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
-                  titleTextStyle: Theme.of(context).textTheme.displayMedium?.copyWith(
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  ),
-                  title: Text(seekDurations[index] != 60 ? "${seekDurations[index]} s" : "1 m"),
-                  leading: isSelected ? const Icon(Icons.check) : null,
-                  onTap: () async {
-                    await _appPreferences.setSeekDuration(seekDurations[index]);
-                    setState(() => seekDuration = seekDurations[index]);
-                  },
-                );
-              },
-            ),
+              return ListTile(
+                selected: isSelected,
+                selectedColor: Theme.of(context).primaryColor,
+                selectedTileColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
+                titleTextStyle: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    ),
+                title: Text(seekDurations[index] != 60 ? "${seekDurations[index]} s" : "1 m"),
+                leading: isSelected ? const Icon(Icons.check) : null,
+                onTap: () async {
+                  await _appPreferences.setSeekDuration(seekDurations[index]);
+                  setState(() => seekDuration = seekDurations[index]);
+                },
+              );
+            },
+          ),
         );
       },
     );
@@ -144,12 +147,13 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
                         TextSpan(
                           text: "Moses Mbaga",
                           style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
-                          recognizer: TapGestureRecognizer()..onTap = () async {
-                            await launchUrl(Uri.parse(Urls.mosesGithub));
-                          },
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
+                          recognizer: TapGestureRecognizer()
+                            ..onTap = () async {
+                              await launchUrl(Uri.parse(Urls.mosesGithub));
+                            },
                         ),
                       ],
                     ),
@@ -177,9 +181,9 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
                           "GitHub",
                           textAlign: TextAlign.center,
                           style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                            color: Theme.of(context).primaryColor,
-                            fontWeight: FontWeight.bold,
-                          ),
+                                color: Theme.of(context).primaryColor,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                       ),
                     ],
@@ -210,8 +214,8 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
             child: Text(
               cancelLabel,
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                color: Colors.white54,
-              ),
+                    color: Colors.white54,
+                  ),
             ),
             onPressed: () => Navigator.of(dialogContext).pop(),
           ),
@@ -219,8 +223,8 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
             child: Text(
               confirmLabel,
               style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                color: Theme.of(context).primaryColor,
-              ),
+                    color: Theme.of(context).primaryColor,
+                  ),
             ),
             onPressed: () async {
               Navigator.of(dialogContext).pop();
@@ -233,6 +237,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   }
 
   Future<void> _deleteAccount() async {
+    unawaited(logEvent("settings_delete_account_start"));
     spinner.show();
 
     // Re-authenticate the user
@@ -266,11 +271,14 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
         showSnackBar(context, "Account deleted");
       }
 
+      unawaited(logEvent("settings_delete_account_success"));
+
       await navigate(
         const LandingScreen(),
         replace: true,
       );
     } catch (_) {
+      unawaited(logEvent("settings_delete_account_failure"));
       if (mounted) {
         showSnackBar(context, "Failed to delete account");
       }
@@ -279,6 +287,8 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   }
 
   Future<void> _clearCache() async {
+    unawaited(logEvent("settings_clear_cache"));
+
     if (mounted) {
       context.read<AppBloc>().add(InvalidateCache());
     }
@@ -295,18 +305,24 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   }
 
   Future<void> _clearRecentSearches({bool showResponse = true}) async {
+    unawaited(logEvent("settings_clear_recent_searches"));
+
     if (mounted) {
       context.read<AppBloc>().add(ClearRecentSearches());
     }
   }
 
   Future<void> _clearFavorites({bool showResponse = true}) async {
+    unawaited(logEvent("settings_clear_favorites"));
+
     if (mounted) {
       context.read<AppBloc>().add(ClearFavorites());
     }
   }
 
   Future<void> _clearRecentlyWatched({bool showResponse = true}) async {
+    unawaited(logEvent("settings_clear_recently_watched"));
+
     if (mounted) {
       context.read<AppBloc>().add(ClearRecentlyWatched());
     }
@@ -315,6 +331,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   Future<void> _signOut() async {
     try {
       await _authService.signOut();
+      unawaited(logEvent("settings_sign_out_success"));
       await navigate(
         const LandingScreen(),
         replace: true,
@@ -323,6 +340,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
       if (mounted) {
         showSnackBar(context, "Failed to sign out");
       }
+      unawaited(logEvent("settings_sign_out_failure"));
     }
   }
 
@@ -387,8 +405,8 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
                   Text(
                     email,
                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: Colors.white54,
-                    ),
+                          color: Colors.white54,
+                        ),
                   ),
                 ],
               ),
@@ -400,12 +418,12 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   }
 
   Widget _buildSectionTitle(String title) => Text(
-    title,
-    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-      fontSize: 20,
-      color: Theme.of(context).primaryColor,
-    ),
-  );
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontSize: 20,
+              color: Theme.of(context).primaryColor,
+            ),
+      );
 
   SettingsTile _buildSectionTile({
     required String title,
@@ -413,22 +431,25 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
     required IconData icon,
     Widget? trailing,
     required Function(BuildContext context) onPressed,
-  }) => SettingsTile(
-    title: Text(
-      title,
-      style: Theme.of(context).textTheme.displayMedium,
-    ),
-    description: description != null ? Text(
-      description,
-      style: Theme.of(context).textTheme.displaySmall?.copyWith(
-        color: Colors.white54,
-      ),
-    ) : null,
-    leading: Icon(icon),
-    trailing: trailing,
-    backgroundColor: Platform.isIOS ? Theme.of(context).cardColor: Colors.transparent,
-    onPressed: onPressed,
-  );
+  }) =>
+      SettingsTile(
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.displayMedium,
+        ),
+        description: description != null
+            ? Text(
+                description,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                      color: Colors.white54,
+                    ),
+              )
+            : null,
+        leading: Icon(icon),
+        trailing: trailing,
+        backgroundColor: Platform.isIOS ? Theme.of(context).cardColor : Colors.transparent,
+        onPressed: onPressed,
+      );
 
   Widget _buildSettingsList() {
     SettingsThemeData settingsThemeData = SettingsThemeData(
@@ -457,7 +478,9 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
               description: "Customize the subtitles style to fit your preference",
               icon: Icons.subtitles_outlined,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => navigate(const SubtitlesPreferencesScreen()),
+              onPressed: (BuildContext context) async {
+                await navigate(const SubtitlesPreferencesScreen());
+              },
             ),
             _buildSectionTile(
               title: "Seek duration",
@@ -475,13 +498,17 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
               title: "About",
               icon: Icons.info_outline_rounded,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => _openAbout(),
+              onPressed: (BuildContext context) async {
+                await _openAbout();
+              },
             ),
             _buildSectionTile(
               title: "Open Source libraries",
               icon: Icons.description_outlined,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) => navigate(const OpenSourceLibrariesScreen()),
+              onPressed: (BuildContext context) async {
+                await navigate(const OpenSourceLibrariesScreen());
+              },
             ),
           ],
         ),
@@ -572,15 +599,15 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
-    body: SafeArea(
-      child: SingleChildScrollView(
-        child: Column(
-          children: <Widget>[
-            _buildUserCard(),
-            _buildSettingsList(),
-          ],
+        body: SafeArea(
+          child: SingleChildScrollView(
+            child: Column(
+              children: <Widget>[
+                _buildUserCard(),
+                _buildSettingsList(),
+              ],
+            ),
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
