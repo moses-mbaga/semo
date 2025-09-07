@@ -16,6 +16,7 @@ import "package:semo/services/stream_extractor_service/extractors/movies_api_ext
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/cine_pro_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/show_box_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/vid_fast_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/vid_link_extractor.dart";
 
 class StreamExtractorService {
@@ -28,6 +29,7 @@ class StreamExtractorService {
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()),
+    StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
   ];
 
