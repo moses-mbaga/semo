@@ -8,6 +8,7 @@ import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/tv_show.dart";
 import "package:semo/enums/media_type.dart";
+import "package:semo/services/stream_extractor_service/extractors/auto_embed_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
@@ -21,6 +22,7 @@ class StreamExtractorService {
   static final Logger _logger = Logger();
   static final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
+    StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MovieBox", extractor: MovieBoxExtractor()),
