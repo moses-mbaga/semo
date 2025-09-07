@@ -250,7 +250,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
                       "tv_show_id": widget.tvShow.id,
                       "season_id": selectedSeason.id,
                       "episode_id": episode.id,
-                      "has_stream": stream != null && stream.url.isNotEmpty,
+                      "has_stream": "${stream != null && stream.url.isNotEmpty}",
                     },
                   ));
                   if (stream == null) {
