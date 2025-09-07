@@ -11,7 +11,11 @@ String normalizeForComparison(String text) => removeDiacritics(text)
     .toLowerCase()
     .trim();
 
-Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {bool Function(String url)? filter}) async {
+Future<Map<String, dynamic>?> extractStreamFromPageRequests(
+  String pageUrl, {
+  bool Function(String url)? filter,
+  bool hasAds = false,
+}) async {
   final Set<String> seen = <String>{};
   final Completer<Map<String, dynamic>?> completer = Completer<Map<String, dynamic>?>();
   PageNetworkRequestsSession? session;
@@ -57,30 +61,60 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {boo
     if (filter != null && !filter(url)) {
       return;
     }
+
+    final bool hls = isHls(url);
+    final bool mp4 = isMp4(url);
+    final bool mkv = isMkv(url);
+    if (!(hls || mp4 || mkv)) {
+      return; // Ignore non-media requests
+    }
+
     if (!seen.add(url)) {
       return;
     }
 
+    // If there are no ads, return immediately for any media type.
+    if (!hasAds) {
+      if (hls) {
+        hlsCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+        unawaited(finish(hlsCandidate));
+        return;
+      } else if (mp4) {
+        mp4Candidate ??= <String, dynamic>{"url": url, "headers": headers};
+        unawaited(finish(mp4Candidate));
+        return;
+      } else if (mkv) {
+        mkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+        unawaited(finish(mkvCandidate));
+        return;
+      }
+    }
+
+    // When there are ads, wait for skip readiness before finishing.
     if (!readyToCapture) {
-      // Store as pre-skip candidates for fallback
-      if (isHls(url)) {
+      if (hls) {
         preHlsCandidate ??= <String, dynamic>{"url": url, "headers": headers};
-      } else if (isMp4(url)) {
+      } else if (mp4) {
         preMp4Candidate ??= <String, dynamic>{"url": url, "headers": headers};
-      } else if (isMkv(url)) {
+      } else if (mkv) {
         preMkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
       }
-
       return;
     }
 
-    if (isHls(url)) {
+    // Ready to capture: finish immediately with the first media seen after skip.
+    if (hls) {
       hlsCandidate ??= <String, dynamic>{"url": url, "headers": headers};
       unawaited(finish(hlsCandidate));
-    } else if (isMp4(url)) {
+      return;
+    } else if (mp4) {
       mp4Candidate ??= <String, dynamic>{"url": url, "headers": headers};
-    } else if (isMkv(url)) {
+      unawaited(finish(mp4Candidate));
+      return;
+    } else if (mkv) {
       mkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+      unawaited(finish(mkvCandidate));
+      return;
     }
   }
 
@@ -158,8 +192,8 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(String pageUrl, {boo
     extraOnLoadStopScripts: <String>[jsSkipAndReady],
   );
 
-  // Timeout: allow time for skip + stream to appear, then pick best
-  await Future<void>.delayed(const Duration(seconds: 20), () => finish());
+  // Timeout: allow time for skip + stream to appear, then pick best.
+  unawaited(Future<void>.delayed(const Duration(seconds: 20), () => finish()));
 
   return completer.future;
 }

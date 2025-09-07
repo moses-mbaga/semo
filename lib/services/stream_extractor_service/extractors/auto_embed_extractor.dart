@@ -64,6 +64,7 @@ class AutoEmbedExtractor implements BaseStreamExtractor {
       final Map<String, dynamic>? stream = await extractStreamFromPageRequests(
         pageUri.toString(),
         filter: (String url) => url.startsWith("https://proxy.vidsrc.co/?u="),
+        hasAds: true,
       );
       final String? url = stream?["url"];
       Map<String, String> headers = stream?["headers"] ?? <String, String>{};
