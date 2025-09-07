@@ -65,15 +65,16 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
     final bool hls = isHls(url);
     final bool mp4 = isMp4(url);
     final bool mkv = isMkv(url);
+
     if (!(hls || mp4 || mkv)) {
-      return; // Ignore non-media requests
+      return;
     }
 
     if (!seen.add(url)) {
       return;
     }
 
-    // If there are no ads, return immediately for any media type.
+    // If there are no ads, return immediately for any media type
     if (!hasAds) {
       if (hls) {
         hlsCandidate ??= <String, dynamic>{"url": url, "headers": headers};
@@ -90,7 +91,7 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
       }
     }
 
-    // When there are ads, wait for skip readiness before finishing.
+    // When there are ads, wait for skip readiness before finishing
     if (!readyToCapture) {
       if (hls) {
         preHlsCandidate ??= <String, dynamic>{"url": url, "headers": headers};
@@ -192,7 +193,7 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
     extraOnLoadStopScripts: <String>[jsSkipAndReady],
   );
 
-  // Timeout: allow time for skip + stream to appear, then pick best.
+  // Timeout: allow time for skip + stream to appear, then pick best
   unawaited(Future<void>.delayed(const Duration(seconds: 20), () => finish()));
 
   return completer.future;
