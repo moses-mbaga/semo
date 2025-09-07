@@ -38,7 +38,7 @@ class MoviesApiExtractor implements BaseStreamExtractor {
   );
   final Logger _logger = Logger();
 
-  Future<Map<String, dynamic>?> _extractStreamLink(String pageUrl) async {
+  Future<Map<String, dynamic>?> _extractStream(String pageUrl) async {
     final Set<String> seen = <String>{};
     final Completer<Map<String, dynamic>?> completer = Completer<Map<String, dynamic>?>();
     HeadlessInAppWebView? headless;
@@ -254,9 +254,9 @@ class MoviesApiExtractor implements BaseStreamExtractor {
         throw Exception("External link is required for $_providerKey");
       }
 
-      final Map<String, dynamic>? m3u8 = await _extractStreamLink(externalLink);
-      final String? url = m3u8?["url"];
-      Map<String, String> headers = m3u8?["headers"] ?? <String, String>{};
+      final Map<String, dynamic>? stream = await _extractStream(externalLink);
+      final String? url = stream?["url"];
+      Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 
       if (url == null || url.isEmpty) {
         throw Exception("No stream URL found for external link: $externalLink");
