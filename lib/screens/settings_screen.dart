@@ -38,14 +38,17 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
   final AuthService _authService = AuthService();
 
   Future<void> _openServerSelector() async {
-    String savedServerName = _appPreferences.getStreamingServer();
-    List<StreamingServer> servers = StreamExtractorService.streamingServers;
-
     if (mounted) {
       await showModalBottomSheet(
         context: context,
         builder: (BuildContext context) {
-          String serverName = savedServerName;
+          List<StreamingServer> servers = StreamExtractorService.streamingServers;
+          String savedServerName = _appPreferences.getStreamingServer();
+          int selectedServerIndex = servers.indexWhere((StreamingServer server) => server.name == savedServerName);
+
+          if (selectedServerIndex == -1) {
+            savedServerName = "Random";
+          }
 
           return StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) => ListView.builder(
@@ -53,7 +56,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
               itemCount: servers.length,
               itemBuilder: (BuildContext context, int index) {
                 StreamingServer server = servers[index];
-                bool isSelected = server.name == serverName;
+                bool isSelected = server.name == savedServerName;
 
                 return ListTile(
                   selected: isSelected,
@@ -66,7 +69,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
                   leading: isSelected ? const Icon(Icons.check) : null,
                   onTap: () async {
                     await _appPreferences.setStreamingServer(server);
-                    setState(() => serverName = server.name);
+                    setState(() => savedServerName = server.name);
                   },
                 );
               },
