@@ -16,7 +16,7 @@ class PageNetworkRequestsSession {
   }
 }
 
-class PageNetworkRequests {
+class PageNetworkRequestsService {
   static const String _defaultHandlerName = "pageNetworkRequestFound";
 
   static String _buildSnifferJs(List<String> includePatterns, String handlerName) {

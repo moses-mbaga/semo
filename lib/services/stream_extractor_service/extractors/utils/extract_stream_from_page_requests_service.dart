@@ -1,6 +1,6 @@
 import "dart:async";
 
-import "package:semo/utils/page_network_requests.dart";
+import "package:semo/services/page_network_requests_service.dart";
 
 // ignore_for_file: unnecessary_string_escapes
 
@@ -176,7 +176,7 @@ class ExtractStreamFromPageRequestsService {
 })();
 """;
 
-    session = await PageNetworkRequests.startCapture(
+    session = await PageNetworkRequestsService.startCapture(
       pageUrl: pageUrl,
       onRequest: (String url, Map<String, String> headers) => consider(url, headers),
       includePatterns: const <String>[".m3u8", ".mp4", ".mkv"],
