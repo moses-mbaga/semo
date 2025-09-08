@@ -1,6 +1,8 @@
 import "dart:async";
+import "dart:io";
 
 import "package:diacritic/diacritic.dart";
+import "package:flutter_inappwebview/flutter_inappwebview.dart";
 import "package:semo/utils/page_network_requests.dart";
 
 // ignore_for_file: unnecessary_string_escapes
@@ -184,17 +186,67 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
     pageUrl: pageUrl,
     onRequest: (String url, Map<String, String> headers) => consider(url, headers),
     includePatterns: const <String>[".m3u8", ".mp4", ".mkv"],
-    extraHandlers: <String, Future<dynamic> Function(List<dynamic>)>{
-      "skipReady": (List<dynamic> args) async {
-        readyToCapture = true;
-        return null;
-      },
-    },
-    extraOnLoadStopScripts: <String>[jsSkipAndReady],
+    extraHandlers: hasAds
+        ? <String, Future<dynamic> Function(List<dynamic>)>{
+            "skipReady": (List<dynamic> args) async {
+              readyToCapture = true;
+              return null;
+            },
+          }
+        : null,
   );
 
+  await Future<void>.delayed(const Duration(milliseconds: 500));
+  final InAppWebViewController? controller = session.webView.webViewController;
+  int timeoutSeconds = 20;
+
+  if (hasAds) {
+    bool skipSupported = true;
+    if (Platform.isIOS) {
+      try {
+        final Object? available = await controller?.evaluateJavascript(
+          source:
+              "typeof window.flutter_inappwebview !== 'undefined' && typeof window.flutter_inappwebview.callHandler === 'function'",
+        );
+        skipSupported = available == true;
+      } catch (_) {
+        skipSupported = false;
+      }
+    }
+
+    if (skipSupported) {
+      await controller?.evaluateJavascript(source: jsSkipAndReady);
+    } else {
+      int delaySeconds = 20;
+      try {
+        final Object? adSeconds = await controller?.evaluateJavascript(
+          source: """
+(() => {
+  const el = Array.from(document.querySelectorAll('*')).find(e => /Ad will end in \\d+ seconds/i.test(e.innerText || e.textContent));
+  if (!el) return null;
+  const m = (el.innerText || '').match(/Ad will end in (\\d+) seconds/i);
+  return m ? parseInt(m[1]) : null;
+})();
+""",
+        );
+        if (adSeconds is int && adSeconds > 0) {
+          delaySeconds = adSeconds;
+        }
+      } catch (_) {}
+
+      unawaited(Future<void>.delayed(Duration(seconds: delaySeconds), () {
+        readyToCapture = true;
+        if (preHlsCandidate != null || preMp4Candidate != null || preMkvCandidate != null) {
+          unawaited(finish());
+        }
+      }));
+
+      timeoutSeconds = delaySeconds + 10;
+    }
+  }
+
   // Timeout: allow time for skip + stream to appear, then pick best
-  unawaited(Future<void>.delayed(const Duration(seconds: 20), () => finish()));
+  unawaited(Future<void>.delayed(Duration(seconds: timeoutSeconds), () => finish()));
 
   return completer.future;
 }
