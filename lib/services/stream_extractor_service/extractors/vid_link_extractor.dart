@@ -9,7 +9,7 @@ import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/common_headers.dart";
-import "package:semo/services/stream_extractor_service/extractors/helpers.dart";
+import "package:semo/services/stream_extractor_service/extractors/utils/extract_stream_from_page_requests_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/streaming_server_base_url_extractor.dart";
 
 class VidLinkExtractor implements BaseStreamExtractor {
@@ -28,6 +28,7 @@ class VidLinkExtractor implements BaseStreamExtractor {
 
   final String _providerKey = "semo_vidlink";
   final StreamingServerBaseUrlExtractor _streamingServerBaseUrlExtractor = StreamingServerBaseUrlExtractor();
+  final ExtractStreamFromPageRequestsService _extractStreamFromPageRequestsService = const ExtractStreamFromPageRequestsService();
   final Dio _dio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 10),
@@ -60,7 +61,7 @@ class VidLinkExtractor implements BaseStreamExtractor {
 
       final Uri pageUri = Uri.parse(baseUrl).resolve(path);
 
-      final Map<String, dynamic>? stream = await extractStreamFromPageRequests(pageUri.toString());
+      final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(pageUri.toString());
       final String? url = stream?["url"];
       Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 
