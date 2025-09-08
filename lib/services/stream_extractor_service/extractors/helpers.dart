@@ -204,10 +204,13 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
     bool skipSupported = true;
     if (Platform.isIOS) {
       try {
-        final Object? available = await controller?.evaluateJavascript(
-          source:
-              "typeof window.flutter_inappwebview !== 'undefined' && typeof window.flutter_inappwebview.callHandler === 'function'",
-        );
+        Object? available;
+        if (controller != null) {
+          available = await controller.evaluateJavascript(
+            source:
+                "typeof window.flutter_inappwebview !== 'undefined' && typeof window.flutter_inappwebview.callHandler === 'function'",
+          );
+        }
         skipSupported = available == true;
       } catch (_) {
         skipSupported = false;
@@ -215,12 +218,16 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
     }
 
     if (skipSupported) {
-      await controller?.evaluateJavascript(source: jsSkipAndReady);
+      if (controller != null) {
+        await controller.evaluateJavascript(source: jsSkipAndReady);
+      }
     } else {
       int delaySeconds = 20;
       try {
-        final Object? adSeconds = await controller?.evaluateJavascript(
-          source: """
+        Object? adSeconds;
+        if (controller != null) {
+          adSeconds = await controller.evaluateJavascript(
+            source: """
 (() => {
   const el = Array.from(document.querySelectorAll('*')).find(e => /Ad will end in \\d+ seconds/i.test(e.innerText || e.textContent));
   if (!el) return null;
@@ -228,7 +235,8 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
   return m ? parseInt(m[1]) : null;
 })();
 """,
-        );
+          );
+        }
         if (adSeconds is int && adSeconds > 0) {
           delaySeconds = adSeconds;
         }
