@@ -6,7 +6,7 @@ import "package:semo/bloc/app_event.dart";
 import "package:semo/bloc/app_state.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/services/recent_searches_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/helpers.dart";
+import "package:semo/services/stream_extractor_service/extractors/utils/helpers.dart";
 
 mixin RecentSearchesHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();

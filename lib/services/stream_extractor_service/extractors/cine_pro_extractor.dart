@@ -8,8 +8,8 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/helpers.dart";
-import "package:semo/services/stream_extractor_service/extractors/streaming_server_base_url_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/utils/helpers.dart";
+import "package:semo/services/stream_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
 
 class CineProExtractor implements BaseStreamExtractor {
   CineProExtractor() {
