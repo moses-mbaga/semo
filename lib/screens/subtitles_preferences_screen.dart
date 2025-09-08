@@ -6,7 +6,7 @@ import "package:semo/gen/assets.gen.dart";
 import "package:semo/models/subtitle_style.dart";
 import "package:semo/screens/base_screen.dart";
 import "package:semo/services/app_preferences_service.dart";
-import "package:semo/utils/string_extension.dart";
+import "package:semo/utils/string_extensions.dart";
 
 class SubtitlesPreferencesScreen extends BaseScreen {
   const SubtitlesPreferencesScreen({super.key});
@@ -22,7 +22,7 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
 
   Widget _buildVisualExample() {
     String subtitle = "Just like everything else in this place. [Chair scrapes floor]\nThe coordinates point to the old lighthouse.";
-    Paint foreground  = Paint()
+    Paint foreground = Paint()
       ..style = _subtitleStyle.borderStyle.style
       ..strokeWidth = _subtitleStyle.borderStyle.strokeWidth
       ..color = SubtitleStyle.getColors()[_subtitleStyle.borderStyle.color]!;
@@ -63,28 +63,29 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
   }
 
   Text _buildSectionTitle(String title) => Text(
-    title,
-    style: Theme.of(context).textTheme.titleSmall?.copyWith(
-      fontSize: 20,
-      color: Theme.of(context).primaryColor,
-    ),
-  );
+        title,
+        style: Theme.of(context).textTheme.titleSmall?.copyWith(
+              fontSize: 20,
+              color: Theme.of(context).primaryColor,
+            ),
+      );
 
   SettingsTile _buildSectionTile({
     required String title,
     required Widget trailing,
     bool enabled = true,
     Function(BuildContext context)? onPressed,
-  }) => SettingsTile(
-    title: Text(
-      title,
-      style: Theme.of(context).textTheme.displayMedium,
-    ),
-    leading: null,
-    trailing: trailing,
-    backgroundColor: Platform.isIOS ? Theme.of(context).cardColor: Colors.transparent,
-    onPressed: onPressed,
-  );
+  }) =>
+      SettingsTile(
+        title: Text(
+          title,
+          style: Theme.of(context).textTheme.displayMedium,
+        ),
+        leading: null,
+        trailing: trailing,
+        backgroundColor: Platform.isIOS ? Theme.of(context).cardColor : Colors.transparent,
+        onPressed: onPressed,
+      );
 
   SettingsList _buildCustomizations() {
     SettingsThemeData settingsThemeData = SettingsThemeData(
@@ -128,9 +129,10 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
                   },
                   dropdownMenuEntries: SubtitleStyle.getFontSizes()
                       .map<DropdownMenuEntry<double>>((double size) => DropdownMenuEntry<double>(
-                    value: size,
-                    label: "$size".replaceAll(".0", ""),
-                  )).toList(),
+                            value: size,
+                            label: "$size".replaceAll(".0", ""),
+                          ))
+                      .toList(),
                 ),
               ),
             ),
@@ -151,11 +153,13 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
                       await _appPreferences.setSubtitlesStyle(_subtitleStyle);
                     }
                   },
-                  dropdownMenuEntries: SubtitleStyle.getColors().keys
+                  dropdownMenuEntries: SubtitleStyle.getColors()
+                      .keys
                       .map<DropdownMenuEntry<String>>((String color) => DropdownMenuEntry<String>(
-                    value: color,
-                    label: color,
-                  )).toList(),
+                            value: color,
+                            label: color,
+                          ))
+                      .toList(),
                 ),
               ),
             ),
@@ -199,9 +203,10 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
                   },
                   dropdownMenuEntries: SubtitleStyle.getBorderWidths()
                       .map<DropdownMenuEntry<double>>((double size) => DropdownMenuEntry<double>(
-                    value: size,
-                    label: "$size".replaceAll(".0", ""),
-                  )).toList(),
+                            value: size,
+                            label: "$size".replaceAll(".0", ""),
+                          ))
+                      .toList(),
                 ),
               ),
             ),
@@ -223,11 +228,13 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
                       await _appPreferences.setSubtitlesStyle(_subtitleStyle);
                     }
                   },
-                  dropdownMenuEntries: SubtitleStyle.getColors().keys
+                  dropdownMenuEntries: SubtitleStyle.getColors()
+                      .keys
                       .map<DropdownMenuEntry<String>>((String color) => DropdownMenuEntry<String>(
-                    value: color,
-                    label: color,
-                  )).toList(),
+                            value: color,
+                            label: color,
+                          ))
+                      .toList(),
                 ),
               ),
             ),
@@ -250,10 +257,13 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
                     }
                   },
                   dropdownMenuEntries: PaintingStyle.values
-                      .map((PaintingStyle style) => style.name).toList().map<DropdownMenuEntry<String>>((String style) => DropdownMenuEntry<String>(
-                    value: style,
-                    label: style.capitalize(),
-                  )).toList(),
+                      .map((PaintingStyle style) => style.name)
+                      .toList()
+                      .map<DropdownMenuEntry<String>>((String style) => DropdownMenuEntry<String>(
+                            value: style,
+                            label: style.capitalize(),
+                          ))
+                      .toList(),
                 ),
               ),
             ),
@@ -262,22 +272,22 @@ class _SubtitlesPreferencesScreenState extends BaseScreenState<SubtitlesPreferen
       ],
     );
   }
-  
+
   @override
   String get screenName => "Subtitles Preferences";
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
-    appBar: AppBar(
-      title: const Text("Subtitles"),
-    ),
-    body: SingleChildScrollView(
-      child: Column(
-        children: <Widget>[
-          _buildVisualExample(),
-          _buildCustomizations(),
-        ],
-      ),
-    ),
-  );
+        appBar: AppBar(
+          title: const Text("Subtitles"),
+        ),
+        body: SingleChildScrollView(
+          child: Column(
+            children: <Widget>[
+              _buildVisualExample(),
+              _buildCustomizations(),
+            ],
+          ),
+        ),
+      );
 }
