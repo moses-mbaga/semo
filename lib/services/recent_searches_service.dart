@@ -3,7 +3,7 @@ import "package:firebase_auth/firebase_auth.dart";
 import "package:logger/logger.dart";
 import "package:semo/services/firestore_collection_names.dart";
 import "package:semo/enums/media_type.dart";
-import "package:semo/utils/normalize_for_comparison.dart";
+import "package:semo/utils/string_extensions.dart";
 
 class RecentSearchesService {
   factory RecentSearchesService() => _instance;
@@ -58,7 +58,7 @@ class RecentSearchesService {
     final List<String> searches = await getRecentSearches(mediaType);
 
     // Remove duplicate entry
-    searches.removeWhere((String q) => normalizeForComparison(q) == normalizeForComparison(query));
+    searches.removeWhere((String q) => q.normalize() == query.normalize());
 
     // Add to beginning
     searches.insert(0, query);
@@ -80,7 +80,7 @@ class RecentSearchesService {
     final List<String> searches = await getRecentSearches(mediaType);
 
     if (searches.contains(query)) {
-      searches.removeWhere((String q) => normalizeForComparison(q) == normalizeForComparison(query));
+      searches.removeWhere((String q) => q.normalize() == query.normalize());
       try {
         await _getDocReference().set(<String, dynamic>{fieldName: searches}, SetOptions(merge: true));
       } catch (e, s) {

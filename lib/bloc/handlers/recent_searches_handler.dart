@@ -6,7 +6,7 @@ import "package:semo/bloc/app_event.dart";
 import "package:semo/bloc/app_state.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/services/recent_searches_service.dart";
-import "package:semo/utils/normalize_for_comparison.dart";
+import "package:semo/utils/string_extensions.dart";
 
 mixin RecentSearchesHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();
@@ -39,7 +39,7 @@ mixin RecentSearchesHandler on Bloc<AppEvent, AppState> {
 
     if (event.mediaType == MediaType.movies) {
       final List<String> updatedSearches = state.moviesRecentSearches ?? <String>[];
-      updatedSearches.removeWhere((String query) => normalizeForComparison(query) == normalizeForComparison(event.query));
+      updatedSearches.removeWhere((String query) => query.normalize() == event.query.normalize());
       updatedSearches.insert(0, event.query);
 
       emit(state.copyWith(
@@ -47,7 +47,7 @@ mixin RecentSearchesHandler on Bloc<AppEvent, AppState> {
       ));
     } else if (event.mediaType == MediaType.tvShows) {
       final List<String> updatedSearches = state.tvShowsRecentSearches ?? <String>[];
-      updatedSearches.removeWhere((String query) => normalizeForComparison(query) == normalizeForComparison(event.query));
+      updatedSearches.removeWhere((String query) => query.normalize() == event.query.normalize());
       updatedSearches.insert(0, event.query);
 
       emit(state.copyWith(

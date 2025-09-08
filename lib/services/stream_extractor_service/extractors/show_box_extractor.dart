@@ -10,8 +10,8 @@ import "package:semo/enums/media_type.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/utils/normalize_for_comparison.dart";
 import "package:semo/services/stream_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
+import "package:semo/utils/string_extensions.dart";
 
 class ShowBoxExtractor implements BaseStreamExtractor {
   ShowBoxExtractor() {
@@ -80,8 +80,8 @@ class ShowBoxExtractor implements BaseStreamExtractor {
 
     String? selectedLink;
     for (final Map<String, String> post in catalog) {
-      final String postTitle = normalizeForComparison(post["title"] ?? "");
-      final String queryTitle = normalizeForComparison(options.title);
+      final String postTitle = "${post["title"]}".normalize();
+      final String queryTitle = options.title.normalize();
 
       if (postTitle == queryTitle || postTitle.contains(queryTitle) || queryTitle.contains(postTitle)) {
         selectedLink = post["link"];
@@ -168,7 +168,7 @@ class ShowBoxExtractor implements BaseStreamExtractor {
   }
 
   int _rankFromName(String name) {
-    final String t = normalizeForComparison(name);
+    final String t = name.normalize();
 
     if (RegExp(r"1080p|\b1080\b").hasMatch(t)) {
       return 0;
@@ -208,7 +208,7 @@ class ShowBoxExtractor implements BaseStreamExtractor {
 
   String? _pickSeasonFid(List<Map<String, dynamic>> files, int season) {
     for (final Map<String, dynamic> f in files) {
-      final String name = normalizeForComparison((f["file_name"] ?? "").toString());
+      final String name = "${f["file_name"]}".normalize();
       final RegExp re = RegExp(r"season\s*(\d+)");
       final Match? m = re.firstMatch(name);
 

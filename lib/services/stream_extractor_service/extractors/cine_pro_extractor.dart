@@ -8,8 +8,8 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/utils/normalize_for_comparison.dart";
 import "package:semo/services/stream_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
+import "package:semo/utils/string_extensions.dart";
 
 class CineProExtractor implements BaseStreamExtractor {
   CineProExtractor() {
@@ -68,8 +68,8 @@ class CineProExtractor implements BaseStreamExtractor {
 
       for (Map<String, dynamic> stream in streams) {
         final String? streamUrl = stream["file"];
-        final String language = normalizeForComparison(stream["lang"] ?? "");
-        final String type = normalizeForComparison(stream["type"] ?? "");
+        final String language = ((stream["lang"] ?? "") as String).normalize();
+        final String type = ((stream["type"] ?? "") as String).normalize();
         final Map<String, String> headers = <String, String>{};
 
         if (stream["headers"] != null) {

@@ -11,8 +11,8 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/utils/normalize_for_comparison.dart";
 import "package:semo/services/stream_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
+import "package:semo/utils/string_extensions.dart";
 
 class MultiMoviesExtractor implements BaseStreamExtractor {
   MultiMoviesExtractor() {
@@ -129,7 +129,7 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
               continue;
             }
 
-            final List<String> seasonEpisodeNumber = normalizeForComparison(episodeNumberElement.text).split("-");
+            final List<String> seasonEpisodeNumber = episodeNumberElement.text.normalize().split("-");
             final String seasonNumber = seasonEpisodeNumber[0].trim();
             final String episodeNumber = seasonEpisodeNumber[1].trim();
             final String? link = linkElement.attributes["href"];
@@ -381,8 +381,8 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
     String? targetPostUrl;
 
     for (final Map<String, String> post in posts) {
-      final String lowerPostTitle = normalizeForComparison("${post["title"]}");
-      final String lowerSearchTitle = normalizeForComparison(options.title);
+      final String lowerPostTitle = "${post["title"]}".normalize();
+      final String lowerSearchTitle = options.title.normalize();
 
       if (options.movieReleaseYear != null) {
         if (lowerPostTitle.contains(lowerSearchTitle) && "${post["year"]}" == options.movieReleaseYear!) {
