@@ -1,3 +1,4 @@
+import "dart:io";
 import "dart:math" as math;
 
 import "package:logger/logger.dart";
@@ -23,7 +24,7 @@ class StreamExtractorService {
   static final Logger _logger = Logger();
   static final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
-    StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
