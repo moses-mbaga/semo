@@ -3,7 +3,7 @@ import "package:firebase_auth/firebase_auth.dart";
 import "package:logger/logger.dart";
 import "package:semo/services/firestore_collection_names.dart";
 import "package:semo/enums/media_type.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/helpers.dart";
+import "package:semo/utils/normalize_for_comparison.dart";
 
 class RecentSearchesService {
   factory RecentSearchesService() => _instance;
