@@ -200,6 +200,8 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
   final InAppWebViewController? controller = session.webView.webViewController;
   int timeoutSeconds = 20;
 
+  // Detect if clicking skip is supported in iOS
+  // If not, wait until ad is complete
   if (hasAds) {
     bool skipSupported = true;
     if (Platform.isIOS) {
@@ -207,8 +209,7 @@ Future<Map<String, dynamic>?> extractStreamFromPageRequests(
         Object? available;
         if (controller != null) {
           available = await controller.evaluateJavascript(
-            source:
-                "typeof window.flutter_inappwebview !== 'undefined' && typeof window.flutter_inappwebview.callHandler === 'function'",
+            source: "typeof window.flutter_inappwebview !== 'undefined' && typeof window.flutter_inappwebview.callHandler === 'function'",
           );
         }
         skipSupported = available == true;
