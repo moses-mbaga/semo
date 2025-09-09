@@ -39,7 +39,7 @@ Notes:
 - **Read server preference:**
   - `final name = AppPreferencesService().getStreamingServer();`
   - Used by stream extraction to select a provider.
-  - Example: `lib/services/stream_extractor/extractor.dart`.
+  - Example: `lib/services/stream_extractor_service/stream_extractor_service.dart`.
 
 - **Update server preference (Settings):**
   - `await AppPreferencesService().setStreamingServer(server);`
@@ -77,4 +77,3 @@ Notes:
 **Testing Tips**
 
 TBD
-

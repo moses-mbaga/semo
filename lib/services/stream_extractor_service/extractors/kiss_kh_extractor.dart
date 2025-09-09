@@ -90,7 +90,7 @@ class KissKhExtractor implements BaseStreamExtractor {
     if (options.season != null && options.episode != null) {
       referenceTitles.add("${options.title} - Season ${options.season}");
     } else {
-      referenceTitles.add("${options.title} (${options.movieReleaseYear})");
+      referenceTitles.add("${options.title} (${options.releaseYear})");
       referenceTitles.add(options.title);
     }
 

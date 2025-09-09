@@ -384,8 +384,8 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
       final String lowerPostTitle = "${post["title"]}".normalize();
       final String lowerSearchTitle = options.title.normalize();
 
-      if (options.movieReleaseYear != null) {
-        if (lowerPostTitle.contains(lowerSearchTitle) && "${post["year"]}" == options.movieReleaseYear!) {
+      if (options.releaseYear != null) {
+        if (lowerPostTitle.contains(lowerSearchTitle) && "${post["year"]}" == options.releaseYear!) {
           targetPostUrl = post["link"];
           break;
         }

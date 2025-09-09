@@ -2,12 +2,9 @@ import "dart:io";
 import "dart:math" as math;
 
 import "package:logger/logger.dart";
-import "package:semo/models/episode.dart";
-import "package:semo/models/movie.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
-import "package:semo/models/tv_show.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/services/stream_extractor_service/extractors/auto_embed_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
@@ -36,14 +33,15 @@ class StreamExtractorService {
 
   static List<StreamingServer> get streamingServers => _streamingServers;
 
-  static Future<MediaStream?> getStream({Movie? movie, TvShow? tvShow, Episode? episode, String? imdbId}) async {
+  static Future<MediaStream?> getStream(StreamExtractorOptions options) async {
     try {
       math.Random random = math.Random();
       String serverName = AppPreferencesService().getStreamingServer();
       MediaStream? stream;
       BaseStreamExtractor? extractor;
 
-      final MediaType requestedMediaType = movie != null ? MediaType.movies : (tvShow != null && episode != null ? MediaType.tvShows : MediaType.none);
+      final bool isTv = options.season != null && options.episode != null;
+      final MediaType requestedMediaType = isTv ? MediaType.tvShows : MediaType.movies;
 
       if (requestedMediaType == MediaType.none) {
         throw Exception("Unable to determine media type for extraction");
@@ -56,29 +54,6 @@ class StreamExtractorService {
         if (extractor == null || !extractor.acceptedMediaTypes.contains(requestedMediaType)) {
           throw Exception("Selected server '$serverName' does not support ${requestedMediaType.toString()}");
         }
-      }
-
-      StreamExtractorOptions? streamExtractorOptions;
-
-      if (movie != null) {
-        streamExtractorOptions = StreamExtractorOptions(
-          tmdbId: movie.id,
-          title: movie.title,
-          movieReleaseYear: movie.releaseDate.split("-")[0],
-          imdbId: imdbId,
-        );
-      } else if (tvShow != null && episode != null) {
-        streamExtractorOptions = StreamExtractorOptions(
-          tmdbId: tvShow.id,
-          season: episode.season,
-          episode: episode.number,
-          title: tvShow.name,
-          imdbId: imdbId,
-        );
-      }
-
-      if (streamExtractorOptions == null) {
-        throw Exception("StreamExtractorOptions is null");
       }
 
       final List<StreamingServer> availableServers = _streamingServers.where((StreamingServer s) => s.extractor != null && s.extractor!.acceptedMediaTypes.contains(requestedMediaType)).toList();
@@ -96,13 +71,13 @@ class StreamExtractorService {
         String? externalLink;
 
         if (extractor?.needsExternalLink == true) {
-          externalLink = await extractor?.getExternalLink(streamExtractorOptions);
+          externalLink = await extractor?.getExternalLink(options);
           if (externalLink == null || externalLink.isEmpty) {
-            throw Exception("Failed to retrieve external link for ${streamExtractorOptions.title} in $serverName");
+            throw Exception("Failed to retrieve external link for ${options.title} in $serverName");
           }
         }
 
-        stream = await extractor?.getStream(externalLink, streamExtractorOptions);
+        stream = await extractor?.getStream(externalLink, options);
 
         if (stream == null || stream.url.isEmpty) {
           _logger.w("Stream not found.\nStreamingServer: $serverName");

@@ -5,6 +5,7 @@ import "package:logger/logger.dart";
 import "package:semo/bloc/app_event.dart";
 import "package:semo/bloc/app_state.dart";
 import "package:semo/models/media_stream.dart";
+import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 
 mixin StreamHandler on Bloc<AppEvent, AppState> {
@@ -39,7 +40,13 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
 
     try {
       final String? imdbId = state.movieImdbIds?[movieId];
-      final MediaStream? stream = await StreamExtractorService.getStream(movie: event.movie, imdbId: imdbId);
+      final StreamExtractorOptions options = StreamExtractorOptions(
+        tmdbId: event.movie.id,
+        title: event.movie.title,
+        releaseYear: (event.movie.releaseDate.isNotEmpty ? event.movie.releaseDate.split("-")[0] : null),
+        imdbId: imdbId,
+      );
+      final MediaStream? stream = await StreamExtractorService.getStream(options);
 
       if (stream == null || stream.url.isEmpty) {
         throw Exception("Stream is null");
@@ -93,11 +100,14 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
 
     try {
       final String? imdbId = state.tvShowImdbIds?[event.tvShow.id.toString()];
-      final MediaStream? stream = await StreamExtractorService.getStream(
-        tvShow: event.tvShow,
-        episode: event.episode,
+      final StreamExtractorOptions options = StreamExtractorOptions(
+        tmdbId: event.tvShow.id,
+        season: event.episode.season,
+        episode: event.episode.number,
+        title: event.tvShow.name,
         imdbId: imdbId,
       );
+      final MediaStream? stream = await StreamExtractorService.getStream(options);
 
       if (stream == null || stream.url.isEmpty) {
         throw Exception("Stream is null");

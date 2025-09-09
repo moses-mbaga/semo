@@ -8,7 +8,7 @@
 - `StreamExtractorService`: Static façade that chooses an extractor and returns a `MediaStream?`.
 - `StreamingServer`: UI‑friendly descriptor of a source with a `name` and an associated extractor instance (or `null` for randomized selection).
 - `BaseStreamExtractor`: Interface every extractor implements with `Future<MediaStream?> getStream(StreamExtractorOptions options)`.
-- `StreamExtractorOptions`: Options passed to extractors (TMDB ID, title, and optionally season/episode or movie release year). Includes optional `imdbId` when available.
+- `StreamExtractorOptions`: Options passed to extractors (TMDB ID, title, and optionally season/episode or `releaseYear`). Includes optional `imdbId` when available.
 - `MediaStream`: The result with a `url` and optional HTTP `headers`.
 
 **Public API**
@@ -16,10 +16,10 @@
 - `static List<StreamingServer> get streamingServers`
   - The list of available servers. First entry is always `Random` (no extractor bound) to enable random selection.
 
-- `static Future<MediaStream?> getStream({Movie? movie, TvShow? tvShow, Episode? episode, String? imdbId})`
-  - Inputs: Provide either `movie`, or both `tvShow` and `episode`.
+- `static Future<MediaStream?> getStream(StreamExtractorOptions options)`
+  - Inputs: An options object; include `season` and `episode` for TV episodes.
   - Behavior:
-    - Builds `StreamExtractorOptions` from the provided inputs.
+    - Uses provided `options` directly (no internal construction).
     - Reads preferred server from `AppPreferencesService().getStreamingServer()`.
     - If preference is `Random`, picks servers at random until a valid stream is found (removing failures from the candidate set for that attempt).
     - If a specific server is selected, delegates only to that extractor.
@@ -29,8 +29,8 @@
 **Models**
 
 - `StreamExtractorOptions`
-  - Movie: `{ tmdbId, title, movieReleaseYear, imdbId? }`
-  - Episode: `{ tmdbId: tvShow.id, season, episode, title: tvShow.name, imdbId? }`
+  - Movie: `{ tmdbId, title, releaseYear?, imdbId? }`
+  - Episode: `{ tmdbId, season, episode, title, imdbId? }`
   - Assertion: `season` and `episode` must be both provided or both omitted.
 
 - `MediaStream`
@@ -50,11 +50,13 @@
 **Usage Examples**
 
 - Movie stream
-  - `final stream = await StreamExtractorService.getStream(movie: movie);`
+  - `final opts = StreamExtractorOptions(tmdbId: movie.id, title: movie.title, releaseYear: movie.releaseDate.split('-').first, imdbId: imdbId);`
+  - `final stream = await StreamExtractorService.getStream(opts);`
   - `if (stream != null && stream.url.isNotEmpty) { /* play via player */ }`
 
 - Episode stream
-  - `final stream = await StreamExtractorService.getStream(tvShow: show, episode: ep);`
+  - `final opts = StreamExtractorOptions(tmdbId: show.id, season: ep.season, episode: ep.number, title: show.name, imdbId: imdbId);`
+  - `final stream = await StreamExtractorService.getStream(opts);`
   - `if (stream != null && stream.url.isNotEmpty) { /* play via player */ }`
 
 - Listing servers for a settings screen
@@ -63,7 +65,7 @@
 
 **Extensibility**
 
-- Add a new extractor by implementing `BaseStreamExtractor` and registering it in the `_streamingServers` list inside `extractor.dart`:
+- Add a new extractor by implementing `BaseStreamExtractor` and registering it in the `_streamingServers` list inside `stream_extractor_service.dart`:
   - `StreamingServer(name: "YourProvider", extractor: YourProviderExtractor()),`
 - No UI changes needed if your settings UI lists `streamingServers` dynamically.
 

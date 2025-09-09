@@ -4,7 +4,7 @@ class StreamExtractorOptions {
     this.season,
     this.episode,
     required this.title,
-    this.movieReleaseYear,
+    this.releaseYear,
     this.imdbId,
   }) : assert(
           (season == null && episode == null) || (season != null && episode != null),
@@ -15,6 +15,6 @@ class StreamExtractorOptions {
   final int? season;
   final int? episode;
   final String title;
-  final String? movieReleaseYear;
+  final String? releaseYear;
   final String? imdbId;
 }
