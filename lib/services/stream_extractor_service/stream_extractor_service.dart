@@ -10,6 +10,7 @@ import "package:semo/services/stream_extractor_service/extractors/auto_embed_ext
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
+import "package:semo/services/stream_extractor_service/extractors/mapple_tv_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/movies_api_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/cine_pro_extractor.dart";
@@ -24,6 +25,7 @@ class StreamExtractorService {
     if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
+    StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()),
