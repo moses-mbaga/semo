@@ -187,8 +187,57 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
       Duration progress = _videoPlayerController.value.position;
       Duration total = _videoPlayerController.value.duration;
-      bool isBuffering = false;
+      Duration buffered = Duration.zero;
+      final List<DurationRange> ranges = _videoPlayerController.value.buffered;
 
+      if (ranges.isNotEmpty) {
+        // Find the range that contains the current position
+        int activeRangeIndex = -1;
+
+        for (int i = 0; i < ranges.length; i++) {
+          final DurationRange range = ranges[i];
+
+          if (progress >= range.start && progress <= range.end) {
+            activeRangeIndex = i;
+            break;
+          }
+        }
+
+        if (activeRangeIndex == -1) {
+          // No buffered range contains the playhead
+          // Treat as no buffer ahead
+          buffered = progress;
+        } else {
+          // Merge adjacent forward ranges so buffered reflects the full contiguous end
+          Duration end = ranges[activeRangeIndex].end;
+          const Duration epsilon = Duration(milliseconds: 200);
+
+          for (int j = activeRangeIndex + 1; j < ranges.length; j++) {
+            final DurationRange next = ranges[j];
+
+            if (next.start <= end + epsilon) {
+              if (next.end > end) {
+                end = next.end;
+              }
+            } else {
+              break;
+            }
+          }
+
+          buffered = end;
+        }
+
+        // Clamp buffered within [progress, total]
+        if (buffered < progress) {
+          buffered = progress;
+        }
+
+        if (total > Duration.zero && buffered > total) {
+          buffered = total;
+        }
+      }
+
+      bool isBuffering = false;
       if (isPlaying && _videoPlayerController.value.isBuffering && (progress == _mediaProgress.progress)) {
         isBuffering = true;
       }
@@ -207,6 +256,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
           _mediaProgress = MediaProgress(
             progress: progress,
             total: total,
+            buffered: buffered,
             isBuffering: isBuffering,
           );
         });
@@ -571,6 +621,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                       bottom: false,
                       child: ProgressBar(
                         progress: _mediaProgress.progress,
+                        buffered: _mediaProgress.buffered,
                         total: _mediaProgress.total,
                         progressBarColor: Theme.of(context).primaryColor,
                         baseBarColor: Theme.of(context).primaryColor.withValues(alpha: 0.2),
