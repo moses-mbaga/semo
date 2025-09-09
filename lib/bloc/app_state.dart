@@ -37,6 +37,7 @@ class AppState {
     this.genreMoviesPagingControllers,
     this.genreTvShowsPagingControllers,
     this.movieTrailers,
+    this.movieImdbIds,
     this.movieCast,
     this.movieRecommendationsPagingControllers,
     this.similarMoviesPagingControllers,
@@ -44,6 +45,7 @@ class AppState {
     this.tvShowEpisodes,
     this.tvShowCast,
     this.tvShowTrailers,
+    this.tvShowImdbIds,
     this.tvShowRecommendationsPagingControllers,
     this.similarTvShowsPagingControllers,
     this.personMovies,
@@ -105,6 +107,7 @@ class AppState {
 
   final Map<String, List<Person>>? movieCast;
   final Map<String, String>? movieTrailers;
+  final Map<String, String>? movieImdbIds;
   final Map<String, PagingController<int, Movie>>? movieRecommendationsPagingControllers;
   final Map<String, PagingController<int, Movie>>? similarMoviesPagingControllers;
 
@@ -112,6 +115,7 @@ class AppState {
   final Map<String, Map<int, List<Episode>>>? tvShowEpisodes;
   final Map<String, List<Person>>? tvShowCast;
   final Map<String, String>? tvShowTrailers;
+  final Map<String, String>? tvShowImdbIds;
   final Map<String, PagingController<int, TvShow>>? tvShowRecommendationsPagingControllers;
   final Map<String, PagingController<int, TvShow>>? similarTvShowsPagingControllers;
 
@@ -173,6 +177,7 @@ class AppState {
     Object? genreMoviesPagingControllers = _notProvided,
     Object? genreTvShowsPagingControllers = _notProvided,
     Object? movieTrailers = _notProvided,
+    Object? movieImdbIds = _notProvided,
     Object? movieCast = _notProvided,
     Object? movieRecommendationsPagingControllers = _notProvided,
     Object? similarMoviesPagingControllers = _notProvided,
@@ -180,6 +185,7 @@ class AppState {
     Object? tvShowEpisodes = _notProvided,
     Object? tvShowCast = _notProvided,
     Object? tvShowTrailers = _notProvided,
+    Object? tvShowImdbIds = _notProvided,
     Object? tvShowRecommendationsPagingControllers = _notProvided,
     Object? similarTvShowsPagingControllers = _notProvided,
     Object? personMovies = _notProvided,
@@ -284,6 +290,9 @@ class AppState {
     movieTrailers: movieTrailers == _notProvided
         ? this.movieTrailers
         : movieTrailers as Map<String, String>?,
+    movieImdbIds: movieImdbIds == _notProvided
+        ? this.movieImdbIds
+        : movieImdbIds as Map<String, String>?,
     movieRecommendationsPagingControllers: movieRecommendationsPagingControllers == _notProvided
         ? this.movieRecommendationsPagingControllers
         : movieRecommendationsPagingControllers as Map<String, PagingController<int, Movie>>?,
@@ -302,6 +311,9 @@ class AppState {
     tvShowTrailers: tvShowTrailers == _notProvided
         ? this.tvShowTrailers
         : tvShowTrailers as Map<String, String>?,
+    tvShowImdbIds: tvShowImdbIds == _notProvided
+        ? this.tvShowImdbIds
+        : tvShowImdbIds as Map<String, String>?,
     tvShowRecommendationsPagingControllers: tvShowRecommendationsPagingControllers == _notProvided
         ? this.tvShowRecommendationsPagingControllers
         : tvShowRecommendationsPagingControllers as Map<String, PagingController<int, TvShow>>?,

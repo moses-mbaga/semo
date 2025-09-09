@@ -1,6 +1,6 @@
 **Stream Extractor**
 
-- Location: `lib/services/stream_extractor_service/extractor.dart`
+- Location: `lib/services/stream_extractor_service/stream_extractor_service.dart`
 - Purpose: Resolve a playable stream URL (`MediaStream`) for a movie or TV episode by delegating to one of the supported extractors.
 
 **Concepts**
@@ -8,7 +8,7 @@
 - `StreamExtractorService`: Static façade that chooses an extractor and returns a `MediaStream?`.
 - `StreamingServer`: UI‑friendly descriptor of a source with a `name` and an associated extractor instance (or `null` for randomized selection).
 - `BaseStreamExtractor`: Interface every extractor implements with `Future<MediaStream?> getStream(StreamExtractorOptions options)`.
-- `StreamExtractorOptions`: Options passed to extractors (TMDB ID, title, and optionally season/episode or movie release year).
+- `StreamExtractorOptions`: Options passed to extractors (TMDB ID, title, and optionally season/episode or movie release year). Includes optional `imdbId` when available.
 - `MediaStream`: The result with a `url` and optional HTTP `headers`.
 
 **Public API**
@@ -16,7 +16,7 @@
 - `static List<StreamingServer> get streamingServers`
   - The list of available servers. First entry is always `Random` (no extractor bound) to enable random selection.
 
-- `static Future<MediaStream?> getStream({Movie? movie, TvShow? tvShow, Episode? episode})`
+- `static Future<MediaStream?> getStream({Movie? movie, TvShow? tvShow, Episode? episode, String? imdbId})`
   - Inputs: Provide either `movie`, or both `tvShow` and `episode`.
   - Behavior:
     - Builds `StreamExtractorOptions` from the provided inputs.
@@ -29,8 +29,8 @@
 **Models**
 
 - `StreamExtractorOptions`
-  - Movie: `{ tmdbId, title, movieReleaseYear }`
-  - Episode: `{ tmdbId: episode.id, season, episode, title: tvShow.name }`
+  - Movie: `{ tmdbId, title, movieReleaseYear, imdbId? }`
+  - Episode: `{ tmdbId: tvShow.id, season, episode, title: tvShow.name, imdbId? }`
   - Assertion: `season` and `episode` must be both provided or both omitted.
 
 - `MediaStream`
@@ -72,4 +72,3 @@
 - Individual extractors encapsulate provider‑specific logic and are not documented here.
 - When preference is `Random`, the service temporarily removes servers that fail during a single resolution attempt to avoid retry loops.
 - Always validate `stream.url` before playback; extractors return `null` if a stream cannot be found.
-

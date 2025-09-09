@@ -51,6 +51,7 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
       await Future.wait(<Future<dynamic>>[
         _loadMovieBasicDetails(event.movieId, emit),
         _loadMovieTrailer(event.movieId, emit),
+        _loadMovieImdbId(event.movieId, emit),
         _loadMovieCast(event.movieId, emit),
         _loadMovieRecommendations(event.movieId, emit),
         _loadSimilarMovies(event.movieId, emit),
@@ -68,6 +69,23 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
         isMovieLoading: updatedLoadingStatus,
         error: "Failed to load movie details",
       ));
+    }
+  }
+
+  Future<void> _loadMovieImdbId(int movieId, Emitter<AppState> emit) async {
+    try {
+      final String? imdbId = await _tmdbService.getImdbId(MediaType.movies, movieId);
+
+      if (imdbId != null && imdbId.isNotEmpty) {
+        final Map<String, String> movieImdbIds = Map<String, String>.from(state.movieImdbIds ?? <String, String>{});
+        movieImdbIds[movieId.toString()] = imdbId;
+
+        emit(state.copyWith(
+          movieImdbIds: movieImdbIds,
+        ));
+      }
+    } catch (e, s) {
+      _logger.w("Error loading movie IMDB id for ID $movieId", error: e, stackTrace: s);
     }
   }
 

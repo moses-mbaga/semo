@@ -36,7 +36,7 @@ class StreamExtractorService {
 
   static List<StreamingServer> get streamingServers => _streamingServers;
 
-  static Future<MediaStream?> getStream({Movie? movie, TvShow? tvShow, Episode? episode}) async {
+  static Future<MediaStream?> getStream({Movie? movie, TvShow? tvShow, Episode? episode, String? imdbId}) async {
     try {
       math.Random random = math.Random();
       String serverName = AppPreferencesService().getStreamingServer();
@@ -61,13 +61,19 @@ class StreamExtractorService {
       StreamExtractorOptions? streamExtractorOptions;
 
       if (movie != null) {
-        streamExtractorOptions = StreamExtractorOptions(tmdbId: movie.id, title: movie.title, movieReleaseYear: movie.releaseDate.split("-")[0]);
+        streamExtractorOptions = StreamExtractorOptions(
+          tmdbId: movie.id,
+          title: movie.title,
+          movieReleaseYear: movie.releaseDate.split("-")[0],
+          imdbId: imdbId,
+        );
       } else if (tvShow != null && episode != null) {
         streamExtractorOptions = StreamExtractorOptions(
           tmdbId: tvShow.id,
           season: episode.season,
           episode: episode.number,
           title: tvShow.name,
+          imdbId: imdbId,
         );
       }
 

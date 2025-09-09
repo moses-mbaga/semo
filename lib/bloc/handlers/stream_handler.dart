@@ -38,7 +38,8 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
     ));
 
     try {
-      final MediaStream? stream = await StreamExtractorService.getStream(movie: event.movie);
+      final String? imdbId = state.movieImdbIds?[movieId];
+      final MediaStream? stream = await StreamExtractorService.getStream(movie: event.movie, imdbId: imdbId);
 
       if (stream == null || stream.url.isEmpty) {
         throw Exception("Stream is null");
@@ -91,9 +92,11 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
     ));
 
     try {
+      final String? imdbId = state.tvShowImdbIds?[event.tvShow.id.toString()];
       final MediaStream? stream = await StreamExtractorService.getStream(
         tvShow: event.tvShow,
         episode: event.episode,
+        imdbId: imdbId,
       );
 
       if (stream == null || stream.url.isEmpty) {

@@ -53,6 +53,7 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
       await Future.wait(<Future<dynamic>>[
         _loadTvShowSeasons(event.tvShowId, emit),
         _loadTvShowTrailer(event.tvShowId, emit),
+        _loadTvShowImdbId(event.tvShowId, emit),
         _loadTvShowCast(event.tvShowId, emit),
         _loadTvShowRecommendations(event.tvShowId, emit),
         _loadSimilarTvShows(event.tvShowId, emit),
@@ -70,6 +71,23 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
         isTvShowLoading: updatedLoadingStatus,
         error: "Failed to load TV show details",
       ));
+    }
+  }
+
+  Future<void> _loadTvShowImdbId(int tvShowId, Emitter<AppState> emit) async {
+    try {
+      final String? imdbId = await _tmdbService.getImdbId(MediaType.tvShows, tvShowId);
+
+      if (imdbId != null && imdbId.isNotEmpty) {
+        final Map<String, String> tvShowImdbIds = Map<String, String>.from(state.tvShowImdbIds ?? <String, String>{});
+        tvShowImdbIds[tvShowId.toString()] = imdbId;
+
+        emit(state.copyWith(
+          tvShowImdbIds: tvShowImdbIds,
+        ));
+      }
+    } catch (e, s) {
+      _logger.w("Error loading TV show IMDB id for ID $tvShowId", error: e, stackTrace: s);
     }
   }
 
