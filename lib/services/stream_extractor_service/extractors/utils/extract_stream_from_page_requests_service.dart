@@ -20,14 +20,12 @@ class ExtractStreamFromPageRequestsService {
     Map<String, dynamic>? hlsCandidate;
     Map<String, dynamic>? mp4Candidate;
     Map<String, dynamic>? mkvCandidate;
-    Map<String, dynamic>? filterOnlyCandidate;
 
     // Pre-skip candidates captured before ready
     // Used as fallback
     Map<String, dynamic>? preHlsCandidate;
     Map<String, dynamic>? preMp4Candidate;
     Map<String, dynamic>? preMkvCandidate;
-    Map<String, dynamic>? preFilterOnlyCandidate;
 
     bool readyToCapture = false;
 
@@ -48,7 +46,7 @@ class ExtractStreamFromPageRequestsService {
 
     Future<void> finish([Map<String, dynamic>? value]) async {
       if (!completer.isCompleted) {
-        value ??= hlsCandidate ?? mp4Candidate ?? mkvCandidate ?? filterOnlyCandidate ?? preHlsCandidate ?? preMp4Candidate ?? preMkvCandidate ?? preFilterOnlyCandidate;
+        value ??= hlsCandidate ?? mp4Candidate ?? mkvCandidate ?? preHlsCandidate ?? preMp4Candidate ?? preMkvCandidate;
         completer.complete(value);
       }
       try {
@@ -87,10 +85,6 @@ class ExtractStreamFromPageRequestsService {
           mkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
           unawaited(finish(mkvCandidate));
           return;
-        } else if (filterOnly && filter != null && filter(url)) {
-          filterOnlyCandidate ??= <String, dynamic>{"url": url, "headers": headers};
-          unawaited(finish(filterOnlyCandidate));
-          return;
         }
       }
 
@@ -102,8 +96,6 @@ class ExtractStreamFromPageRequestsService {
           preMp4Candidate ??= <String, dynamic>{"url": url, "headers": headers};
         } else if (mkv) {
           preMkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
-        } else if (filterOnly && filter != null && filter(url)) {
-          preFilterOnlyCandidate ??= <String, dynamic>{"url": url, "headers": headers};
         }
         return;
       }
@@ -120,10 +112,6 @@ class ExtractStreamFromPageRequestsService {
       } else if (mkv) {
         mkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
         unawaited(finish(mkvCandidate));
-        return;
-      } else if (filterOnly && filter != null && filter(url)) {
-        filterOnlyCandidate ??= <String, dynamic>{"url": url, "headers": headers};
-        unawaited(finish(filterOnlyCandidate));
         return;
       }
     }
