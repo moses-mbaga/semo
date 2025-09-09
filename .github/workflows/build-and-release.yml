@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       release_notes:
-        description: "Release notes"
+        description: 'Release notes: JSON list or text (both supporting markdown). Example: ["feat: X", "fix: Y"]'
         required: false
         type: string
         default: "New release"
@@ -40,6 +40,13 @@ jobs:
         run: |
           mkdir -p $GITHUB_WORKSPACE/github_action_logs
           : > $GITHUB_WORKSPACE/github_action_logs/all.log
+
+      - name: Prepare release notes file
+        env:
+          RELEASE_NOTES: ${{ github.event.inputs.release_notes }}
+        run: |
+          set -o pipefail
+          python3 .github/ci-scripts/prepare_release_notes.py RELEASE_NOTES.md
 
       - name: Set up Flutter
         if: ${{ success() }}
@@ -178,7 +185,7 @@ jobs:
         with:
           tag_name: ${{ github.event.inputs.version }}
           release_name: Release ${{ github.event.inputs.version }}
-          body: ${{ github.event.inputs.release_notes }}
+          body_path: RELEASE_NOTES.md
           draft: false
           prerelease: false
 
