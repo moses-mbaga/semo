@@ -9,6 +9,7 @@ class ExtractStreamFromPageRequestsService {
 
   Future<Map<String, dynamic>?> extract(
     String pageUrl, {
+    List<String> includePatterns = const <String>[".m3u8", ".mp4", ".mkv"],
     bool Function(String url)? filter,
     bool hasAds = false,
   }) async {
@@ -19,12 +20,14 @@ class ExtractStreamFromPageRequestsService {
     Map<String, dynamic>? hlsCandidate;
     Map<String, dynamic>? mp4Candidate;
     Map<String, dynamic>? mkvCandidate;
+    Map<String, dynamic>? filterOnlyCandidate;
 
     // Pre-skip candidates captured before ready
     // Used as fallback
     Map<String, dynamic>? preHlsCandidate;
     Map<String, dynamic>? preMp4Candidate;
     Map<String, dynamic>? preMkvCandidate;
+    Map<String, dynamic>? preFilterOnlyCandidate;
 
     bool readyToCapture = false;
 
@@ -45,7 +48,7 @@ class ExtractStreamFromPageRequestsService {
 
     Future<void> finish([Map<String, dynamic>? value]) async {
       if (!completer.isCompleted) {
-        value ??= hlsCandidate ?? mp4Candidate ?? mkvCandidate ?? preHlsCandidate ?? preMp4Candidate ?? preMkvCandidate;
+        value ??= hlsCandidate ?? mp4Candidate ?? mkvCandidate ?? filterOnlyCandidate ?? preHlsCandidate ?? preMp4Candidate ?? preMkvCandidate ?? preFilterOnlyCandidate;
         completer.complete(value);
       }
       try {
@@ -53,7 +56,7 @@ class ExtractStreamFromPageRequestsService {
       } catch (_) {}
     }
 
-    void consider(String url, Map<String, String> headers) {
+    void consider(String url, Map<String, String> headers, {bool filterOnly = false}) {
       if (filter != null && !filter(url)) {
         return;
       }
@@ -62,7 +65,7 @@ class ExtractStreamFromPageRequestsService {
       final bool mp4 = isMp4(url);
       final bool mkv = isMkv(url);
 
-      if (!(hls || mp4 || mkv)) {
+      if (!filterOnly && !(hls || mp4 || mkv)) {
         return;
       }
 
@@ -84,6 +87,10 @@ class ExtractStreamFromPageRequestsService {
           mkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
           unawaited(finish(mkvCandidate));
           return;
+        } else if (filterOnly && filter != null && filter(url)) {
+          filterOnlyCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+          unawaited(finish(filterOnlyCandidate));
+          return;
         }
       }
 
@@ -95,6 +102,8 @@ class ExtractStreamFromPageRequestsService {
           preMp4Candidate ??= <String, dynamic>{"url": url, "headers": headers};
         } else if (mkv) {
           preMkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+        } else if (filterOnly && filter != null && filter(url)) {
+          preFilterOnlyCandidate ??= <String, dynamic>{"url": url, "headers": headers};
         }
         return;
       }
@@ -111,6 +120,10 @@ class ExtractStreamFromPageRequestsService {
       } else if (mkv) {
         mkvCandidate ??= <String, dynamic>{"url": url, "headers": headers};
         unawaited(finish(mkvCandidate));
+        return;
+      } else if (filterOnly && filter != null && filter(url)) {
+        filterOnlyCandidate ??= <String, dynamic>{"url": url, "headers": headers};
+        unawaited(finish(filterOnlyCandidate));
         return;
       }
     }
@@ -178,8 +191,8 @@ class ExtractStreamFromPageRequestsService {
 
     session = await PageNetworkRequestsService.startCapture(
       pageUrl: pageUrl,
-      onRequest: (String url, Map<String, String> headers) => consider(url, headers),
-      includePatterns: const <String>[".m3u8", ".mp4", ".mkv"],
+      onRequest: (String url, Map<String, String> headers) => consider(url, headers, filterOnly: includePatterns.isEmpty),
+      includePatterns: includePatterns,
       extraHandlers: <String, Future<dynamic> Function(List<dynamic>)>{
         "skipReady": (List<dynamic> args) async {
           readyToCapture = true;
