@@ -12,6 +12,7 @@ class ExtractStreamFromPageRequestsService {
     List<String> includePatterns = const <String>[".m3u8", ".mp4", ".mkv"],
     bool Function(String url)? filter,
     bool hasAds = false,
+    bool acceptAnyOnFilterMatch = false,
   }) async {
     final Set<String> seen = <String>{};
     final Completer<Map<String, dynamic>?> completer = Completer<Map<String, dynamic>?>();
@@ -64,6 +65,14 @@ class ExtractStreamFromPageRequestsService {
       final bool mkv = isMkv(url);
 
       if (!filterOnly && !(hls || mp4 || mkv)) {
+        // If caller explicitly allows any URL that passes filter,
+        // accept it even if it doesn't look like a media URL.
+        if (acceptAnyOnFilterMatch) {
+          if (!seen.add(url)) {
+            return;
+          }
+          unawaited(finish(<String, dynamic>{"url": url, "headers": headers}));
+        }
         return;
       }
 

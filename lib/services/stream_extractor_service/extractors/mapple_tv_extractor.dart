@@ -63,11 +63,12 @@ class MappleTvExtractor implements BaseStreamExtractor {
 
       final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(
         pageUri.toString(),
-        includePatterns: <String>["https://proxy.heistotron.uk"],
-        filter: (String url) => url.startsWith("https://proxy.heistotron.uk"),
+        includePatterns: <String>["proxy.heistotron.uk"],
+        filter: (String url) => url.contains("proxy.heistotron.uk"),
+        acceptAnyOnFilterMatch: true,
       );
       final String? url = stream?["url"];
-      Map<String, String> headers = stream?["headers"] ?? <String, String>{};
+      final Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 
       if (url == null || url.isEmpty) {
         throw Exception("No stream URL found for external link: $externalLink");
