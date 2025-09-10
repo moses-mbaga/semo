@@ -78,6 +78,7 @@ class StreamExtractorService {
           externalLinkUrl = (external?["url"] as String?)?.trim();
           final Map<dynamic, dynamic>? rawHeaders = external?["headers"] as Map<dynamic, dynamic>?;
           if (rawHeaders != null) {
+            // ignore: avoid_annotating_with_dynamic
             externalLinkHeaders = rawHeaders.map((dynamic k, dynamic v) => MapEntry<String, String>(k.toString(), v.toString()));
           }
 
