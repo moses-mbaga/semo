@@ -63,10 +63,21 @@ mixin RecentlyWatchedHandler on Bloc<AppEvent, AppState> {
       final Map<String, dynamic> updatedRecentlyWatched = await _recentlyWatchedService.updateMovieProgress(event.movieId, event.progress, recentlyWatched: state.recentlyWatched);
       final List<Movie> updatedRecentlyWatchedMovies = state.recentlyWatchedMovies ?? <Movie>[];
 
-      if (state.recentlyWatchedMovies != null && !state.recentlyWatchedMovies!.any((Movie movie) => movie.id == event.movieId)) {
-        final Movie? movie = await _helpers.fetchMovieById(state, event.movieId);
-        if (movie != null) {
-          updatedRecentlyWatchedMovies.add(movie);
+      if (state.recentlyWatchedMovies != null) {
+        final int existingIndex = updatedRecentlyWatchedMovies.indexWhere((Movie movie) => movie.id == event.movieId);
+        Movie? movieToInsert;
+
+        if (existingIndex != -1) {
+          movieToInsert = updatedRecentlyWatchedMovies.removeAt(existingIndex);
+        } else {
+          final Movie? movie = await _helpers.fetchMovieById(state, event.movieId);
+          if (movie != null) {
+            movieToInsert = movie;
+          }
+        }
+
+        if (movieToInsert != null) {
+          updatedRecentlyWatchedMovies.insert(0, movieToInsert);
         }
       }
 
@@ -93,10 +104,21 @@ mixin RecentlyWatchedHandler on Bloc<AppEvent, AppState> {
       );
       final List<TvShow> updatedRecentlyWatchedTvShows = state.recentlyWatchedTvShows ?? <TvShow>[];
 
-      if (state.recentlyWatchedTvShows != null && !state.recentlyWatchedTvShows!.any((TvShow tvShow) => tvShow.id == event.tvShowId)) {
-        final TvShow? tvShow = await _helpers.fetchTvShowById(state, event.tvShowId);
-        if (tvShow != null) {
-          updatedRecentlyWatchedTvShows.add(tvShow);
+      if (state.recentlyWatchedTvShows != null) {
+        final int existingIndex = updatedRecentlyWatchedTvShows.indexWhere((TvShow tvShow) => tvShow.id == event.tvShowId);
+        TvShow? tvShowToInsert;
+
+        if (existingIndex != -1) {
+          tvShowToInsert = updatedRecentlyWatchedTvShows.removeAt(existingIndex);
+        } else {
+          final TvShow? tvShow = await _helpers.fetchTvShowById(state, event.tvShowId);
+          if (tvShow != null) {
+            tvShowToInsert = tvShow;
+          }
+        }
+
+        if (tvShowToInsert != null) {
+          updatedRecentlyWatchedTvShows.insert(0, tvShowToInsert);
         }
       }
 
