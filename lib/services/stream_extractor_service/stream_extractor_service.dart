@@ -27,10 +27,10 @@ class StreamExtractorService {
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
     StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
-    StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
-    StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()),
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
   ];
