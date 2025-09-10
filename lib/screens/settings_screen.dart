@@ -44,11 +44,6 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
         builder: (BuildContext context) {
           List<StreamingServer> servers = StreamExtractorService.streamingServers;
           String savedServerName = _appPreferences.getStreamingServer();
-          int selectedServerIndex = servers.indexWhere((StreamingServer server) => server.name == savedServerName);
-
-          if (selectedServerIndex == -1) {
-            savedServerName = "Random";
-          }
 
           return StatefulBuilder(
             builder: (BuildContext context, StateSetter setState) => ListView.builder(

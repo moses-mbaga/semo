@@ -3,6 +3,7 @@ import "dart:convert";
 import "package:logger/logger.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/subtitle_style.dart";
+import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
 class AppPreferencesService {
@@ -14,6 +15,22 @@ class AppPreferencesService {
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
+    await EnsureActiveStreamingServerValidity();
+  }
+
+  static Future<void> EnsureActiveStreamingServerValidity() async {
+    try {
+      AppPreferencesService appPreferencesService = AppPreferencesService();
+      List<StreamingServer> servers = StreamExtractorService.streamingServers;
+      String savedServerName = appPreferencesService.getStreamingServer();
+      int selectedServerIndex = servers.indexWhere((StreamingServer server) => server.name == savedServerName);
+
+      if (selectedServerIndex == -1) {
+        savedServerName = "Random";
+        StreamingServer server = servers.firstWhere((StreamingServer s) => s.name == savedServerName);
+        await appPreferencesService.setStreamingServer(server);
+      }
+    } catch (_) {}
   }
 
   Future<bool?> setStreamingServer(StreamingServer server) async => await _prefs?.setString("server", server.name);
