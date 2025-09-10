@@ -57,7 +57,7 @@ class HollyMovieExtractor implements BaseStreamExtractor {
       }
 
       final bool isTv = options.season != null && options.episode != null;
-      String formattedTitle = options.title.replaceAll(" ", "-").normalize();
+      String formattedTitle = options.title.removeSpecialChars().replaceAll(" ", "-").normalize();
       String path = "/$formattedTitle";
 
       if (isTv) {
