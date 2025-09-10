@@ -6,6 +6,7 @@ import "package:flutter/material.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:semo/models/media_progress.dart";
 import "package:semo/models/media_stream.dart";
+import "package:semo/enums/stream_type.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/models/subtitle_style.dart" as local;
 import "package:subtitle_wrapper_package/subtitle_wrapper_package.dart";
@@ -78,6 +79,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     _videoPlayerController = VideoPlayerController.networkUrl(
       Uri.parse(widget.stream.url),
       httpHeaders: widget.stream.headers,
+      formatHint: widget.stream.type == StreamType.hls ? VideoFormat.hls : VideoFormat.other,
     );
     _scaleVideoAnimationController = AnimationController(
       duration: const Duration(milliseconds: 125),

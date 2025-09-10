@@ -5,6 +5,7 @@ import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
 import "package:semo/models/media_stream.dart";
+import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
@@ -84,6 +85,7 @@ class CineProExtractor implements BaseStreamExtractor {
             (language == "en" || language == "english")) {
           _logger.i("Found valid stream: $headers");
           return MediaStream(
+            type: type == "hls" ? StreamType.hls : StreamType.mp4,
             url: streamUrl,
             headers: headers,
           );

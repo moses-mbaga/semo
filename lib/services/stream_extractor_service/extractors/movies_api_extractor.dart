@@ -7,6 +7,7 @@ import "package:pretty_dio_logger/pretty_dio_logger.dart";
 import "package:html/dom.dart";
 import "package:html/parser.dart" as html_parser;
 import "package:semo/models/media_stream.dart";
+import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
@@ -117,6 +118,7 @@ class MoviesApiExtractor implements BaseStreamExtractor {
       }
 
       return MediaStream(
+        type: url.toLowerCase().contains("m3u8") || url.toLowerCase().contains("m3u") ? StreamType.hls : (url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
         url: url,
         headers: headers,
       );

@@ -5,6 +5,7 @@ import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
 import "package:semo/models/media_stream.dart";
+import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
@@ -147,6 +148,11 @@ class KissKhExtractor implements BaseStreamExtractor {
       }
 
       return MediaStream(
+        type: videoUrl.toLowerCase().contains("m3u8")
+            ? StreamType.hls
+            : (videoUrl.toLowerCase().contains("mkv")
+                ? StreamType.mkv
+                : StreamType.mp4),
         url: videoUrl,
         headers: <String, String>{
           "Referer": baseUrl,
