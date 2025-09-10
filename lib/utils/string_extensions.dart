@@ -14,4 +14,13 @@ extension StringExtensions on String {
       .replaceAll(RegExp(r"\s+"), " ") // Normalize whitespace
       .toLowerCase()
       .trim();
+
+  String removeSpecialChars() {
+    if (isEmpty) {
+      return this;
+    }
+
+    final String ascii = removeDiacritics(this);
+    return ascii.replaceAll(RegExp("[^a-zA-Z0-9 ]"), "");
+  }
 }
