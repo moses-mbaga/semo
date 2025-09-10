@@ -144,15 +144,11 @@ class KissKhExtractor implements BaseStreamExtractor {
 
       final String? videoUrl = response.data?["source"]?["Video"] as String?;
       if (videoUrl == null || videoUrl.isEmpty) {
-        throw Exception("No video URL found for $_providerKey id=$episodeId");
+        throw Exception("No stream URL found for $_providerKey, with id: $episodeId");
       }
 
       return MediaStream(
-        type: videoUrl.toLowerCase().contains("m3u8")
-            ? StreamType.hls
-            : (videoUrl.toLowerCase().contains("mkv")
-                ? StreamType.mkv
-                : StreamType.mp4),
+        type: videoUrl.toLowerCase().contains("m3u8") ? StreamType.hls : (videoUrl.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
         url: videoUrl,
         headers: <String, String>{
           "Referer": baseUrl,

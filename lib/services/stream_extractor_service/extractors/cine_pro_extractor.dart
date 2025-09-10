@@ -77,13 +77,14 @@ class CineProExtractor implements BaseStreamExtractor {
           headers.addAll(Map<String, String>.from(stream["headers"]));
         }
 
-        if (streamUrl != null &&
-            streamUrl.isNotEmpty &&
-            !streamUrl.contains("shadowlandschronicles.com") && // Remove broken stream sources
+        if (streamUrl == null || streamUrl.isEmpty) {
+          throw Exception("No stream URL found for: $_providerKey");
+        }
+
+        if (!streamUrl.contains("shadowlandschronicles.com") && // Remove broken stream sources
             !streamUrl.contains("cdn.niggaflix.xyz") && // Remove broken stream sources
             (type == "mp4" || type == "hls") &&
             (language == "en" || language == "english")) {
-          _logger.i("Found valid stream: $headers");
           return MediaStream(
             type: type == "hls" ? StreamType.hls : StreamType.mp4,
             url: streamUrl,

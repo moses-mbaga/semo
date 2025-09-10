@@ -417,10 +417,11 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
 
       if (options.season != null && options.episode != null) {
         final String? episodeUrl = await _findEpisodeUrl(externalLink, options.season!, options.episode!);
+
         if (episodeUrl != null) {
           return await _extractStream(episodeUrl);
         } else {
-          throw Exception("Failed to find episode URL for ${options.title} S${options.season}E${options.episode}");
+          throw Exception("Failed to find episode URL with $_providerKey, for S${options.season}E${options.episode}");
         }
       } else {
         return _extractStream(externalLink);

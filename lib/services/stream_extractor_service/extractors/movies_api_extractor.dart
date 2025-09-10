@@ -109,7 +109,7 @@ class MoviesApiExtractor implements BaseStreamExtractor {
       Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 
       if (url == null || url.isEmpty) {
-        throw Exception("No stream URL found for external link: $externalLink");
+        throw Exception("No stream URL found for $_providerKey, with external link: $externalLink");
       }
 
       if (!headers.containsKey("Origin") || !headers.containsKey("Referer")) {

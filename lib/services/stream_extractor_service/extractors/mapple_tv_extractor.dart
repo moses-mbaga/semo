@@ -70,7 +70,7 @@ class MappleTvExtractor implements BaseStreamExtractor {
       final Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 
       if (url == null || url.isEmpty) {
-        throw Exception("No stream URL found for external link: $externalLink");
+        throw Exception("No stream URL found for: $_providerKey");
       }
 
       return MediaStream(

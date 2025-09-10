@@ -324,6 +324,7 @@ class ShowBoxExtractor implements BaseStreamExtractor {
       final String qualityUrl = "https://febbox.vercel.app/api/video-quality?fid=$targetFid";
       final Response<dynamic> qRes = await _dio.get(qualityUrl);
       final String? html = (qRes.data is Map) ? qRes.data["html"] as String? : null;
+
       if (html == null || html.isEmpty) {
         throw Exception("No HTML in video-quality response for fid=$targetFid");
       }
