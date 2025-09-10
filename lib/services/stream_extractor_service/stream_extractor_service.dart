@@ -70,16 +70,27 @@ class StreamExtractorService {
           serverName = server.name;
         }
 
-        String? externalLink;
+        String? externalLinkUrl;
+        Map<String, String>? externalLinkHeaders;
 
         if (extractor?.needsExternalLink == true) {
-          externalLink = await extractor?.getExternalLink(options);
-          if (externalLink == null || externalLink.isEmpty) {
+          final Map<String, Object?>? external = await extractor?.getExternalLink(options);
+          externalLinkUrl = (external?["url"] as String?)?.trim();
+          final Map<dynamic, dynamic>? rawHeaders = external?["headers"] as Map<dynamic, dynamic>?;
+          if (rawHeaders != null) {
+            externalLinkHeaders = rawHeaders.map((dynamic k, dynamic v) => MapEntry<String, String>(k.toString(), v.toString()));
+          }
+
+          if (externalLinkUrl == null || externalLinkUrl.isEmpty) {
             throw Exception("Failed to retrieve external link for ${options.title} in $serverName");
           }
         }
 
-        stream = await extractor?.getStream(externalLink, options);
+        stream = await extractor?.getStream(
+          options,
+          externalLink: externalLinkUrl,
+          externalLinkHeaders: externalLinkHeaders,
+        );
 
         if (stream == null || stream.url.isEmpty) {
           _logger.w("Stream not found.\nStreamingServer: $serverName");

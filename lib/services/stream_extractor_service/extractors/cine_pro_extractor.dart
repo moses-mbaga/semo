@@ -43,10 +43,10 @@ class CineProExtractor implements BaseStreamExtractor {
   bool get needsExternalLink => false;
 
   @override
-  Future<String?> getExternalLink(StreamExtractorOptions options) async => null;
+  Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async => null;
 
   @override
-  Future<MediaStream?> getStream(String? externalLink, StreamExtractorOptions options) async {
+  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       // The CinePro backend API is open source and should be self hosted
       // Documentation: https://github.com/cinepro-org/backend

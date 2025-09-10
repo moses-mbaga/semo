@@ -45,7 +45,7 @@ class ShowBoxExtractor implements BaseStreamExtractor {
   bool get needsExternalLink => true;
 
   @override
-  Future<String?> getExternalLink(StreamExtractorOptions options) async {
+  Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async {
     final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
     if (baseUrl == null || baseUrl.isEmpty) {
       throw Exception("Failed to get base URL for $_providerKey");
@@ -90,7 +90,14 @@ class ShowBoxExtractor implements BaseStreamExtractor {
     }
 
     selectedLink ??= catalog.first["link"];
-    return selectedLink;
+
+    if (selectedLink == null || selectedLink.isEmpty) {
+      return null;
+    }
+
+    return <String, Object?>{
+      "url": selectedLink,
+    };
   }
 
   String _toAbsoluteUrl(String baseUrl, String href) {
@@ -242,7 +249,7 @@ class ShowBoxExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(String? externalLink, StreamExtractorOptions options) async {
+  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       if (externalLink == null || externalLink.isEmpty) {
         throw Exception("External link is required for $_providerKey");

@@ -46,7 +46,7 @@ class MoviesApiExtractor implements BaseStreamExtractor {
   bool get needsExternalLink => true;
 
   @override
-  Future<String?> getExternalLink(StreamExtractorOptions options) async {
+  Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async {
     try {
       final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null || baseUrl.isEmpty) {
@@ -86,7 +86,9 @@ class MoviesApiExtractor implements BaseStreamExtractor {
       final Uri iframeUri = Uri.parse(iframeSrc);
       final String externalUrl = iframeUri.hasScheme ? iframeUri.toString() : pageUri.resolveUri(iframeUri).toString();
 
-      return externalUrl;
+      return <String, Object?>{
+        "url": externalUrl,
+      };
     } catch (e, s) {
       _logger.e("Error getting external link for MoviesApi", error: e, stackTrace: s);
     }
@@ -95,7 +97,7 @@ class MoviesApiExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(String? externalLink, StreamExtractorOptions options) async {
+  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       if (externalLink == null || externalLink.isEmpty) {
         throw Exception("External link is required for $_providerKey");

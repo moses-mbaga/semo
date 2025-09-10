@@ -70,7 +70,7 @@ class KissKhExtractor implements BaseStreamExtractor {
   bool get needsExternalLink => true;
 
   @override
-  Future<String?> getExternalLink(StreamExtractorOptions options) async {
+  Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async {
     final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
     if (baseUrl == null || baseUrl.isEmpty) {
       throw Exception("Failed to get base URL for $_providerKey");
@@ -98,18 +98,30 @@ class KissKhExtractor implements BaseStreamExtractor {
       try {
         Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => "${result["title"]}".normalize() == title.normalize());
         int? id = result["id"];
-        return id?.toString();
+
+        if (id != null) {
+          return <String, Object?>{
+            "url": id.toString(),
+          };
+        }
       } catch (_) {}
     }
 
     // Fallback
     Map<String, dynamic> result = searchResults.firstWhere((Map<String, dynamic> result) => "${result["title"]}".normalize().contains(options.title.normalize()));
     int? id = result["id"];
-    return id?.toString();
+
+    if (id == null) {
+      return null;
+    }
+
+    return <String, Object?>{
+      "url": id.toString(),
+    };
   }
 
   @override
-  Future<MediaStream?> getStream(String? externalLink, StreamExtractorOptions options) async {
+  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       if (externalLink == null || externalLink.isEmpty) {
         throw Exception("External link is required for $_providerKey");

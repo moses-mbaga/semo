@@ -37,6 +37,7 @@ class StreamingServerBaseUrlExtractor {
 
   static final Map<String, String> _manualBaseUrls = <String, String>{
     "semo_cinepro": SecretsService.cineProBaseUrl,
+    "semo_hollymovies": "https://hollymovieshd.cc",
     "semo_mappletv": "https://mappletv.uk",
     "semo_vidfast": "https://vidfast.pro",
     "semo_vidlink": "https://vidlink.pro",
