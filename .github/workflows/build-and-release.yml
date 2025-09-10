@@ -107,7 +107,7 @@ jobs:
             --overwrite-firebase-options
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      - name: Analyze with Dart (fail on infos/warnings)
+      - name: Analyze with Dart
         if: ${{ success() }}
         run: |
           set -o pipefail
