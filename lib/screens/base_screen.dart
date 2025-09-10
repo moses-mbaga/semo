@@ -18,10 +18,12 @@ abstract class BaseScreen extends StatefulWidget {
     super.key,
     this.shouldLogScreenView = true,
     this.shouldListenToAuthStateChanges = true,
+    this.shouldListenToAppVersionChanges = true,
   });
 
   final bool shouldLogScreenView;
   final bool shouldListenToAuthStateChanges;
+  final bool shouldListenToAppVersionChanges;
 }
 
 abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
@@ -220,7 +222,10 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
     _remoteConfigSubscription = _remoteConfig.onConfigUpdated.listen((RemoteConfigUpdate event) async {
       try {
         await _remoteConfig.activate();
-        await _evaluateVersionRequirement();
+
+        if (widget.shouldListenToAppVersionChanges) {
+          await _evaluateVersionRequirement();
+        }
       } catch (e, s) {
         logger.e("Failed to handle remote config update", error: e, stackTrace: s);
       }
@@ -315,7 +320,10 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
           _initAuthStateListener();
         }
 
-        await _evaluateVersionRequirement();
+        if (widget.shouldListenToAppVersionChanges) {
+          await _evaluateVersionRequirement();
+        }
+
         _initRemoteConfigListener();
 
         await initializeScreen();
@@ -328,9 +336,7 @@ abstract class BaseScreenState<T extends BaseScreen> extends State<T> {
     handleDispose();
     _connectionSubscription.cancel();
     _remoteConfigSubscription?.cancel();
-    if (widget.shouldListenToAuthStateChanges) {
-      _authSubscription?.cancel();
-    }
+    _authSubscription?.cancel();
     super.dispose();
   }
 

@@ -25,7 +25,13 @@ class PlayerScreen extends BaseScreen {
     this.subtitle,
     required this.stream,
     required this.mediaType,
-  }) : assert(mediaType != MediaType.tvShows || (seasonId != null && episodeId != null), "seasonId and episodeId must be provided when mediaType is tvShows");
+  })  : assert(
+          mediaType != MediaType.tvShows || (seasonId != null && episodeId != null),
+          "seasonId and episodeId must be provided when mediaType is tvShows",
+        ),
+        super(
+          shouldListenToAppVersionChanges: false,
+        );
 
   final int tmdbId;
   final int? seasonId;
