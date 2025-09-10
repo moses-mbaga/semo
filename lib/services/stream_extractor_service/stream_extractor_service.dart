@@ -8,6 +8,7 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/services/stream_extractor_service/extractors/auto_embed_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
+import "package:semo/services/stream_extractor_service/extractors/holly_movie_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/mapple_tv_extractor.dart";
@@ -24,6 +25,7 @@ class StreamExtractorService {
     const StreamingServer(name: "Random", extractor: null),
     if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
+    StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
