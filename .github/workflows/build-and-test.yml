@@ -93,11 +93,11 @@ jobs:
             --overwrite-firebase-options
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
-      - name: Analyze with Dart
+      - name: Analyze with Dart (fail on infos/warnings)
         if: ${{ success() }}
         run: |
           set -o pipefail
-          { dart analyze; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+          { dart analyze --fatal-infos --fatal-warnings; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Decode keystore
         if: ${{ success() }}
