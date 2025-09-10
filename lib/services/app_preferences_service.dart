@@ -15,10 +15,10 @@ class AppPreferencesService {
 
   static Future<void> init() async {
     _prefs = await SharedPreferences.getInstance();
-    await EnsureActiveStreamingServerValidity();
+    await ensureActiveStreamingServerValidity();
   }
 
-  static Future<void> EnsureActiveStreamingServerValidity() async {
+  static Future<void> ensureActiveStreamingServerValidity() async {
     try {
       AppPreferencesService appPreferencesService = AppPreferencesService();
       List<StreamingServer> servers = StreamExtractorService.streamingServers;
