@@ -9,7 +9,7 @@ class ExtractStreamFromPageRequestsService {
 
   Future<Map<String, dynamic>?> extract(
     String pageUrl, {
-    List<String> includePatterns = const <String>[".m3u8", ".mp4", ".mkv"],
+    List<String> includePatterns = const <String>[".m3u8", ".m3u", ".mp4", ".mkv"],
     bool Function(String url)? filter,
     bool hasAds = false,
     bool acceptAnyOnFilterMatch = false,
@@ -32,7 +32,7 @@ class ExtractStreamFromPageRequestsService {
 
     bool isHls(String url) {
       final String u = url.toLowerCase();
-      return u.contains("m3u8");
+      return u.contains("m3u8") || u.contains("m3u");
     }
 
     bool isMp4(String url) {
