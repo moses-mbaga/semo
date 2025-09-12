@@ -335,9 +335,9 @@ class ShowBoxExtractor implements BaseStreamExtractor {
       for (final Element el in qualities) {
         final String? url = el.attributes["data-url"];
 
-        if (url != null && url.isNotEmpty) {
+        if (url != null && url.isNotEmpty && (url.toLowerCase().contains("mp4") || url.toLowerCase().contains("mkv"))) {
           return MediaStream(
-            type: url.toLowerCase().contains("m3u8") || url.toLowerCase().contains("m3u") ? StreamType.hls : (url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
+            type: url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4,
             url: url,
           );
         }
