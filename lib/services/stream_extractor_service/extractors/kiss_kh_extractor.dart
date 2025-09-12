@@ -122,7 +122,7 @@ class KissKhExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       if (externalLink == null || externalLink.isEmpty) {
         throw Exception("External link is required for $_providerKey");
@@ -147,17 +147,19 @@ class KissKhExtractor implements BaseStreamExtractor {
         throw Exception("No stream URL found for $_providerKey, with id: $episodeId");
       }
 
-      return MediaStream(
-        type: videoUrl.toLowerCase().contains("m3u8") ? StreamType.hls : (videoUrl.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
-        url: videoUrl,
-        headers: <String, String>{
-          "Referer": baseUrl,
-        },
-      );
+      return <MediaStream>[
+        MediaStream(
+          type: videoUrl.toLowerCase().contains("m3u8") ? StreamType.hls : (videoUrl.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
+          url: videoUrl,
+          headers: <String, String>{
+            "Referer": baseUrl,
+          },
+        ),
+      ];
     } catch (e, s) {
       _logger.e("Error in KissKhExtractor", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 }

@@ -98,7 +98,7 @@ class MoviesApiExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       if (externalLink == null || externalLink.isEmpty) {
         throw Exception("External link is required for $_providerKey");
@@ -117,15 +117,17 @@ class MoviesApiExtractor implements BaseStreamExtractor {
         headers["Referer"] = "https://vidora.stream";
       }
 
-      return MediaStream(
-        type: url.toLowerCase().contains("m3u8") || url.toLowerCase().contains("m3u") ? StreamType.hls : (url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
-        url: url,
-        headers: headers,
-      );
+      return <MediaStream>[
+        MediaStream(
+          type: url.toLowerCase().contains("m3u8") || url.toLowerCase().contains("m3u") ? StreamType.hls : (url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
+          url: url,
+          headers: headers,
+        ),
+      ];
     } catch (e, s) {
       _logger.e("Error extracting stream in MoviesApiExtractor", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 }

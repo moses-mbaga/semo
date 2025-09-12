@@ -409,7 +409,7 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       if (externalLink == null || externalLink.isEmpty) {
         throw Exception("External link is required for $_providerKey");
@@ -419,17 +419,23 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
         final String? episodeUrl = await _findEpisodeUrl(externalLink, options.season!, options.episode!);
 
         if (episodeUrl != null) {
-          return await _extractStream(episodeUrl);
+          final MediaStream? s = await _extractStream(episodeUrl);
+          if (s != null) {
+            return <MediaStream>[s];
+          }
         } else {
           throw Exception("Failed to find episode URL with $_providerKey, for S${options.season}E${options.episode}");
         }
       } else {
-        return _extractStream(externalLink);
+        final MediaStream? s = await _extractStream(externalLink);
+        if (s != null) {
+          return <MediaStream>[s];
+        }
       }
     } catch (e, s) {
       _logger.e("Error in MultiMoviesExtractor", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 }

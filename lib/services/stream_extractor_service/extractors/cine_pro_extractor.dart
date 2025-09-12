@@ -47,14 +47,14 @@ class CineProExtractor implements BaseStreamExtractor {
   Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async => null;
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       // The CinePro backend API is open source and should be self hosted
       // Documentation: https://github.com/cinepro-org/backend
       final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null) {
         _logger.e("No base URL found for provider: $_providerKey");
-        return null;
+        return <MediaStream>[];
       }
 
       final String mediaType = options.season != null && options.episode != null ? "tv" : "movie";
@@ -85,17 +85,19 @@ class CineProExtractor implements BaseStreamExtractor {
             !streamUrl.contains("cdn.niggaflix.xyz") && // Remove broken stream sources
             (type == "mp4" || type == "hls") &&
             (language == "en" || language == "english")) {
-          return MediaStream(
-            type: type == "hls" ? StreamType.hls : StreamType.mp4,
-            url: streamUrl,
-            headers: headers,
-          );
+          return <MediaStream>[
+            MediaStream(
+              type: type == "hls" ? StreamType.hls : StreamType.mp4,
+              url: streamUrl,
+              headers: headers,
+            ),
+          ];
         }
       }
     } catch (e, s) {
       _logger.e("Error in CineProExtractor", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 }

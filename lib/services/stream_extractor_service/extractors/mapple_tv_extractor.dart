@@ -48,7 +48,7 @@ class MappleTvExtractor implements BaseStreamExtractor {
   Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async => null;
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null || baseUrl.isEmpty) {
@@ -73,15 +73,17 @@ class MappleTvExtractor implements BaseStreamExtractor {
         throw Exception("No stream URL found for: $_providerKey");
       }
 
-      return MediaStream(
-        type: StreamType.hls,
-        url: url,
-        headers: headers,
-      );
+      return <MediaStream>[
+        MediaStream(
+          type: StreamType.hls,
+          url: url,
+          headers: headers,
+        ),
+      ];
     } catch (e, s) {
       _logger.e("Error extracting stream in MappleTvExtractor", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 }

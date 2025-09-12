@@ -250,7 +250,7 @@ class ShowBoxExtractor implements BaseStreamExtractor {
   }
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       if (externalLink == null || externalLink.isEmpty) {
         throw Exception("External link is required for $_providerKey");
@@ -336,16 +336,18 @@ class ShowBoxExtractor implements BaseStreamExtractor {
         final String? url = el.attributes["data-url"];
 
         if (url != null && url.isNotEmpty && (url.toLowerCase().contains("mp4") || url.toLowerCase().contains("mkv"))) {
-          return MediaStream(
-            type: url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4,
-            url: url,
-          );
+          return <MediaStream>[
+            MediaStream(
+              type: url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4,
+              url: url,
+            ),
+          ];
         }
       }
     } catch (e, s) {
       _logger.e("Error in ShowBoxExtractor", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 }

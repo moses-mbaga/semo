@@ -41,7 +41,7 @@ class StreamExtractorService {
     try {
       math.Random random = math.Random();
       String serverName = AppPreferencesService().getStreamingServer();
-      MediaStream? stream;
+      List<MediaStream> streams = <MediaStream>[];
       BaseStreamExtractor? extractor;
 
       final bool isTv = options.season != null && options.episode != null;
@@ -62,7 +62,7 @@ class StreamExtractorService {
 
       final List<StreamingServer> availableServers = _streamingServers.where((StreamingServer s) => s.extractor != null && s.extractor!.acceptedMediaTypes.contains(requestedMediaType)).toList();
 
-      while ((stream?.url == null || stream!.url.isEmpty) && (serverName != "Random" || availableServers.isNotEmpty)) {
+      while (streams.isEmpty && (serverName != "Random" || availableServers.isNotEmpty)) {
         int randomIndex = -1;
 
         if (serverName == "Random" && extractor == null) {
@@ -89,19 +89,17 @@ class StreamExtractorService {
           }
         }
 
-        stream = await extractor?.getStream(
-          options,
-          externalLink: externalLinkUrl,
-          externalLinkHeaders: externalLinkHeaders,
-        );
+        streams = await (extractor?.getStreams(
+              options,
+              externalLink: externalLinkUrl,
+              externalLinkHeaders: externalLinkHeaders,
+            ) ??
+            Future<List<MediaStream>>.value(<MediaStream>[]));
 
-        if (stream == null || stream.url.isEmpty) {
-          _logger.w("Stream not found.\nStreamingServer: $serverName");
-
-          stream = null;
+        if (streams.isEmpty) {
+          _logger.w("No streams found.\nStreamingServer: $serverName");
 
           if (serverName == "Random") {
-            // Remove this server from the local pool and try another
             if (randomIndex >= 0 && randomIndex < availableServers.length) {
               availableServers.removeAt(randomIndex);
             }
@@ -113,11 +111,11 @@ class StreamExtractorService {
         }
       }
 
-      if (stream != null && stream.url.isNotEmpty) {
-        _logger.i("Stream found.\nStreamingServer: $serverName\nUrl: ${stream.url}");
+      if (streams.isNotEmpty) {
+        _logger.i("Streams found.\nStreamingServer: $serverName\nCount: ${streams.length}");
       }
 
-      return stream;
+      return streams.first;
     } catch (e, s) {
       _logger.e("Failed to extract stream", error: e, stackTrace: s);
     }

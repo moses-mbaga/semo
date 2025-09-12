@@ -6,7 +6,9 @@ abstract class BaseStreamExtractor {
   List<MediaType> get acceptedMediaTypes;
   bool get needsExternalLink;
   Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options);
-  Future<MediaStream?> getStream(
+
+  // New multi-stream API. For now, implementations should return at most one.
+  Future<List<MediaStream>> getStreams(
     StreamExtractorOptions options, {
     String? externalLink,
     Map<String, String>? externalLinkHeaders,

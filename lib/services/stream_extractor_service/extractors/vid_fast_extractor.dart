@@ -50,7 +50,7 @@ class VidFastExtractor implements BaseStreamExtractor {
   Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async => null;
 
   @override
-  Future<MediaStream?> getStream(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null || baseUrl.isEmpty) {
@@ -70,15 +70,17 @@ class VidFastExtractor implements BaseStreamExtractor {
         throw Exception("No stream URL found for: $_providerKey");
       }
 
-      return MediaStream(
-        type: url.toLowerCase().contains("m3u8") || url.toLowerCase().contains("m3u") ? StreamType.hls : (url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
-        url: url,
-        headers: headers,
-      );
+      return <MediaStream>[
+        MediaStream(
+          type: url.toLowerCase().contains("m3u8") || url.toLowerCase().contains("m3u") ? StreamType.hls : (url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
+          url: url,
+          headers: headers,
+        ),
+      ];
     } catch (e, s) {
       _logger.e("Error extracting stream in VidFastExtractor", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 }
