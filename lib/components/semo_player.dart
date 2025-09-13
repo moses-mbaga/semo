@@ -78,7 +78,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     super.initState();
     _videoPlayerController = VideoPlayerController.networkUrl(
       Uri.parse(widget.stream.url),
-      httpHeaders: widget.stream.headers,
+      httpHeaders: widget.stream.headers ?? <String, String>{},
       formatHint: widget.stream.type == StreamType.hls ? VideoFormat.hls : VideoFormat.other,
     );
     _scaleVideoAnimationController = AnimationController(
