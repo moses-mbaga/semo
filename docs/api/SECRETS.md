@@ -10,7 +10,7 @@
 
 - `TMDB_ACCESS_TOKEN` (String): TMDB v4 API Bearer token.
 - `SUBDL_API_KEY` (String): SubDL API key for subtitle downloads.
-- `CLOUDFLARE_WORKER_PROXY` (String): Cloudflare Worker proxy URL.
+- `CF_WORKERS_API_KEY` (String): Cloudflare Workers' API key.
 
 Declare both in `.env` (use `.env.example` as a template) and run the build step to embed/obfuscate values.
 
@@ -38,7 +38,7 @@ Declare both in `.env` (use `.env.example` as a template) and run the build step
 - Add secrets to `.env` (never commit real values):
   - `TMDB_ACCESS_TOKEN=...`
   - `SUBDL_API_KEY=...`
-  - `CLOUDFLARE_WORKER_PROXY=...`
+  - `CF_WORKERS_API_KEY=...`
 - Generate code: `dart run build_runner build --delete-conflicting-outputs`.
 - Verify build: `dart analyze` and run the app.
 
@@ -52,5 +52,5 @@ Declare both in `.env` (use `.env.example` as a template) and run the build step
 
 - File: `lib/services/secrets_service.dart`
 - Generated: `lib/services/secrets_service.g.dart`
-- Env: `.env` with `TMDB_ACCESS_TOKEN`, `SUBDL_API_KEY`, `CLOUDFLARE_WORKER_PROXY`
+- Env: `.env` with `TMDB_ACCESS_TOKEN`, `SUBDL_API_KEY`, `CF_WORKERS_API_KEY`
 - Build: `dart run build_runner build --delete-conflicting-outputs`

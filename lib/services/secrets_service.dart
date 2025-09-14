@@ -10,8 +10,8 @@ abstract class SecretsService {
   @EnviedField(varName: "SUBDL_API_KEY", obfuscate: true)
   static String subdlApiKey = _SecretsService.subdlApiKey;
 
-  @EnviedField(varName: "CLOUDFLARE_WORKER_PROXY", obfuscate: true)
-  static String cloudflareWorkerProxy = _SecretsService.cloudflareWorkerProxy;
+  @EnviedField(varName: "CF_WORKERS_API_KEY", obfuscate: true)
+  static String cfWorkersApiKey = _SecretsService.cfWorkersApiKey;
 
   @EnviedField(varName: "CINEPRO_BASE_URL", obfuscate: true)
   static String cineProBaseUrl = _SecretsService.cineProBaseUrl;
