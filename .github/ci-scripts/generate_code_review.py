@@ -44,57 +44,63 @@ def create_payload(diff_content, repo):
     return payload
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument('--diff-file', required=True)  # Changed from --diff to --diff-file
-    p.add_argument('--provider', required=True)
-    args = p.parse_args()
-
-    repo = os.environ.get("GITHUB_REPOSITORY").split("/")[0]
-    branch = os.environ.get("GITHUB_REF_NAME")
-    actor = os.environ.get("GITHUB_ACTOR");
-
-    log("Reading diff file...", "info")
     try:
-        with open(args.diff_file, 'r', encoding='utf-8') as f:
-            diff_content = f.read()
-        log(f"Successfully read diff file: {args.diff_file}", "info")
-    except FileNotFoundError:
-        log(f"Error: Diff file not found at {args.diff_file}", "error")
-        sys.exit(1)
-    except Exception as e:
-        log(f"Error reading diff file: {e}", "error")
-        sys.exit(1)
+        p = argparse.ArgumentParser()
+        p.add_argument('--diff-file', required=True)  # Changed from --diff to --diff-file
+        p.add_argument('--provider', required=True)
+        args = p.parse_args()
 
-    log("Creating payload for code review generation...", "info") 
-    request_payload = create_payload(sanitize(diff_content), repo)
-    log("Completed creating payload for code review generation.", "info")
+        repo = os.environ.get("GITHUB_REPOSITORY").split("/")[0]
+        branch = os.environ.get("GITHUB_REF_NAME")
+        actor = os.environ.get("GITHUB_ACTOR");
 
-    log("Generating code review...", "info")
+        log("Reading diff file...", "info")
+        try:
+            with open(args.diff_file, 'r', encoding='utf-8') as f:
+                diff_content = f.read()
+            log(f"Successfully read diff file: {args.diff_file}", "info")
+        except FileNotFoundError:
+            log(f"Error: Diff file not found at {args.diff_file}", "error")
+            sys.exit(1)
+        except Exception as e:
+            log(f"Error reading diff file: {e}", "error")
+            sys.exit(1)
 
-    response = None
-    if args.provider == "openai":
-        api_key = os.environ.get("OPENAI_API_KEY")
-        response = openai.generate_text("gpt-5", request_payload["system_instruction"], request_payload["command"], "medium", api_key)
-    elif args.provider == "anthropic":
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], True, api_key)
-    elif args.provider == "gemini":
-        api_key = os.environ.get("GEMINI_API_KEY")
-        response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)
-    else:
-        log(f"Provider '{args.provider}' is currently not supported.", "error")
-        sys.exit(1)
+        log("Creating payload for code review generation...", "info") 
+        request_payload = create_payload(sanitize(diff_content), repo)
+        log("Completed creating payload for code review generation.", "info")
 
-    log("Completed generating code review.", "info")
+        log("Generating code review...", "info")
 
-    if response["error"] is True:
-        sys.exit(1)
-    else:
-        log("Adding code review to file", "info")
+        response = None
+        if args.provider == "openai":
+            api_key = os.environ.get("OPENAI_API_KEY")
+            response = openai.generate_text("gpt-5", request_payload["system_instruction"], request_payload["command"], "medium", api_key)
+        elif args.provider == "anthropic":
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], True, api_key)
+        elif args.provider == "gemini":
+            api_key = os.environ.get("GEMINI_API_KEY")
+            response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)
+        else:
+            log(f"Provider '{args.provider}' is currently not supported.", "error")
+            sys.exit(1)
 
-        payload = { "code_review": f"{response["message"]}" }
-        with open("./.github/code_review.json", "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False)
+        log("Completed generating code review.", "info")
 
-        log("Code review added to file successfully.", "info")
-        log("Code review generated.", "success")
+        if response["error"] is True:
+            sys.exit(1)
+        else:
+            log("Adding code review to file", "info")
+
+            payload = { "code_review": f"{response["message"]}" }
+            with open("./.github/code_review.json", "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False)
+
+            log("Code review added to file successfully.", "info")
+            log("Code review generated.", "success")
+    except SystemExit as e:
+        if e.code == 1:
+            log("Encountered a fatal error (exit 1). Emitting warning and continuing without failing the job.", "warning")
+        else:
+            raise

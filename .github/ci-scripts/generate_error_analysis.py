@@ -45,45 +45,51 @@ def create_payload(logs, repo):
     return payload
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument('--logs', required=True)
-    p.add_argument('--slack-id', required=False, default="")
-    p.add_argument('--provider', required=True)
-    args = p.parse_args()
+    try:
+        p = argparse.ArgumentParser()
+        p.add_argument('--logs', required=True)
+        p.add_argument('--slack-id', required=False, default="")
+        p.add_argument('--provider', required=True)
+        args = p.parse_args()
 
-    repo = os.environ.get("GITHUB_REPOSITORY").split("/")[0]
-    branch = os.environ.get("GITHUB_REF_NAME")
+        repo = os.environ.get("GITHUB_REPOSITORY").split("/")[0]
+        branch = os.environ.get("GITHUB_REF_NAME")
 
-    log("Creating payload for error analysis generation...", "info") 
-    request_payload = create_payload(sanitize(args.logs), repo)
-    log("Completed creating payload for error analysis generation.", "info")
+        log("Creating payload for error analysis generation...", "info") 
+        request_payload = create_payload(sanitize(args.logs), repo)
+        log("Completed creating payload for error analysis generation.", "info")
 
-    log("Generating error analysis...", "info")
-    
-    response = None
-    if args.provider == "openai":
-        api_key = os.environ.get("OPENAI_API_KEY")
-        response = openai.generate_text("gpt-5", request_payload["system_instruction"], request_payload["command"], "low", api_key)
-    elif args.provider == "anthropic":
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], False, api_key)
-    elif args.provider == "gemini":
-        api_key = os.environ.get("GEMINI_API_KEY")
-        response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)
-    else:
-        log(f"Provider '{args.provider}' is currently not supported.", "error")
-        sys.exit(1)
+        log("Generating error analysis...", "info")
+        
+        response = None
+        if args.provider == "openai":
+            api_key = os.environ.get("OPENAI_API_KEY")
+            response = openai.generate_text("gpt-5", request_payload["system_instruction"], request_payload["command"], "low", api_key)
+        elif args.provider == "anthropic":
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], False, api_key)
+        elif args.provider == "gemini":
+            api_key = os.environ.get("GEMINI_API_KEY")
+            response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)
+        else:
+            log(f"Provider '{args.provider}' is currently not supported.", "error")
+            sys.exit(1)
 
-    log("Completed generating error analysis.", "info")
+        log("Completed generating error analysis.", "info")
 
-    if response["error"] is True:
-        sys.exit(1)
-    else:
-        log("Adding error analysis to file", "info")
+        if response["error"] is True:
+            sys.exit(1)
+        else:
+            log("Adding error analysis to file", "info")
 
-        payload = { "error_analysis": f"{response["message"]}" }
-        with open("./.github/error_analysis.json", "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False)
+            payload = { "error_analysis": f"{response["message"]}" }
+            with open("./.github/error_analysis.json", "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False)
 
-        log("Error analysis added to file successfully.", "info")
-        log("Error analysis generated.", "success")
+            log("Error analysis added to file successfully.", "info")
+            log("Error analysis generated.", "success")
+    except SystemExit as e:
+        if e.code == 1:
+            log("Encountered a fatal error (exit 1). Emitting warning and continuing without failing the job.", "warning")
+        else:
+            raise

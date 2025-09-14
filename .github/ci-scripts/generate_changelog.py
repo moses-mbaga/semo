@@ -57,69 +57,75 @@ def create_payload(commit_info, diff, repo):
     return payload
 
 if __name__ == "__main__":
-    p = argparse.ArgumentParser()
-    p.add_argument('--commit-info-file', required=True)
-    p.add_argument('--diff-file', required=True)
-    p.add_argument('--provider', required=True)
-    args = p.parse_args()
-
-    repo = os.environ.get("GITHUB_REPOSITORY").split("/")[0]
-    branch = os.environ.get("GITHUB_REF_NAME")
-
-    log("Reading commit info file...", "info")
     try:
-        with open(args.commit_info_file, 'r', encoding='utf-8') as f:
-            commit_info_content = f.read()
-        log(f"Successfully read commit info file: {args.commit_info_file}", "info")
-    except FileNotFoundError:
-        log(f"Error: Commit info file not found at {args.commit_info_file}", "error")
-        sys.exit(1)
-    except Exception as e:
-        log(f"Error reading commit info file: {e}", "error")
-        sys.exit(1)
+        p = argparse.ArgumentParser()
+        p.add_argument('--commit-info-file', required=True)
+        p.add_argument('--diff-file', required=True)
+        p.add_argument('--provider', required=True)
+        args = p.parse_args()
 
-    log("Reading diff file...", "info")
-    try:
-        with open(args.diff_file, 'r', encoding='utf-8') as f:
-            diff_content = f.read()
-        log(f"Successfully read diff file: {args.diff_file}", "info")
-    except FileNotFoundError:
-        log(f"Error: Diff file not found at {args.diff_file}", "error")
-        sys.exit(1)
-    except Exception as e:
-        log(f"Error reading diff file: {e}", "error")
-        sys.exit(1)
+        repo = os.environ.get("GITHUB_REPOSITORY").split("/")[0]
+        branch = os.environ.get("GITHUB_REF_NAME")
 
-    log("Creating payload for changelog generation...", "info") 
-    request_payload = create_payload(sanitize(commit_info_content), sanitize(diff_content), repo)
-    log("Completed creating payload for changelog generation.", "info")
+        log("Reading commit info file...", "info")
+        try:
+            with open(args.commit_info_file, 'r', encoding='utf-8') as f:
+                commit_info_content = f.read()
+            log(f"Successfully read commit info file: {args.commit_info_file}", "info")
+        except FileNotFoundError:
+            log(f"Error: Commit info file not found at {args.commit_info_file}", "error")
+            sys.exit(1)
+        except Exception as e:
+            log(f"Error reading commit info file: {e}", "error")
+            sys.exit(1)
 
-    log("Generating changelog...", "info")
+        log("Reading diff file...", "info")
+        try:
+            with open(args.diff_file, 'r', encoding='utf-8') as f:
+                diff_content = f.read()
+            log(f"Successfully read diff file: {args.diff_file}", "info")
+        except FileNotFoundError:
+            log(f"Error: Diff file not found at {args.diff_file}", "error")
+            sys.exit(1)
+        except Exception as e:
+            log(f"Error reading diff file: {e}", "error")
+            sys.exit(1)
 
-    response = None
-    if args.provider == "openai":
-        api_key = os.environ.get("OPENAI_API_KEY")
-        response = openai.generate_text("gpt-5-mini", request_payload["system_instruction"], request_payload["command"], "minimal", api_key)
-    elif args.provider == "anthropic":
-        api_key = os.environ.get("ANTHROPIC_API_KEY")
-        response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], False, api_key)
-    elif args.provider == "gemini":
-        api_key = os.environ.get("GEMINI_API_KEY")
-        response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)
-    else:
-        log(f"Provider '{args.provider}' is currently not supported.", "error")
-        sys.exit(1)
+        log("Creating payload for changelog generation...", "info") 
+        request_payload = create_payload(sanitize(commit_info_content), sanitize(diff_content), repo)
+        log("Completed creating payload for changelog generation.", "info")
 
-    log("Completed generating changelog.", "info")
+        log("Generating changelog...", "info")
 
-    if response["error"] is True:
-        sys.exit(1)
-    else:
-        log("Adding changelog to file", "info")
+        response = None
+        if args.provider == "openai":
+            api_key = os.environ.get("OPENAI_API_KEY")
+            response = openai.generate_text("gpt-5-mini", request_payload["system_instruction"], request_payload["command"], "minimal", api_key)
+        elif args.provider == "anthropic":
+            api_key = os.environ.get("ANTHROPIC_API_KEY")
+            response = anthropic.generate_text("claude-sonnet-4-20250514", request_payload["system_instruction"], request_payload["command"], False, api_key)
+        elif args.provider == "gemini":
+            api_key = os.environ.get("GEMINI_API_KEY")
+            response = gemini.generate_text("gemini-2.5-pro-preview-06-05", request_payload["system_instruction"], request_payload["command"], api_key)
+        else:
+            log(f"Provider '{args.provider}' is currently not supported.", "error")
+            sys.exit(1)
 
-        payload = { "changelog": f"{response["message"]}" }
-        with open("./.github/changelog.json", "w", encoding="utf-8") as f:
-            json.dump(payload, f, ensure_ascii=False)
+        log("Completed generating changelog.", "info")
 
-        log("Changelog added to file successfully.", "info")
-        log("Changelog generated.", "success")
+        if response["error"] is True:
+            sys.exit(1)
+        else:
+            log("Adding changelog to file", "info")
+
+            payload = { "changelog": f"{response["message"]}" }
+            with open("./.github/changelog.json", "w", encoding="utf-8") as f:
+                json.dump(payload, f, ensure_ascii=False)
+
+            log("Changelog added to file successfully.", "info")
+            log("Changelog generated.", "success")
+    except SystemExit as e:
+        if e.code == 1:
+            log("Encountered a fatal error (exit 1). Emitting warning and continuing without failing the job.", "warning")
+        else:
+            raise
