@@ -31,8 +31,8 @@ jobs:
           FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
         run: |
           if [ -n "${FIREBASE_SERVICE_ACCOUNT_JSON}" ]; then
-            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON -c workers/android-client/wrangler.toml --quiet
-            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON -c workers/zip-to-vtt/wrangler.toml --quiet
+            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON -c workers/android-client/wrangler.toml
+            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON -c workers/zip-to-vtt/wrangler.toml
           else
             echo "FIREBASE_SERVICE_ACCOUNT_JSON is not set; skipping secret upload" >&2
           fi
