@@ -23,7 +23,21 @@ jobs:
         working-directory: cf-workers
         run: npm install
 
-      - name: Deploy workers
+      - name: Configure Worker secrets
+        working-directory: cf-workers
+        env:
+          CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+        run: |
+          if [ -n "${FIREBASE_SERVICE_ACCOUNT_JSON}" ]; then
+            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON -c workers/android-client/wrangler.toml --quiet
+            echo "$FIREBASE_SERVICE_ACCOUNT_JSON" | npx wrangler secret put FIREBASE_SERVICE_ACCOUNT_JSON -c workers/zip-to-vtt/wrangler.toml --quiet
+          else
+            echo "FIREBASE_SERVICE_ACCOUNT_JSON is not set; skipping secret upload" >&2
+          fi
+
+      - name: Deploy Workers
         working-directory: cf-workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}

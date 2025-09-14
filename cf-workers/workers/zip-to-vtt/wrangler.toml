@@ -2,3 +2,5 @@ name = "zip-to-vtt"
 type = "typescript"
 main = "index.ts"
 compatibility_date = "2025-09-14"
+compatibility_flags = ["nodejs_compat"]
+vars = { FIREBASE_PROJECT_ID = "semo-5557f" }

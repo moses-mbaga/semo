@@ -39,6 +39,17 @@ Examples:
 curl "http://127.0.0.1:8787/?url=https%3A%2F%2Fexample.com%2Fsubs.zip" -i
 ```
 
+### Authentication
+
+- Requires an `Authorization: Bearer <Firebase ID token>` header on non-`OPTIONS` requests.
+- ID tokens are verified using the Firebase Admin SDK only.
+- The Firebase project is read from `FIREBASE_PROJECT_ID` (set in each worker’s `wrangler.toml`).
+
+### Secrets
+
+- Provide the Firebase service account JSON to the worker as a secret named `FIREBASE_SERVICE_ACCOUNT_JSON`.
+- In CI, set a repository secret `FIREBASE_SERVICE_ACCOUNT_JSON` with the entire JSON content.
+
 ### Behavior
 
 - Response headers:

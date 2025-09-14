@@ -1,4 +1,17 @@
 import crypto from "crypto";
+import { initializeApp, applicationDefault, cert, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+
+function extractBearer(req) {
+  const raw = (req.headers.get("Authorization") || "").trim();
+  if (!raw) return null;
+  const parts = raw.split(/\s+/);
+  const idx = parts.findIndex((p) => p.toLowerCase() === "bearer");
+  if (idx === -1) return null;
+  const token = parts.slice(idx + 1).join(" ");
+  const cleaned = token.replace(/^\s*"|"\s*$/g, "").trim();
+  return cleaned || null;
+}
 
 /**
  * Generates random client info and user agent for request obfuscation
@@ -266,7 +279,7 @@ async function makeAuthenticatedRequest(url, options = {}) {
   return response;
 }
 
-async function handleRequest(request) {
+async function handleRequest(request, env) {
   // Enable CORS
   const corsHeaders = {
     "Access-Control-Allow-Origin": "*",
@@ -281,6 +294,55 @@ async function handleRequest(request) {
 
   try {
     const url = new URL(request.url);
+    const projectId = env?.FIREBASE_PROJECT_ID;
+    if (!projectId) {
+      return new Response(JSON.stringify({ error: "Missing FIREBASE_PROJECT_ID" }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+
+    // AuthN: require Firebase ID token in Authorization: Bearer <token>
+    const idToken = extractBearer(request);
+    if (!idToken) {
+      return new Response(JSON.stringify({ error: "Missing ID token" }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
+
+    // Initialize Firebase Admin (singleton across requests in the same isolate)
+    let app;
+    try {
+      const existing = getApps();
+      if (existing && existing.length > 0) {
+        app = existing[0];
+      } else {
+        let credential;
+        if (env && env.FIREBASE_SERVICE_ACCOUNT_JSON) {
+          const svc = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON);
+          credential = cert(svc);
+        } else {
+          credential = applicationDefault();
+        }
+        app = initializeApp({ credential, projectId });
+      }
+    } catch (initErr) {
+      return new Response(JSON.stringify({ error: "Auth init failed" }), {
+        status: 500,
+        headers: corsHeaders,
+      });
+    }
+
+    // Verify the ID token using Admin SDK only
+    try {
+      await getAuth(app).verifyIdToken(idToken);
+    } catch (e) {
+      return new Response(JSON.stringify({ error: "Invalid ID token" }), {
+        status: 401,
+        headers: corsHeaders,
+      });
+    }
 
     // Parse request parameters
     let requestData;

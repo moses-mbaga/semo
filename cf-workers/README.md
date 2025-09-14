@@ -57,12 +57,15 @@ Required repository secrets:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
+- `FIREBASE_SERVICE_ACCOUNT_JSON` (service account JSON; used by both workers)
 
 The workflow installs deps and runs the two deploy scripts:
 
 - `npm run deploy:android-client`
 - `npm run deploy:zip-to-vtt`
 - Or `npm run deploy:all` to deploy both in parallel
+
+The workflow also uploads the `FIREBASE_SERVICE_ACCOUNT_JSON` secret to both workers using `wrangler secret put` before deployment.
 
 ## Configuration
 

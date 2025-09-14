@@ -1,5 +1,18 @@
 // src/subtitles/worker.ts
 import { ZipReader, BlobReader, TextWriter } from "@zip.js/zip.js";
+import { initializeApp, applicationDefault, cert, getApps } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
+
+function extractBearer(req: Request): string | null {
+  const raw = (req.headers.get("Authorization") || "").trim();
+  if (!raw) return null;
+  const parts = raw.split(/\s+/);
+  const idx = parts.findIndex((p) => p.toLowerCase() === "bearer");
+  if (idx === -1) return null;
+  const token = parts.slice(idx + 1).join(" ");
+  const cleaned = token.replace(/^\s*"|"\s*$/g, "").trim();
+  return cleaned || null;
+}
 
 const CACHE_TTL_SECONDS = 60 * 60; // 1 hour
 
@@ -7,6 +20,39 @@ export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext) {
     try {
       const url = new URL(req.url);
+      const projectId = env?.FIREBASE_PROJECT_ID;
+      if (!projectId) return jsonError("Missing FIREBASE_PROJECT_ID", 500);
+
+      // Require Authorization: Bearer <Firebase ID token>
+      if (req.method !== "OPTIONS") {
+        const idToken = extractBearer(req);
+        if (!idToken) return jsonError("Missing ID token", 401);
+        // Initialize Firebase Admin
+        let app;
+        try {
+          const existing = getApps();
+          if (existing && existing.length > 0) {
+            app = existing[0];
+          } else {
+            let credential;
+            if (env && (env as any).FIREBASE_SERVICE_ACCOUNT_JSON) {
+              const svc = JSON.parse((env as any).FIREBASE_SERVICE_ACCOUNT_JSON as string);
+              credential = cert(svc);
+            } else {
+              credential = applicationDefault();
+            }
+            app = initializeApp({ credential, projectId });
+          }
+        } catch (initErr) {
+          return jsonError("Auth init failed", 500);
+        }
+
+        try {
+          await getAuth(app).verifyIdToken(idToken);
+        } catch {
+          return jsonError("Invalid ID token", 401);
+        }
+      }
       const zipUrl = url.searchParams.get("url");
       if (!zipUrl) {
         return jsonError("Missing ?url=<zip file>", 400);
@@ -72,7 +118,7 @@ function withCors(resp: Response) {
   const h = new Headers(resp.headers);
   h.set("Access-Control-Allow-Origin", "*");
   h.set("Access-Control-Allow-Methods", "GET, OPTIONS");
-  h.set("Access-Control-Allow-Headers", "Content-Type");
+  h.set("Access-Control-Allow-Headers", "Content-Type, Authorization");
   return new Response(resp.body, { status: resp.status, headers: h });
 }
 
@@ -110,4 +156,4 @@ function srtToVtt(srt: string): string {
   return out;
 }
 
-export interface Env { }
+export interface Env { FIREBASE_PROJECT_ID?: string; FIREBASE_SERVICE_ACCOUNT_JSON?: string }
