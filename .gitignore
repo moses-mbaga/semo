@@ -13,6 +13,10 @@
 /ios/Runner/GoogleService-Info.plist
 /assets/gen/
 
+.wrangler/
+node_modules/
+package-lock.json
+
 .vscode/
 .idx/
 

@@ -1,0 +1,4 @@
+name = "zip-to-vtt"
+type = "typescript"
+main = "index.ts"
+compatibility_date = "2025-09-14"
