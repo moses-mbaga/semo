@@ -1,11 +1,8 @@
 name: Deploy Cloudflare Workers
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - "cf-workers/**"
+  workflow_dispatch:
+  workflow_call:
 
 jobs:
   deploy:

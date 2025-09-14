@@ -1,0 +1,157 @@
+name: AI Analysis
+
+on:
+  workflow_call:
+    inputs:
+      build_result:
+        description: Result of build job (success/failure/skipped)
+        required: false
+        type: string
+        default: skipped
+      workers_result:
+        description: Result of workers job (success/failure/skipped)
+        required: false
+        type: string
+        default: skipped
+      origin_workflow_file:
+        description: Workflow file path of the origin
+        required: false
+        type: string
+        default: ".github/workflows/build-and-test.yml"
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  analyze:
+    runs-on: macos-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+        with:
+          fetch-depth: 0
+          submodules: recursive
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Initialize log capture
+        run: |
+          mkdir -p $GITHUB_WORKSPACE/github_action_logs
+          : > $GITHUB_WORKSPACE/github_action_logs/all.log
+
+      - name: Download build logs artifact
+        if: ${{ inputs.build_result != 'skipped' }}
+        uses: actions/download-artifact@v4
+        with:
+          name: build-logs
+          path: github_action_logs/
+
+      - name: Set up Python venv
+        run: |
+          python3 -m venv .venv
+
+      - name: Install Python dependencies
+        run: |
+          . .venv/bin/activate
+          pip install requests
+        shell: bash
+
+      - name: Prepare Git context
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          ORIGIN_WORKFLOW_FILE: ${{ inputs.origin_workflow_file }}
+        run: |
+          set -o pipefail
+          {
+            . .venv/bin/activate
+            WORKFLOW_FILE_NAME=$(basename "$ORIGIN_WORKFLOW_FILE")
+            echo "Using workflow file: $WORKFLOW_FILE_NAME"
+            python3 .github/ci-scripts/generate_git_context.py \
+              --token "$GITHUB_TOKEN" \
+              --workflow-file-name "$WORKFLOW_FILE_NAME"
+          } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+
+      - name: Generate changelog
+        id: generate_changelog
+        env:
+          COMMIT_INFO_FILE: ${{ env.COMMIT_INFO_FILE }}
+          DIFF_FILE: ${{ env.DIFF_FILE }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -o pipefail
+          {
+            . .venv/bin/activate
+            python3 .github/ci-scripts/generate_changelog.py \
+              --commit-info-file "$COMMIT_INFO_FILE" \
+              --diff-file "$DIFF_FILE" \
+              --provider "openai"
+          } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+
+      - name: Generate code review
+        id: generate_code_review
+        env:
+          DIFF_FILE: ${{ env.DIFF_FILE }}
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          set -o pipefail
+          {
+            . .venv/bin/activate
+            python3 .github/ci-scripts/generate_code_review.py \
+              --diff-file "$DIFF_FILE" \
+              --provider "anthropic"
+          } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+
+      - name: Update Wiki (Success)
+        if: ${{ inputs.build_result != 'failure' && inputs.workers_result != 'failure' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          {
+            . .venv/bin/activate
+            python3 .github/ci-scripts/update_wiki.py \
+              --token "$GITHUB_TOKEN" \
+              --repo "${{ github.repository }}" \
+              --commit-hash "${{ github.sha }}" \
+              --changelog-file "./.github/changelog.json" \
+              --code-review-file "./.github/code_review.json" \
+              --success
+          } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+
+      - name: Generate error analysis
+        id: generate_error_analysis
+        if: ${{ inputs.build_result == 'failure' || inputs.workers_result == 'failure' }}
+        env:
+          REPO_NAME: ${{ github.repository }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -o pipefail
+          {
+            LOGS=$(cat $GITHUB_WORKSPACE/github_action_logs/all.log || true)
+            if [ -z "$LOGS" ]; then
+              LOGS="No logs captured. Make sure every step uses tee -a github_action_logs/all.log"
+            fi
+
+            . .venv/bin/activate
+            python3 .github/ci-scripts/generate_error_analysis.py \
+              --logs "$LOGS" \
+              --provider "openai"
+          } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+
+      - name: Update Wiki (Failure)
+        if: ${{ inputs.build_result == 'failure' || inputs.workers_result == 'failure' }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -o pipefail
+          {
+            . .venv/bin/activate
+            python3 .github/ci-scripts/update_wiki.py \
+              --token "$GITHUB_TOKEN" \
+              --repo "${{ github.repository }}" \
+              --commit-hash "${{ github.sha }}" \
+              --error-analysis-file "./.github/error_analysis.json" \
+              --run-id "${{ github.run_id }}" \
+              --failure
+          } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
