@@ -22,9 +22,11 @@ jobs:
           check-latest: true
 
       - name: Install dependencies
+        working-directory: cf-workers
         run: npm install
 
       - name: Deploy workers
+        working-directory: cf-workers
         env:
           CLOUDFLARE_API_TOKEN: ${{ secrets.CLOUDFLARE_API_TOKEN }}
           CLOUDFLARE_ACCOUNT_ID: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
