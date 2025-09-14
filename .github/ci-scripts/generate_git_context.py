@@ -108,59 +108,83 @@ def main():
 
     parser = argparse.ArgumentParser(description='Prepare Git context for GitHub Actions')
     parser.add_argument('--token', required=True, help='GitHub token')
-    parser.add_argument('--workflow-file-name', default='deploy.yml', help='Workflow file name (default: deploy.yml)')
+    parser.add_argument('--workflow-file-names', required=True, help='Comma-separated workflow file names')
     args = parser.parse_args()
 
-    # Find the last successful run
-    log("Finding last successful run...", "info")
-    last_successful_sha = find_last_successful_run(args.token, args.workflow_file_name)
+    # Parse and validate workflow files
+    workflow_files = [w.strip() for w in args.workflow_file_names.split(',') if w.strip()]
+    if not workflow_files:
+        log("No workflow files provided via --workflow-file-names", "error")
+        sys.exit(1)
 
-    if last_successful_sha:
-        log(f"Last successful commit SHA: {last_successful_sha}", "info")
+    combined_commit_info_sections = []
+    combined_diff_sections = []
+    combined_ranges = []
 
-    # Get commit range
-    log("Determining commit range...", "info")
-    commit_range = get_commit_range(last_successful_sha)
-    log(f"Using commit range: {commit_range}", "info")
+    for wf in workflow_files:
+        # Find the last successful run for each workflow
+        log(f"Finding last successful run for {wf}...", "info")
+        last_successful_sha = find_last_successful_run(args.token, wf)
 
-    # Get commit info
-    log("Retrieving commit information...", "info")
-    commit_info = run_command(f'git log "{commit_range}" --pretty=format:"Commit: %H%nAuthor: %an%nMessage: %s%n"')
-    log(f"Commit information retrieved:\n{commit_info}", "info")
+        if last_successful_sha:
+            log(f"Last successful commit SHA for {wf}: {last_successful_sha}", "info")
 
-    # Write commit info to a file
+        # Get commit range for this workflow
+        log(f"Determining commit range for {wf}...", "info")
+        commit_range = get_commit_range(last_successful_sha)
+        combined_ranges.append(f"{wf}:{commit_range}")
+        log(f"Using commit range for {wf}: {commit_range}", "info")
+
+        # Get commit info for this workflow
+        log(f"Retrieving commit information for {wf}...", "info")
+        commit_info = run_command(f'git log "{commit_range}" --pretty=format:"Commit: %H%nAuthor: %an%nMessage: %s%n"')
+        section_info = (
+            f"=== Workflow: {wf} ===\n"
+            f"Commit Range: {commit_range}\n\n"
+            f"{commit_info}\n"
+        )
+        combined_commit_info_sections.append(section_info)
+
+        # Get diff for this workflow
+        log(f"Retrieving diff information for {wf}...", "info")
+        diff = run_command(f'git diff "{commit_range}"')
+        section_diff = (
+            f"=== Workflow: {wf} ===\n"
+            f"Commit Range: {commit_range}\n\n"
+            f"{diff}\n"
+        )
+        combined_diff_sections.append(section_diff)
+
+    # Join and write commit info
+    commit_info_text = "\n\n".join(combined_commit_info_sections)
     commit_info_file_path = os.path.join(os.environ["GITHUB_WORKSPACE"], "commit_info.txt")
     with open(commit_info_file_path, "w") as commit_info_file:
-        commit_info_file.write(commit_info)
+        commit_info_file.write(commit_info_text)
     log(f"Commit info written to {commit_info_file_path}", "info")
 
-    # Get diff
-    log("Retrieving diff information...", "info")
-    diff = run_command(f'git diff "{commit_range}"')
-    log(f"Diff information retrieved.", "info")
-
-    # Write diff to a file
+    # Join and write diff
+    diff_text = "\n\n".join(combined_diff_sections)
     diff_file_path = os.path.join(os.environ["GITHUB_WORKSPACE"], "diff.txt")
     with open(diff_file_path, "w") as diff_file:
-        diff_file.write(diff)
+        diff_file.write(diff_text)
     log(f"Diff written to {diff_file_path}", "info")
 
     # Set environment variables
     log("Setting environment variables...", "info")
-    write_to_github_env("COMMIT_RANGE", commit_range)
+    write_to_github_env("COMMIT_RANGE", " | ".join(combined_ranges))
     write_multiline_to_github_env("COMMIT_INFO_FILE", commit_info_file_path)
-    write_to_github_env("DIFF_FILE", diff_file_path) # Output path to diff file
+    write_to_github_env("DIFF_FILE", diff_file_path)
     log("Environment variables are set.", "info")
 
     # Log everything
     log("Adding commit information and diff to logs...", "info")
     log_message = f"""
-Commit Range: {commit_range}
+Workflows: {', '.join(workflow_files)}
 
-Commit Info:
-{commit_info}
+Commit Ranges:\n- {'\n- '.join(combined_ranges)}
 
-Diff is stored in: {diff_file_path}
+Commit Info file: {commit_info_file_path}
+Diff file: {diff_file_path}
 """
     add_to_logs(log_message)
     log("Commit information and diff added to logs.", "info")

@@ -1,4 +1,4 @@
-name: Detect Changes
+name: Orchestrator
 
 on:
   push:
@@ -12,6 +12,7 @@ permissions:
 
 jobs:
   detect:
+    name: Detect changes
     runs-on: ubuntu-latest
     outputs:
       build: ${{ steps.filter.outputs.build }}
@@ -33,9 +34,7 @@ jobs:
               - 'ios/**'
               - 'assets/**'
               - 'pubspec.yaml'
-              - 'pubspec.lock'
               - 'analysis_options.yaml'
-              - 'firebase.json'
               - '.github/workflows/build-and-test.yml'
             workers:
               - 'cf-workers/**'
@@ -49,7 +48,7 @@ jobs:
     secrets: inherit
 
   run-cf-workers-deploy:
-    name: Deploy CF workers
+    name: Deploy Clouflare Workers
     if: ${{ needs.detect.outputs.workers == 'true' }}
     needs: detect
     uses: ./.github/workflows/deploy-cf-workers.yml
@@ -66,5 +65,5 @@ jobs:
     with:
       build_result: ${{ needs.run-build-and-test.result }}
       workers_result: ${{ needs.run-cf-workers-deploy.result }}
-      origin_workflow_file: ${{ needs.run-build-and-test.result != 'skipped' && '.github/workflows/build-and-test.yml' || '.github/workflows/deploy-cf-workers.yml' }}
+      origin_workflow_files: ${{ format('{0}{1}', needs.run-build-and-test.result != 'skipped' && '.github/workflows/build-and-test.yml' || '', needs.run-cf-workers-deploy.result != 'skipped' && (needs.run-build-and-test.result != 'skipped' && ',.github/workflows/deploy-cf-workers.yml' || '.github/workflows/deploy-cf-workers.yml') || '') }}
     secrets: inherit

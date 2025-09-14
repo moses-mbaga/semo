@@ -13,8 +13,8 @@ on:
         required: false
         type: string
         default: skipped
-      origin_workflow_file:
-        description: Workflow file path of the origin
+      origin_workflow_files:
+        description: Comma-separated workflow file paths of the origins
         required: false
         type: string
         default: ".github/workflows/build-and-test.yml"
@@ -25,6 +25,7 @@ permissions:
 
 jobs:
   analyze:
+    name: Analyze
     runs-on: macos-latest
 
     steps:
@@ -60,16 +61,15 @@ jobs:
       - name: Prepare Git context
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          ORIGIN_WORKFLOW_FILE: ${{ inputs.origin_workflow_file }}
+          ORIGIN_WORKFLOW_FILES: ${{ inputs.origin_workflow_files }}
         run: |
           set -o pipefail
           {
             . .venv/bin/activate
-            WORKFLOW_FILE_NAME=$(basename "$ORIGIN_WORKFLOW_FILE")
-            echo "Using workflow file: $WORKFLOW_FILE_NAME"
+            echo "Using workflow files: $ORIGIN_WORKFLOW_FILES"
             python3 .github/ci-scripts/generate_git_context.py \
               --token "$GITHUB_TOKEN" \
-              --workflow-file-name "$WORKFLOW_FILE_NAME"
+              --workflow-file-names "$ORIGIN_WORKFLOW_FILES"
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Generate changelog

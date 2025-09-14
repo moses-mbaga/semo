@@ -10,7 +10,7 @@ concurrency:
 
 jobs:
   build_and_test:
-    name: "Build and test"
+    name: Build
     runs-on: macos-latest
     permissions:
       actions: read
