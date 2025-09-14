@@ -42,18 +42,21 @@ jobs:
               - '.github/workflows/deploy-cf-workers.yml'
 
   run-build-and-test:
+    name: Build and test
     if: ${{ needs.detect.outputs.build == 'true' }}
     needs: detect
     uses: ./.github/workflows/build-and-test.yml
     secrets: inherit
 
   run-cf-workers-deploy:
+    name: Deploy CF workers
     if: ${{ needs.detect.outputs.workers == 'true' }}
     needs: detect
     uses: ./.github/workflows/deploy-cf-workers.yml
     secrets: inherit
 
   ai-analysis:
+    name: AI Analysis
     needs:
       - detect
       - run-build-and-test
