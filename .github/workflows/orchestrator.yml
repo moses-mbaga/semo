@@ -48,7 +48,7 @@ jobs:
     secrets: inherit
 
   run-cf-workers-deploy:
-    name: Deploy Clouflare Workers
+    name: Deploy Cloudflare Workers
     if: ${{ needs.detect.outputs.workers == 'true' }}
     needs: detect
     uses: ./.github/workflows/deploy-cf-workers.yml
