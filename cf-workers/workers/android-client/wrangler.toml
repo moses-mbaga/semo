@@ -3,4 +3,3 @@ type = "javascript"
 main = "index.js"
 compatibility_date = "2025-08-30"
 compatibility_flags = ["nodejs_compat"]
-vars = { FIREBASE_PROJECT_ID = "semo-5557f" }

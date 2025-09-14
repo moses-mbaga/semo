@@ -1,6 +1,4 @@
 import crypto from "crypto";
-import { initializeApp, applicationDefault, cert, getApps } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 
 function extractBearer(req) {
   const raw = (req.headers.get("Authorization") || "").trim();
@@ -239,7 +237,7 @@ async function makeAuthenticatedRequest(url, options = {}) {
     method = "POST",
     body = null,
     headers = {},
-    authorization = "Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1aWQiOjI4NTI5MDIxODk3Njc1NzcyNDgsImV4cCI6MTc2MDM3NDU5NywiaWF0IjoxNzUyNTk4Mjk3fQ.8I4f8RoU0JoXkgJeFpjp3R_owfRbUzBjVaB5QKtUBzM",
+    authorization = undefined,
   } = options;
 
   const bodyString = body ? JSON.stringify(body) : "";
@@ -255,7 +253,6 @@ async function makeAuthenticatedRequest(url, options = {}) {
 
   const requestHeaders = {
     "Accept-Encoding": "gzip, deflate, br",
-    Authorization: authorization,
     Connection: "keep-alive",
     "Content-Type": contentType,
     "User-Agent": userAgent,
@@ -265,6 +262,10 @@ async function makeAuthenticatedRequest(url, options = {}) {
     "x-tr-signature": signature,
     ...headers,
   };
+
+  if (authorization) {
+    requestHeaders["Authorization"] = authorization;
+  }
 
   if (bodyString) {
     requestHeaders["Content-Length"] = Buffer.byteLength(bodyString, "utf8");
@@ -294,51 +295,23 @@ async function handleRequest(request, env) {
 
   try {
     const url = new URL(request.url);
-    const projectId = env?.FIREBASE_PROJECT_ID;
-    if (!projectId) {
-      return new Response(JSON.stringify({ error: "Missing FIREBASE_PROJECT_ID" }), {
+    // AuthN: require Authorization: Bearer <CF_WORKERS_API_KEY>
+    const apiKey = env?.CF_WORKERS_API_KEY;
+    if (!apiKey) {
+      return new Response(JSON.stringify({ error: "Server missing API key" }), {
         status: 500,
         headers: corsHeaders,
       });
     }
-
-    // AuthN: require Firebase ID token in Authorization: Bearer <token>
-    const idToken = extractBearer(request);
-    if (!idToken) {
-      return new Response(JSON.stringify({ error: "Missing ID token" }), {
+    const provided = extractBearer(request);
+    if (!provided) {
+      return new Response(JSON.stringify({ error: "Missing Authorization" }), {
         status: 401,
         headers: corsHeaders,
       });
     }
-
-    // Initialize Firebase Admin (singleton across requests in the same isolate)
-    let app;
-    try {
-      const existing = getApps();
-      if (existing && existing.length > 0) {
-        app = existing[0];
-      } else {
-        let credential;
-        if (env && env.FIREBASE_SERVICE_ACCOUNT_JSON) {
-          const svc = JSON.parse(env.FIREBASE_SERVICE_ACCOUNT_JSON);
-          credential = cert(svc);
-        } else {
-          credential = applicationDefault();
-        }
-        app = initializeApp({ credential, projectId });
-      }
-    } catch (initErr) {
-      return new Response(JSON.stringify({ error: "Auth init failed" }), {
-        status: 500,
-        headers: corsHeaders,
-      });
-    }
-
-    // Verify the ID token using Admin SDK only
-    try {
-      await getAuth(app).verifyIdToken(idToken);
-    } catch (e) {
-      return new Response(JSON.stringify({ error: "Invalid ID token" }), {
+    if (provided !== apiKey) {
+      return new Response(JSON.stringify({ error: "Invalid API key" }), {
         status: 401,
         headers: corsHeaders,
       });

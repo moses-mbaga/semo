@@ -10,6 +10,7 @@ Two Workers are maintained here, each with its own `wrangler.toml` under `worker
 - Node.js 20+
 - Cloudflare account and Wrangler (Wrangler is included in `devDependencies`)
 - For deployments: Cloudflare API token and account ID
+- A secret API key for the Workers (set as `CF_WORKERS_API_KEY`)
 
 ## Local Development
 
@@ -57,7 +58,7 @@ Required repository secrets:
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
-- `FIREBASE_SERVICE_ACCOUNT_JSON` (service account JSON; used by both workers)
+- `CF_WORKERS_API_KEY` (the API key required by both workers)
 
 The workflow installs deps and runs the two deploy scripts:
 
@@ -65,9 +66,10 @@ The workflow installs deps and runs the two deploy scripts:
 - `npm run deploy:zip-to-vtt`
 - Or `npm run deploy:all` to deploy both in parallel
 
-The workflow also uploads the `FIREBASE_SERVICE_ACCOUNT_JSON` secret to both workers using `wrangler secret put` before deployment.
+The workflow uploads the `CF_WORKERS_API_KEY` secret to both workers using `wrangler secret put` before deployment.
 
 ## Configuration
 
 - Each worker’s `wrangler.toml` sets its `name`, `type`, `main`, and `compatibility_date`.
+- Requests to the workers must include `Authorization: Bearer <CF_WORKERS_API_KEY>`.
 - To bind a custom domain/route, add the appropriate `routes`/`route` configuration to the worker’s `wrangler.toml` or configure routes in the Cloudflare dashboard after deployment.

@@ -1,7 +1,5 @@
 // src/subtitles/worker.ts
 import { ZipReader, BlobReader, TextWriter } from "@zip.js/zip.js";
-import { initializeApp, applicationDefault, cert, getApps } from "firebase-admin/app";
-import { getAuth } from "firebase-admin/auth";
 
 function extractBearer(req: Request): string | null {
   const raw = (req.headers.get("Authorization") || "").trim();
@@ -20,38 +18,12 @@ export default {
   async fetch(req: Request, env: Env, ctx: ExecutionContext) {
     try {
       const url = new URL(req.url);
-      const projectId = env?.FIREBASE_PROJECT_ID;
-      if (!projectId) return jsonError("Missing FIREBASE_PROJECT_ID", 500);
-
-      // Require Authorization: Bearer <Firebase ID token>
+      const apiKey = env?.CF_WORKERS_API_KEY;
       if (req.method !== "OPTIONS") {
-        const idToken = extractBearer(req);
-        if (!idToken) return jsonError("Missing ID token", 401);
-        // Initialize Firebase Admin
-        let app;
-        try {
-          const existing = getApps();
-          if (existing && existing.length > 0) {
-            app = existing[0];
-          } else {
-            let credential;
-            if (env && (env as any).FIREBASE_SERVICE_ACCOUNT_JSON) {
-              const svc = JSON.parse((env as any).FIREBASE_SERVICE_ACCOUNT_JSON as string);
-              credential = cert(svc);
-            } else {
-              credential = applicationDefault();
-            }
-            app = initializeApp({ credential, projectId });
-          }
-        } catch (initErr) {
-          return jsonError("Auth init failed", 500);
-        }
-
-        try {
-          await getAuth(app).verifyIdToken(idToken);
-        } catch {
-          return jsonError("Invalid ID token", 401);
-        }
+        if (!apiKey) return jsonError("Server missing API key", 500);
+        const provided = extractBearer(req);
+        if (!provided) return jsonError("Missing Authorization", 401);
+        if (provided !== apiKey) return jsonError("Invalid API key", 401);
       }
       const zipUrl = url.searchParams.get("url");
       if (!zipUrl) {
@@ -156,4 +128,4 @@ function srtToVtt(srt: string): string {
   return out;
 }
 
-export interface Env { FIREBASE_PROJECT_ID?: string; FIREBASE_SERVICE_ACCOUNT_JSON?: string }
+export interface Env { CF_WORKERS_API_KEY?: string }
