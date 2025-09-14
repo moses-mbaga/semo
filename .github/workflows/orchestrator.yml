@@ -60,7 +60,7 @@ jobs:
       - detect
       - run-build-and-test
       - run-cf-workers-deploy
-    if: ${{ always() }}
+    if: ${{ needs.detect.outputs.build == 'true' || needs.detect.outputs.workers == 'true' }}
     uses: ./.github/workflows/ai-analysis.yml
     with:
       build_result: ${{ needs.run-build-and-test.result }}
