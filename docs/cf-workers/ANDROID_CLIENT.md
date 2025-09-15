@@ -106,7 +106,7 @@ GitHub Actions: see `.github/workflows/deploy-cf-workers.yml`. It installs deps 
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
-- `FIREBASE_SERVICE_ACCOUNT_JSON` (service account JSON value)
+- `CF_WORKERS_API_KEY`
 
 ## Routes and domains
 

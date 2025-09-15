@@ -76,4 +76,5 @@ Notes:
 
 **Testing Tips**
 
-TBD
+- Use `SharedPreferences.setMockInitialValues({});` to initialize storage in tests.
+- After setting mock values, run your tests with `flutter test`.

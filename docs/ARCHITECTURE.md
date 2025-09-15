@@ -133,7 +133,9 @@ Guidelines:
 
 ## Testing
 
-TBD
+- Run static analysis with `dart analyze` to catch issues early.
+- Execute the test suite with `flutter test` before pushing changes.
+- Add widget and unit tests under the `test/` directory to cover new features.
 
 ## Generated Code (Assets & Env)
 

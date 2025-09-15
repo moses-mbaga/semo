@@ -67,7 +67,9 @@
 
 **Testing**
 
-TBD
+- For unit tests, mock `FirebaseAuth` and `GoogleSignIn` or use the Firebase Auth emulator.
+- Configure the emulator with `FirebaseAuth.instance.useAuthEmulator("localhost", 9099);`.
+- Run the tests with `flutter test`.
 
 **Quick Reference**
 
