@@ -41,14 +41,12 @@ curl "http://127.0.0.1:8787/?url=https%3A%2F%2Fexample.com%2Fsubs.zip" -i
 
 ### Authentication
 
-- Requires an `Authorization: Bearer <Firebase ID token>` header on non-`OPTIONS` requests.
-- ID tokens are verified using the Firebase Admin SDK only.
-- The Firebase project is read from `FIREBASE_PROJECT_ID` (set in each worker’s `wrangler.toml`).
+- Requires `Authorization: Bearer <CF_WORKERS_API_KEY>` on non-`OPTIONS` requests.
 
 ### Secrets
 
-- Provide the Firebase service account JSON to the worker as a secret named `FIREBASE_SERVICE_ACCOUNT_JSON`.
-- In CI, set a repository secret `FIREBASE_SERVICE_ACCOUNT_JSON` with the entire JSON content.
+- Provide a repository secret `CF_WORKERS_API_KEY` containing your API key.
+- The GitHub Actions workflow uploads it to the worker via `wrangler secret put` before deploy.
 
 ### Behavior
 
@@ -75,6 +73,7 @@ GitHub Actions: see `.github/workflows/deploy-cf-workers.yml`. It installs deps 
 
 - `CLOUDFLARE_API_TOKEN`
 - `CLOUDFLARE_ACCOUNT_ID`
+- `CF_WORKERS_API_KEY`
 
 ## Routes and domains
 
