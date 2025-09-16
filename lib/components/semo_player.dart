@@ -5,13 +5,15 @@ import "package:dio/dio.dart";
 import "package:flutter/material.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:logger/logger.dart";
+import "package:semo/enums/subtitles_type.dart";
 import "package:semo/models/media_progress.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/models/subtitle_style.dart" as local;
 import "package:semo/models/stream_subtitles.dart";
-import "package:semo/services/secrets_service.dart";
+import "package:semo/services/subtitle_service.dart";
+import "package:semo/services/zip_to_vtt_service.dart";
 import "package:subtitle_wrapper_package/subtitle_wrapper_package.dart";
 import "package:video_player/video_player.dart";
 
@@ -58,7 +60,14 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     showSubtitles: true,
   );
   final AppPreferencesService _appPreferences = AppPreferencesService();
-  final Dio _dio = Dio();
+  final Dio _dio = Dio(
+    BaseOptions(
+      connectTimeout: const Duration(seconds: 5),
+      receiveTimeout: const Duration(seconds: 5),
+    ),
+  );
+  final SubtitleService _subtitleService = SubtitleService();
+  final ZipToVttService _zipToVttService = ZipToVttService();
   SubtitleStyle _subtitleStyle = const SubtitleStyle();
   MediaProgress _mediaProgress = const MediaProgress();
   late final int _seekDuration = _appPreferences.getSeekDuration();
@@ -394,26 +403,32 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
   Future<void> _applySubtitle(StreamSubtitles track, {required int indexInLanguage, required String language}) async {
     try {
-      // Currently throwing 403 errors on OpenSubtitles urls with proxy
-      // To be investigated
-      final Response<String> response = await _dio.get<String>(
-        track.url,
-        options: Options(
-          responseType: ResponseType.plain,
-          headers: <String, String>{
-            "Authorization": "Bearer ${SecretsService.cfWorkersApiKey}",
-          },
-        ),
-      );
+      String? content;
 
-      final String content = response.data ?? "";
-      _subtitleController.updateSubtitleContent(content: content);
+      if (track.type == SubtitlesType.webVtt || track.type == SubtitlesType.srt) {
+        final Response<String> response = await _dio.get<String>(
+          track.url,
+          options: Options(responseType: ResponseType.plain),
+        );
 
-      setState(() {
-        _selectedSubtitleLanguageGroup = language;
-        _selectedSubtitleIndex = indexInLanguage;
-        _showSubtitles = true;
-      });
+        if (response.statusCode == 200) {
+          if (response.data != null && response.data!.isNotEmpty) {
+            content = track.type == SubtitlesType.webVtt ? response.data : _subtitleService.srtToVtt(response.data!);
+          }
+        }
+      } else if (track.type == SubtitlesType.zip) {
+        content = await _zipToVttService.extract(track.url);
+      }
+
+      if (content != null) {
+        _subtitleController.updateSubtitleContent(content: content);
+
+        setState(() {
+          _selectedSubtitleLanguageGroup = language;
+          _selectedSubtitleIndex = indexInLanguage;
+          _showSubtitles = true;
+        });
+      }
     } catch (e, s) {
       _logger.w("Failed to apply subtitles", error: e, stackTrace: s);
     }

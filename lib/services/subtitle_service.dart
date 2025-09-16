@@ -2,6 +2,7 @@ import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
+import "package:semo/enums/subtitles_type.dart";
 import "package:semo/models/stream_subtitles.dart";
 import "package:semo/utils/urls.dart";
 
@@ -127,13 +128,13 @@ class SubtitleService {
         for (int index = 0; index < filtered.length; index++) {
           final Map<String, dynamic> subtitle = filtered[index];
           final String zipUrl = subtitle["zipUrl"] as String;
-          final String proxyUrl = "${Urls.zipToVttProxyBase}?url=${Uri.encodeComponent(zipUrl)}";
 
           results.add(
             StreamSubtitles(
               name: "${index + 1}",
               language: subtitle["language"] as String,
-              url: proxyUrl,
+              url: zipUrl,
+              type: SubtitlesType.zip,
             ),
           );
         }
@@ -145,5 +146,37 @@ class SubtitleService {
     }
 
     return <StreamSubtitles>[];
+  }
+
+  String srtToVtt(String srt) {
+    final String normalized = srt.replaceAll("\r\n", "\n");
+    final List<String> lines = normalized.split("\n");
+    final RegExp timestampPattern = RegExp(
+      r"^(\d{2}:\d{2}:\d{2}),(\d{3})\s-->\s(\d{2}:\d{2}:\d{2}),(\d{3})(.*)$",
+    );
+    final RegExp numericPattern = RegExp(r"^\d+$");
+
+    final StringBuffer buffer = StringBuffer("WEBVTT\n\n");
+
+    for (int index = 0; index < lines.length; index++) {
+      String line = lines[index];
+
+      if (numericPattern.hasMatch(line.trim())) {
+        final bool nextIsTimestamp = index + 1 < lines.length && timestampPattern.hasMatch(lines[index + 1]);
+        if (nextIsTimestamp) {
+          continue;
+        }
+      }
+
+      final RegExpMatch? match = timestampPattern.firstMatch(line);
+      if (match != null) {
+        final String tail = match.group(5) ?? "";
+        line = "${match.group(1)}.${match.group(2)} --> ${match.group(3)}.${match.group(4)}$tail";
+      }
+
+      buffer.writeln(line);
+    }
+
+    return buffer.toString();
   }
 }
