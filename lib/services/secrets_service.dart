@@ -7,9 +7,6 @@ abstract class SecretsService {
   @EnviedField(varName: "TMDB_ACCESS_TOKEN", obfuscate: true)
   static String tmdbAccessToken = _SecretsService.tmdbAccessToken;
 
-  @EnviedField(varName: "SUBDL_API_KEY", obfuscate: true)
-  static String subdlApiKey = _SecretsService.subdlApiKey;
-
   @EnviedField(varName: "CINEPRO_BASE_URL", obfuscate: true)
   static String cineProBaseUrl = _SecretsService.cineProBaseUrl;
 }
