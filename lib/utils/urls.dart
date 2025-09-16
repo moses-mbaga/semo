@@ -29,8 +29,6 @@ class Urls {
   static const String image1280 = "https://image.tmdb.org/t/p/w1280";
   static const String imageOriginal = "https://image.tmdb.org/t/p/original";
 
-  static const String zipToVttProxyBase = "https://zip-to-vtt.codeloperstz.workers.dev";
-
   static const String openSubtitlesApiBase = "https://rest.opensubtitles.org";
   static String getOpenSubtitlesMovieSearch(String imdbId) => "$openSubtitlesApiBase/search/imdbid-$imdbId/";
   static String getOpenSubtitlesEpisodeSearch(String imdbId, int season, int episode) => "$openSubtitlesApiBase/search/episode-$episode/imdbid-$imdbId/season-$season/";

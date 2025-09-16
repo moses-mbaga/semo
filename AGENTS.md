@@ -13,7 +13,6 @@
   - `firebase_options.dart`.
 - `assets/`: Images and lottie files declared in `pubspec.yaml`.
 - `docs/`: Markdown documentation and guides.
-- `cf-workers/`: Cloudflare Workers built with TypeScript and Wrangler.
 - Platform folders: `android/`, `ios/`.
 - Config: `.env`, `.env.example`, `analysis_options.yaml`, `pubspec.yaml`.
 
@@ -26,16 +25,11 @@
 - Run `flutter doctor` to ensure all required tooling is configured.
 - Fetch dependencies with `flutter pub get`.
 
-### npm (cf-workers)
-- Workers require Node.js and npm.
-- If missing, install Node.js (e.g., `curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash - && sudo apt-get install -y nodejs`).
-- In `cf-workers/`, install dependencies with `npm ci`.
 
 ## Build and Dev Commands
 - Generate code: `dart run build_runner build --delete-conflicting-outputs` — builds env/assets helpers.
 - Analyze: `dart analyze` — static checks using `flutter_lints` config.
 - Run app: `flutter run` (e.g., `-d chrome`, `-d ios`, `-d android`).
-- Workers: `npm run dev:<worker>` to run locally, `npm run deploy:<worker>` to deploy.
 - Release builds: `flutter build aab --release`, `flutter build apk --release`, `flutter build ios --release`.
 
 ## Linting
@@ -55,7 +49,6 @@
 
 ## Pre-commit Checks
 - Before committing, run `dart analyze`.
-- For changes under `cf-workers/`, run `npm test` if defined and verify workers with `npm run dev:<worker>`.
 
 ## Commits & Pull Requests
 - Commits: use imperative, concise subjects; include scope when clear (e.g., `screens: fix crash on movie screen`). Prefer descriptive refactors over generic messages.

@@ -8,11 +8,6 @@ on:
         required: false
         type: string
         default: skipped
-      workers_result:
-        description: Result of workers job (success/failure/skipped)
-        required: false
-        type: string
-        default: skipped
       origin_workflow_files:
         description: Comma-separated workflow file paths of the origins
         required: false
@@ -103,7 +98,7 @@ jobs:
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Update Wiki (Success)
-        if: ${{ inputs.build_result != 'failure' && inputs.workers_result != 'failure' }}
+        if: ${{ inputs.build_result != 'failure' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
@@ -121,7 +116,7 @@ jobs:
 
       - name: Generate error analysis
         id: generate_error_analysis
-        if: ${{ inputs.build_result == 'failure' || inputs.workers_result == 'failure' }}
+        if: ${{ inputs.build_result == 'failure' }}
         env:
           REPO_NAME: ${{ github.repository }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -140,7 +135,7 @@ jobs:
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Update Wiki (Failure)
-        if: ${{ inputs.build_result == 'failure' || inputs.workers_result == 'failure' }}
+        if: ${{ inputs.build_result == 'failure' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |

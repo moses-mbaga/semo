@@ -10,7 +10,6 @@
 
 - `TMDB_ACCESS_TOKEN` (String): TMDB v4 API Bearer token.
 - `SUBDL_API_KEY` (String): SubDL API key for subtitle downloads.
-- `CF_WORKERS_API_KEY` (String): Cloudflare Workers' API key.
 - `CINEPRO_BASE_URL` (String): Base URL for the CinePro streaming server.
 
  Declare these in `.env` (use `.env.example` as a template) and run the build step to embed/obfuscate values.
@@ -24,8 +23,6 @@
 - `static String subdlApiKey`
   - API key used for SubDL subtitle queries.
   - Consumed by: `lib/services/subtitle_service.dart` (`api_key` query param).
-- `static String cfWorkersApiKey`
-  - API key injected into Cloudflare Worker requests.
 - `static String cineProBaseUrl`
   - Base URL used for CinePro streaming server requests.
 **Common Usage**
@@ -41,7 +38,6 @@
 - Add secrets to `.env` (never commit real values):
   - `TMDB_ACCESS_TOKEN=...`
   - `SUBDL_API_KEY=...`
-  - `CF_WORKERS_API_KEY=...`
   - `CINEPRO_BASE_URL=...`
 - Generate code: `dart run build_runner build --delete-conflicting-outputs`.
 - Verify build: `dart analyze` and run the app.
@@ -56,5 +52,5 @@
 
 - File: `lib/services/secrets_service.dart`
 - Generated: `lib/services/secrets_service.g.dart`
-- Env: `.env` with `TMDB_ACCESS_TOKEN`, `SUBDL_API_KEY`, `CF_WORKERS_API_KEY`, `CINEPRO_BASE_URL`
+- Env: `.env` with `TMDB_ACCESS_TOKEN`, `SUBDL_API_KEY`, `CINEPRO_BASE_URL`
 - Build: `dart run build_runner build --delete-conflicting-outputs`

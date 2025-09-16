@@ -16,7 +16,6 @@ jobs:
     runs-on: ubuntu-latest
     outputs:
       build: ${{ steps.filter.outputs.build }}
-      workers: ${{ steps.filter.outputs.workers }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -36,9 +35,6 @@ jobs:
               - 'pubspec.yaml'
               - 'analysis_options.yaml'
               - '.github/workflows/build-and-test.yml'
-            workers:
-              - 'cf-workers/**'
-              - '.github/workflows/deploy-cf-workers.yml'
 
   run-build-and-test:
     name: Build and test
@@ -47,23 +43,14 @@ jobs:
     uses: ./.github/workflows/build-and-test.yml
     secrets: inherit
 
-  run-cf-workers-deploy:
-    name: Deploy Cloudflare Workers
-    if: ${{ needs.detect.outputs.workers == 'true' }}
-    needs: detect
-    uses: ./.github/workflows/deploy-cf-workers.yml
-    secrets: inherit
-
   ai-analysis:
-    name: AI Analysis
+    name: AI analysis
     needs:
       - detect
       - run-build-and-test
-      - run-cf-workers-deploy
-    if: ${{ always() && (needs.detect.outputs.build == 'true' || needs.detect.outputs.workers == 'true') }}
+    if: ${{ always() && needs.detect.outputs.build == 'true' }}
     uses: ./.github/workflows/ai-analysis.yml
     with:
       build_result: ${{ needs.run-build-and-test.result }}
-      workers_result: ${{ needs.run-cf-workers-deploy.result }}
-      origin_workflow_files: ${{ format('{0}{1}', needs.run-build-and-test.result != 'skipped' && '.github/workflows/build-and-test.yml' || '', needs.run-cf-workers-deploy.result != 'skipped' && (needs.run-build-and-test.result != 'skipped' && ',.github/workflows/deploy-cf-workers.yml' || '.github/workflows/deploy-cf-workers.yml') || '') }}
+      origin_workflow_files: ${{ needs.run-build-and-test.result != 'skipped' && '.github/workflows/build-and-test.yml' || '' }}
     secrets: inherit
