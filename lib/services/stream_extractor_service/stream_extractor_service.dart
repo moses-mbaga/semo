@@ -39,11 +39,10 @@ class StreamExtractorService {
 
   static Future<MediaStream?> getStream(StreamExtractorOptions options) async {
     try {
-      math.Random random = math.Random();
-      String serverName = AppPreferencesService().getStreamingServer();
-      List<MediaStream> streams = <MediaStream>[];
-      BaseStreamExtractor? extractor;
-
+      const int maxIndividualAttempts = 3;
+      const int maxRandomExtractors = 3;
+      final math.Random random = math.Random();
+      final String storedServerName = AppPreferencesService().getStreamingServer();
       final bool isTv = options.season != null && options.episode != null;
       final MediaType requestedMediaType = isTv ? MediaType.tvShows : MediaType.movies;
 
@@ -51,75 +50,83 @@ class StreamExtractorService {
         throw Exception("Unable to determine media type for extraction");
       }
 
-      if (serverName != "Random") {
-        final StreamingServer server = _streamingServers.firstWhere((StreamingServer server) => server.name == serverName);
-        extractor = server.extractor;
-
-        if (extractor == null || !extractor.acceptedMediaTypes.contains(requestedMediaType)) {
-          throw Exception("Selected server '$serverName' does not support ${requestedMediaType.toString()}");
-        }
-      }
-
       final List<StreamingServer> availableServers = _streamingServers.where((StreamingServer s) => s.extractor != null && s.extractor!.acceptedMediaTypes.contains(requestedMediaType)).toList();
 
-      while (streams.isEmpty && (serverName != "Random" || availableServers.isNotEmpty)) {
-        int randomIndex = -1;
+      if (storedServerName != "Random") {
+        final StreamingServer server = _streamingServers.firstWhere((StreamingServer server) => server.name == storedServerName);
+        final BaseStreamExtractor? extractor = server.extractor;
 
-        if (serverName == "Random" && extractor == null) {
-          randomIndex = random.nextInt(availableServers.length);
-          final StreamingServer server = availableServers[randomIndex];
-          extractor = server.extractor;
-          serverName = server.name;
+        if (extractor == null || !extractor.acceptedMediaTypes.contains(requestedMediaType)) {
+          throw Exception("Selected server '$storedServerName' does not support ${requestedMediaType.toString()}");
         }
 
-        String? externalLinkUrl;
-        Map<String, String>? externalLinkHeaders;
+        for (int attempt = 0; attempt < maxIndividualAttempts; attempt++) {
+          final List<MediaStream> streams = await _extractStreamsForServer(extractor, options, server.name);
 
-        if (extractor?.needsExternalLink == true) {
-          final Map<String, Object?>? external = await extractor?.getExternalLink(options);
-          externalLinkUrl = (external?["url"] as String?)?.trim();
-          final Map<dynamic, dynamic>? rawHeaders = external?["headers"] as Map<dynamic, dynamic>?;
-          if (rawHeaders != null) {
-            // ignore: avoid_annotating_with_dynamic
-            externalLinkHeaders = rawHeaders.map((dynamic k, dynamic v) => MapEntry<String, String>(k.toString(), v.toString()));
+          if (streams.isNotEmpty) {
+            _logger.i("Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
+            return streams.first;
           }
 
-          if (externalLinkUrl == null || externalLinkUrl.isEmpty) {
-            throw Exception("Failed to retrieve external link for ${options.title} in $serverName");
-          }
+          _logger.w(
+            "No streams found.\nStreamingServer: ${server.name}\nAttempt: ${attempt + 1} of $maxIndividualAttempts",
+          );
         }
 
-        streams = await (extractor?.getStreams(
-              options,
-              externalLink: externalLinkUrl,
-              externalLinkHeaders: externalLinkHeaders,
-            ) ??
-            Future<List<MediaStream>>.value(<MediaStream>[]));
-
-        if (streams.isEmpty) {
-          _logger.w("No streams found.\nStreamingServer: $serverName");
-
-          if (serverName == "Random") {
-            if (randomIndex >= 0 && randomIndex < availableServers.length) {
-              availableServers.removeAt(randomIndex);
-            }
-            extractor = null;
-            serverName = "Random";
-          } else {
-            break;
-          }
-        }
+        return null;
       }
 
-      if (streams.isNotEmpty) {
-        _logger.i("Streams found.\nStreamingServer: $serverName\nCount: ${streams.length}");
-      }
+      final List<StreamingServer> randomServers = List<StreamingServer>.from(availableServers);
+      int randomAttempts = 0;
 
-      return streams.first;
+      while (randomAttempts < maxRandomExtractors && randomServers.isNotEmpty) {
+        final int randomIndex = random.nextInt(randomServers.length);
+        final StreamingServer server = randomServers.removeAt(randomIndex);
+        final BaseStreamExtractor extractor = server.extractor!;
+
+        final List<MediaStream> streams = await _extractStreamsForServer(extractor, options, server.name);
+
+        if (streams.isNotEmpty) {
+          _logger.i("Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
+          return streams.first;
+        }
+
+        _logger.w("No streams found.\nStreamingServer: ${server.name}");
+        randomAttempts++;
+      }
     } catch (e, s) {
       _logger.e("Failed to extract stream", error: e, stackTrace: s);
     }
 
     return null;
+  }
+
+  static Future<List<MediaStream>> _extractStreamsForServer(
+    BaseStreamExtractor extractor,
+    StreamExtractorOptions options,
+    String serverName,
+  ) async {
+    String? externalLinkUrl;
+    Map<String, String>? externalLinkHeaders;
+
+    if (extractor.needsExternalLink) {
+      final Map<String, Object?>? external = await extractor.getExternalLink(options);
+      externalLinkUrl = (external?["url"] as String?)?.trim();
+      final Map<dynamic, dynamic>? rawHeaders = external?["headers"] as Map<dynamic, dynamic>?;
+      if (rawHeaders != null) {
+        // ignore: avoid_annotating_with_dynamic
+        externalLinkHeaders = rawHeaders.map((dynamic k, dynamic v) => MapEntry<String, String>(k.toString(), v.toString()));
+      }
+
+      if (externalLinkUrl == null || externalLinkUrl.isEmpty) {
+        throw Exception("Failed to retrieve external link for ${options.title} in $serverName");
+      }
+    }
+
+    return extractor.getStreams(
+      options,
+      externalLink: externalLinkUrl,
+      externalLinkHeaders: externalLinkHeaders,
+    );
   }
 }
