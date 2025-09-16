@@ -70,6 +70,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   int _selectedSubtitleIndex = 0;
   late final AnimationController _scaleVideoAnimationController;
   Animation<double> _scaleVideoAnimation = const AlwaysStoppedAnimation<double>(1.0);
+  late final AnimationController _leftRippleController;
+  late final AnimationController _rightRippleController;
+  late final Animation<double> _leftRippleScale;
+  late final Animation<double> _rightRippleScale;
+  late final Animation<double> _leftRippleOpacity;
+  late final Animation<double> _rightRippleOpacity;
   bool _isZoomedIn = false;
   double _lastZoomGestureScale = 1.0;
   Timer? _hideControlsTimer;
@@ -89,6 +95,48 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       duration: const Duration(milliseconds: 125),
       vsync: this,
     );
+    _leftRippleController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _rightRippleController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _leftRippleScale = Tween<double>(begin: 0.8, end: 1.3).animate(
+      CurvedAnimation(
+        parent: _leftRippleController,
+        curve: Curves.easeOut,
+      ),
+    );
+    _rightRippleScale = Tween<double>(begin: 0.8, end: 1.3).animate(
+      CurvedAnimation(
+        parent: _rightRippleController,
+        curve: Curves.easeOut,
+      ),
+    );
+    _leftRippleOpacity = Tween<double>(begin: 0.6, end: 0).animate(
+      CurvedAnimation(
+        parent: _leftRippleController,
+        curve: Curves.easeOut,
+      ),
+    );
+    _rightRippleOpacity = Tween<double>(begin: 0.6, end: 0).animate(
+      CurvedAnimation(
+        parent: _rightRippleController,
+        curve: Curves.easeOut,
+      ),
+    );
+    _leftRippleController.addStatusListener((AnimationStatus status) {
+      if (status == AnimationStatus.completed) {
+        _leftRippleController.reset();
+      }
+    });
+    _rightRippleController.addStatusListener((AnimationStatus status) {
+      if (status == AnimationStatus.completed) {
+        _rightRippleController.reset();
+      }
+    });
     _initializePlayer();
   }
 
@@ -99,6 +147,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     _videoPlayerController.removeListener(_playerListener);
     _videoPlayerController.dispose();
     _scaleVideoAnimationController.dispose();
+    _leftRippleController.dispose();
+    _rightRippleController.dispose();
     super.dispose();
   }
 
@@ -505,6 +555,14 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     _lastZoomGestureScale = 1.0;
   }
 
+  void _triggerDoubleTapFeedback({required bool isLeftTap}) {
+    if (isLeftTap) {
+      _leftRippleController.forward(from: 0);
+    } else {
+      _rightRippleController.forward(from: 0);
+    }
+  }
+
   Future<void> _handleDoubleTap(TapDownDetails details) async {
     if (_mediaProgress.total.inSeconds > 0) {
       setState(() => _showControls = true);
@@ -514,10 +572,14 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         }
       });
 
+      final Size? widgetSize = context.size;
+      final double width = widgetSize?.width ?? MediaQuery.of(context).size.width;
+      final bool isLeftTap = details.localPosition.dx < width / 2;
+      _triggerDoubleTapFeedback(isLeftTap: isLeftTap);
+
       Timer(const Duration(milliseconds: 500), () async {
         if (context.mounted) {
-          Offset position = details.globalPosition;
-          if (position.dx < MediaQuery.of(context).size.width / 2) {
+          if (isLeftTap) {
             await seekBack();
           } else {
             await seekForward();
@@ -726,6 +788,86 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         ),
       );
 
+  Widget _buildDoubleTapFeedback() => Positioned.fill(
+        child: IgnorePointer(
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Center(
+                  child: _buildDoubleTapRipple(isLeft: true),
+                ),
+              ),
+              Expanded(
+                child: Center(
+                  child: _buildDoubleTapRipple(isLeft: false),
+                ),
+              ),
+            ],
+          ),
+        ),
+      );
+
+  Widget _buildDoubleTapRipple({required bool isLeft}) {
+    final AnimationController controller = isLeft ? _leftRippleController : _rightRippleController;
+    final Animation<double> scaleAnimation = isLeft ? _leftRippleScale : _rightRippleScale;
+    final Animation<double> opacityAnimation = isLeft ? _leftRippleOpacity : _rightRippleOpacity;
+
+    return AnimatedBuilder(
+      animation: controller,
+      builder: (BuildContext context, Widget? child) {
+        if (controller.isDismissed) {
+          return const SizedBox.shrink();
+        }
+
+        final double opacity = opacityAnimation.value.clamp(0.0, 1.0).toDouble();
+
+        return Transform.scale(
+          scale: scaleAnimation.value,
+          child: Opacity(
+            opacity: opacity,
+            child: child,
+          ),
+        );
+      },
+      child: _buildDoubleTapIndicator(isLeft: isLeft),
+    );
+  }
+
+  Widget _buildDoubleTapIndicator({required bool isLeft}) {
+    final TextStyle textStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
+              color: Colors.white,
+              fontWeight: FontWeight.bold,
+            ) ??
+        const TextStyle(
+          color: Colors.white,
+          fontWeight: FontWeight.bold,
+          fontSize: 18,
+        );
+
+    final String label = "${isLeft ? "-" : "+"}${_seekDuration.abs()} s";
+
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.35),
+        shape: BoxShape.circle,
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: <Widget>[
+          Icon(
+            isLeft ? Icons.fast_rewind_rounded : Icons.fast_forward_rounded,
+            color: Colors.white,
+            size: 32,
+          ),
+          const SizedBox(height: 6),
+          Text(label, style: textStyle),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) => GestureDetector(
         onTap: _handleTap,
@@ -737,6 +879,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
             Container(color: Colors.black),
             _buildPlayer(),
             _buildControls(),
+            _buildDoubleTapFeedback(),
           ],
         ),
       );
