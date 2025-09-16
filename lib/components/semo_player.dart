@@ -834,16 +834,6 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   Widget _buildDoubleTapIndicator({required bool isLeft}) {
-    final TextStyle textStyle = Theme.of(context).textTheme.titleSmall?.copyWith(
-              color: Colors.white,
-              fontWeight: FontWeight.bold,
-            ) ??
-        const TextStyle(
-          color: Colors.white,
-          fontWeight: FontWeight.bold,
-          fontSize: 18,
-        );
-
     final String label = "${isLeft ? "-" : "+"}${_seekDuration.abs()} s";
 
     return Container(
@@ -862,7 +852,13 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
             size: 32,
           ),
           const SizedBox(height: 6),
-          Text(label, style: textStyle),
+          Text(
+            label,
+            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+          ),
         ],
       ),
     );
