@@ -21,7 +21,6 @@ import "package:semo/screens/subtitles_preferences_screen.dart";
 import "package:semo/services/auth_service.dart";
 import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 import "package:semo/services/app_preferences_service.dart";
-import "package:semo/services/subtitle_service.dart";
 import "package:semo/utils/urls.dart";
 import "package:url_launcher/url_launcher.dart";
 
@@ -294,11 +293,6 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
     try {
       DefaultCacheManager manager = DefaultCacheManager();
       await manager.emptyCache();
-    } catch (_) {}
-
-    try {
-      SubtitleService subtitleService = SubtitleService();
-      await subtitleService.deleteAllSubtitles();
     } catch (_) {}
   }
 

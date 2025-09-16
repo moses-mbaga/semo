@@ -6,10 +6,13 @@ import "package:semo/bloc/app_event.dart";
 import "package:semo/bloc/app_state.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/stream_extractor_options.dart";
+import "package:semo/models/stream_subtitles.dart";
+import "package:semo/services/subtitle_service.dart";
 import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 
 mixin StreamHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();
+  final SubtitleService _subtitleService = SubtitleService();
 
   Future<void> onExtractMovieStream(ExtractMovieStream event, Emitter<AppState> emit) async {
     final String movieId = event.movie.id.toString();
@@ -46,11 +49,29 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         releaseYear: (event.movie.releaseDate.isNotEmpty ? event.movie.releaseDate.split("-")[0] : null),
         imdbId: imdbId,
       );
-      final MediaStream? stream = await StreamExtractorService.getStream(options);
 
-      if (stream == null || stream.url.isEmpty) {
+      final Future<MediaStream?> streamFuture = StreamExtractorService.getStream(options);
+      Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
+      if (imdbId != null && imdbId.isNotEmpty) {
+        subtitlesFuture = _subtitleService
+            .getSubtitles(imdbId: imdbId)
+            .catchError((Object? _) => <StreamSubtitles>[]);
+      }
+
+      final MediaStream? baseStream = await streamFuture;
+      final List<StreamSubtitles> subtitles = await subtitlesFuture;
+
+      if (baseStream == null || baseStream.url.isEmpty) {
         throw Exception("Stream is null");
       }
+
+      final MediaStream stream = MediaStream(
+        type: baseStream.type,
+        url: baseStream.url,
+        headers: baseStream.headers,
+        subtitles: subtitles,
+        audios: baseStream.audios,
+      );
 
       final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.movieStreams ?? <String, MediaStream>{});
       updatedStreams[movieId] = stream;
@@ -59,6 +80,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
       emit(state.copyWith(
         isExtractingMovieStream: updatedExtractingStatus,
         movieStreams: updatedStreams,
+        // We now carry subtitles inside MediaStream; keep map untouched
       ));
     } catch (e, s) {
       _logger.e("Error extracting stream for ID ${event.movie.id}", error: e, stackTrace: s);
@@ -107,12 +129,33 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         title: event.tvShow.name,
         imdbId: imdbId,
       );
-      final MediaStream? stream = await StreamExtractorService.getStream(options);
 
-      if (stream == null || stream.url.isEmpty) {
+      final Future<MediaStream?> streamFuture = StreamExtractorService.getStream(options);
+      Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
+      if (imdbId != null && imdbId.isNotEmpty) {
+        subtitlesFuture = _subtitleService
+            .getSubtitles(
+              imdbId: imdbId,
+              seasonNumber: event.episode.season,
+              episodeNumber: event.episode.number,
+            )
+            .catchError((Object? _) => <StreamSubtitles>[]);
+      }
+
+      final MediaStream? baseStream = await streamFuture;
+      final List<StreamSubtitles> subtitles = await subtitlesFuture;
+
+      if (baseStream == null || baseStream.url.isEmpty) {
         throw Exception("Stream is null");
       }
 
+      final MediaStream stream = MediaStream(
+        type: baseStream.type,
+        url: baseStream.url,
+        headers: baseStream.headers,
+        subtitles: subtitles,
+        audios: baseStream.audios,
+      );
       final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.episodeStreams ?? <String, MediaStream>{});
       updatedStreams[episodeId] = stream;
 
@@ -120,6 +163,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
       emit(state.copyWith(
         isExtractingEpisodeStream: updatedExtractingStatus,
         episodeStreams: updatedStreams,
+        // Subtitles are embedded in MediaStream
       ));
     } catch (e, s) {
       _logger.e("Error extracting stream for ID ${event.episode.id}", error: e, stackTrace: s);

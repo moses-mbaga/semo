@@ -76,10 +76,6 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
       },
     );
 
-    if (mounted) {
-      context.read<AppBloc>().add(LoadMovieSubtitles(_movie.id));
-    }
-
     await navigate(
       PlayerScreen(
         tmdbId: _movie.id,

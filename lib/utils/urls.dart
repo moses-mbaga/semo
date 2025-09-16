@@ -29,9 +29,11 @@ class Urls {
   static const String image1280 = "https://image.tmdb.org/t/p/w1280";
   static const String imageOriginal = "https://image.tmdb.org/t/p/original";
 
-  static const String subdlApiBase = "https://api.subdl.com";
-  static const String subdlDownloadBase = "https://dl.subdl.com";
-  static const String subtitles = "$subdlApiBase/api/v1/subtitles";
+  static const String zipToVttProxyBase = "https://zip-to-vtt.codeloperstz.workers.dev";
+
+  static const String openSubtitlesApiBase = "https://rest.opensubtitles.org";
+  static String getOpenSubtitlesMovieSearch(String imdbId) => "$openSubtitlesApiBase/search/imdbid-$imdbId/";
+  static String getOpenSubtitlesEpisodeSearch(String imdbId, int season, int episode) => "$openSubtitlesApiBase/search/episode-$episode/imdbid-$imdbId/season-$season/";
 
   static const String github = "https://github.com/moses-mbaga/semo";
   static const String mosesGithub = "https://github.com/moses-mbaga";

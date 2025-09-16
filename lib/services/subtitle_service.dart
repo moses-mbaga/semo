@@ -1,13 +1,8 @@
-import "dart:io";
-
-import "package:archive/archive.dart";
 import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
-import "package:path/path.dart" as path;
-import "package:path_provider/path_provider.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
-import "package:semo/services/secrets_service.dart";
+import "package:semo/models/stream_subtitles.dart";
 import "package:semo/utils/urls.dart";
 
 class SubtitleService {
@@ -28,7 +23,7 @@ class SubtitleService {
   final Dio _dio = Dio(
     BaseOptions(
       connectTimeout: const Duration(seconds: 10),
-      receiveTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 10),
     ),
   );
   final PrettyDioLogger _dioLogger = PrettyDioLogger(
@@ -42,123 +37,113 @@ class SubtitleService {
   );
   bool _isDioLoggerInitialized = false;
 
-  Future<List<File>> getSubtitles(int tmdbId, {int? seasonNumber, int? episodeNumber, String? locale = "EN"}) async {
+  Future<List<StreamSubtitles>> getSubtitles({
+    required String imdbId,
+    int? seasonNumber,
+    int? episodeNumber,
+  }) async {
     try {
-      final List<File> srtFiles = <File>[];
-      final Directory directory = await getTemporaryDirectory();
-
-      if (!directory.existsSync()) {
-        await directory.create(recursive: true);
+      final List<StreamSubtitles> results = <StreamSubtitles>[];
+      String sanitizedImdbId = imdbId.trim();
+      if (sanitizedImdbId.isEmpty) {
+        return results;
+      }
+      if (sanitizedImdbId.toLowerCase().startsWith("tt")) {
+        sanitizedImdbId = sanitizedImdbId.substring(2);
+      }
+      if (sanitizedImdbId.isEmpty) {
+        return results;
       }
 
-      final String mediaType = seasonNumber != null && episodeNumber != null ? "tv_shows" : "movies";
-      String destinationDirectoryPath = "${directory.path}/subtitles/$mediaType/$tmdbId";
-
-      if (seasonNumber != null && episodeNumber != null) {
-        destinationDirectoryPath += "/$seasonNumber/$episodeNumber";
-      }
-
-      destinationDirectoryPath += "/$locale";
-      Directory destinationDirectory = Directory(destinationDirectoryPath);
-
-      if (destinationDirectory.existsSync()) {
-        List<FileSystemEntity> destinationDirectoryEntities = destinationDirectory.listSync();
-
-        for (FileSystemEntity entity in destinationDirectoryEntities) {
-          if (entity is File) {
-            String fileExtension = path.extension(entity.path);
-
-            if (fileExtension == ".srt") {
-              srtFiles.add(entity);
-            }
-          }
-        }
-      }
-
-      if (srtFiles.isNotEmpty) {
-        return srtFiles;
-      }
-
-      final Map<String, dynamic> parameters = <String, dynamic>{
-        "api_key": SecretsService.subdlApiKey,
-        "tmdb_id": "$tmdbId",
-        "languages": locale,
-        "subs_per_page": "5",
+      final Set<String> allowedLanguages = <String>{
+        "EN",
+        "FI",
+        "ES",
+        "FR",
+        "DE",
+        "PT",
+        "IT",
+        "RU",
+        "AR",
+        "TR",
+        "HI",
+        "ZH",
+        "JA",
+        "KO",
       };
 
-      if (seasonNumber != null && episodeNumber != null) {
-        parameters["season_number"] = "$seasonNumber";
-        parameters["episode_number"] = "$episodeNumber";
-      }
+      final String requestUrl = seasonNumber != null && episodeNumber != null
+          ? Urls.getOpenSubtitlesEpisodeSearch(
+              sanitizedImdbId,
+              seasonNumber,
+              episodeNumber,
+            )
+          : Urls.getOpenSubtitlesMovieSearch(sanitizedImdbId);
 
-      // Ensure the logger is added
-      // It could've been removed in a previous call
       if (!_dio.interceptors.contains(_dioLogger)) {
         _dio.interceptors.add(_dioLogger);
       }
 
-      final Response<dynamic> response = await _dio.get(
-        Urls.subtitles,
-        queryParameters: parameters,
-      );
+      final Response<dynamic> response = await _dio.get(requestUrl);
 
-      if (response.statusCode == 200) {
-        final dynamic subtitlesData = response.data;
-        final List<dynamic> subtitles = subtitlesData["subtitles"] as List<dynamic>;
+      if (response.statusCode == 200 && response.data is List<dynamic>) {
+        final List<dynamic> subtitles = response.data as List<dynamic>;
+        final List<Map<String, dynamic>> filtered = <Map<String, dynamic>>[];
 
         for (final dynamic subtitle in subtitles) {
-          final String zipUrl = subtitle["url"] as String;
-          final String fullZipUrl = Urls.subdlDownloadBase + zipUrl;
-
-          // Remove the logger temporarily
-          // To avoid logging binary data
-          _dio.interceptors.removeWhere((Interceptor interceptor) => interceptor == _dioLogger);
-
-          final Response<dynamic> zipResponse = await _dio.get<List<int>>(
-            fullZipUrl,
-            options: Options(responseType: ResponseType.bytes),
-          );
-
-          if (zipResponse.statusCode == 200) {
-            final Uint8List bytes = Uint8List.fromList(zipResponse.data);
-            final Archive archive = ZipDecoder().decodeBytes(bytes);
-
-            for (final dynamic file in archive) {
-              if (file.isFile && file.content != null) {
-                final String fileName = file.name;
-                final String extension = path.extension(fileName);
-
-                if (extension == ".srt") {
-                  final List<int> data = file.content as List<int>;
-                  final File srtFile = File("$destinationDirectoryPath/$fileName");
-
-                  await srtFile.create(recursive: true);
-                  await srtFile.writeAsBytes(data);
-
-                  srtFiles.add(srtFile);
-                }
-              }
-            }
+          if (subtitle is! Map<String, dynamic>) {
+            continue;
           }
+
+          final dynamic formatValue = subtitle["SubFormat"];
+          final String format = formatValue == null ? "" : formatValue.toString().toLowerCase();
+          if (format != "srt") {
+            continue;
+          }
+
+          final String language = (subtitle["ISO639"] ?? "").toString().toUpperCase();
+          if (language.isEmpty || !allowedLanguages.contains(language)) {
+            continue;
+          }
+
+          final String zipUrl = (subtitle["ZipDownloadLink"] ?? "").toString();
+          if (zipUrl.isEmpty) {
+            continue;
+          }
+
+          final double score = subtitle["Score"] is num ? (subtitle["Score"] as num).toDouble() : double.tryParse(subtitle["Score"]?.toString() ?? "") ?? 0;
+
+          filtered.add(<String, dynamic>{
+            "language": language,
+            "zipUrl": zipUrl,
+            "score": score,
+          });
+        }
+
+        filtered.sort(
+          (Map<String, dynamic> a, Map<String, dynamic> b) => (b["score"] as double).compareTo(a["score"] as double),
+        );
+
+        for (int index = 0; index < filtered.length; index++) {
+          final Map<String, dynamic> subtitle = filtered[index];
+          final String zipUrl = subtitle["zipUrl"] as String;
+          final String proxyUrl = "${Urls.zipToVttProxyBase}?url=${Uri.encodeComponent(zipUrl)}";
+
+          results.add(
+            StreamSubtitles(
+              name: "${index + 1}",
+              language: subtitle["language"] as String,
+              url: proxyUrl,
+            ),
+          );
         }
       }
 
-      return srtFiles;
+      return results;
     } catch (e, s) {
       _logger.w("Error getting subtitles", error: e, stackTrace: s);
     }
 
-    return <File>[];
-  }
-
-  Future<void> deleteAllSubtitles() async {
-    final Directory directory = await getTemporaryDirectory();
-
-    if (directory.existsSync()) {
-      Directory destinationDirectory = Directory("${directory.path}/subtitles");
-      if (destinationDirectory.existsSync()) {
-        await destinationDirectory.delete(recursive: true);
-      }
-    }
+    return <StreamSubtitles>[];
   }
 }

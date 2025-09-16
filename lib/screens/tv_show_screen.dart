@@ -89,15 +89,6 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
       },
     );
 
-    if (mounted) {
-      context.read<AppBloc>().add(LoadEpisodeSubtitles(
-            widget.tvShow.id,
-            seasonNumber: season.number,
-            episodeId: episode.id,
-            episodeNumber: episode.number,
-          ));
-    }
-
     await navigate(
       PlayerScreen(
         tmdbId: widget.tvShow.id,

@@ -1,14 +1,17 @@
 import "dart:async";
-import "dart:io";
 
 import "package:audio_video_progress_bar/audio_video_progress_bar.dart";
+import "package:dio/dio.dart";
 import "package:flutter/material.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
+import "package:logger/logger.dart";
 import "package:semo/models/media_progress.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/models/subtitle_style.dart" as local;
+import "package:semo/models/stream_subtitles.dart";
+import "package:semo/services/secrets_service.dart";
 import "package:subtitle_wrapper_package/subtitle_wrapper_package.dart";
 import "package:video_player/video_player.dart";
 
@@ -22,7 +25,6 @@ class SemoPlayer extends StatefulWidget {
     required this.stream,
     required this.title,
     this.subtitle,
-    this.subtitleFiles,
     this.initialProgress = 0,
     this.onProgress,
     this.onError,
@@ -36,7 +38,6 @@ class SemoPlayer extends StatefulWidget {
   final MediaStream stream;
   final String title;
   final String? subtitle;
-  final List<File>? subtitleFiles;
   final int initialProgress;
   final OnProgressCallback? onProgress;
   final OnErrorCallback? onError;
@@ -53,10 +54,11 @@ class SemoPlayer extends StatefulWidget {
 class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   late final VideoPlayerController _videoPlayerController;
   final SubtitleController _subtitleController = SubtitleController(
-    subtitleType: SubtitleType.srt,
+    subtitleType: SubtitleType.webvtt,
     showSubtitles: true,
   );
   final AppPreferencesService _appPreferences = AppPreferencesService();
+  final Dio _dio = Dio();
   SubtitleStyle _subtitleStyle = const SubtitleStyle();
   MediaProgress _mediaProgress = const MediaProgress();
   late final int _seekDuration = _appPreferences.getSeekDuration();
@@ -64,7 +66,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool _isPlaying = false;
   bool _showControls = true;
   bool _showSubtitles = false;
-  int _selectedSubtitle = 0;
+  String? _selectedSubtitleLanguageGroup;
+  int _selectedSubtitleIndex = 0;
   late final AnimationController _scaleVideoAnimationController;
   Animation<double> _scaleVideoAnimation = const AlwaysStoppedAnimation<double>(1.0);
   bool _isZoomedIn = false;
@@ -72,6 +75,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   Timer? _hideControlsTimer;
   Timer? _progressTimer;
   static const double _eps = 1e-3;
+  final Logger _logger = Logger();
 
   @override
   void initState() {
@@ -338,51 +342,122 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
   }
 
-  Future<void> _setSubtitle(int index) async {
+  Future<void> _applySubtitle(StreamSubtitles track, {required int indexInLanguage, required String language}) async {
     try {
-      File? subtitleFile = index >= 0 ? (widget.subtitleFiles?[index]) : null;
-      String? subtitleContent = await subtitleFile?.readAsString();
-
-      _subtitleController.updateSubtitleContent(content: subtitleContent ?? "");
-
-      setState(() {
-        _selectedSubtitle = index;
-        _showSubtitles = index >= 0;
-      });
-    } catch (_) {}
-  }
-
-  Future<void> _showSubtitleSelector() async => showDialog(
-        context: context,
-        builder: (BuildContext context) => AlertDialog(
-          title: const Text("Select subtitle"),
-          content: Container(
-            width: double.maxFinite,
-            child: ListView.builder(
-              shrinkWrap: true,
-              itemCount: widget.subtitleFiles?.length,
-              itemBuilder: (BuildContext context, int index) {
-                bool isSelected = index == _selectedSubtitle;
-                return ListTile(
-                  title: Text(
-                    "English ${index + 1}",
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                          color: isSelected ? Theme.of(context).primaryColor : Colors.white,
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                        ),
-                  ),
-                  onTap: () async {
-                    await _setSubtitle(index);
-                    if (context.mounted) {
-                      Navigator.pop(context);
-                    }
-                  },
-                );
-              },
-            ),
-          ),
+      // Currently throwing 403 errors on OpenSubtitles urls with proxy
+      // To be investigated
+      final Response<String> response = await _dio.get<String>(
+        track.url,
+        options: Options(
+          responseType: ResponseType.plain,
+          headers: <String, String>{
+            "Authorization": "Bearer ${SecretsService.cfWorkersApiKey}",
+          },
         ),
       );
+
+      final String content = response.data ?? "";
+      _subtitleController.updateSubtitleContent(content: content);
+
+      setState(() {
+        _selectedSubtitleLanguageGroup = language;
+        _selectedSubtitleIndex = indexInLanguage;
+        _showSubtitles = true;
+      });
+    } catch (e, s) {
+      _logger.w("Failed to apply subtitles", error: e, stackTrace: s);
+    }
+  }
+
+  Map<String, List<StreamSubtitles>> _groupSubtitlesByLanguage(List<StreamSubtitles> tracks) {
+    final Map<String, List<StreamSubtitles>> grouped = <String, List<StreamSubtitles>>{};
+    for (final StreamSubtitles t in tracks) {
+      final String key = t.language.toUpperCase();
+      grouped.putIfAbsent(key, () => <StreamSubtitles>[]).add(t);
+    }
+    return grouped;
+  }
+
+  Future<void> _showSubtitleSelector() async {
+    final List<StreamSubtitles> tracks = widget.stream.subtitles ?? <StreamSubtitles>[];
+    if (tracks.isEmpty) {
+      return;
+    }
+
+    final Map<String, List<StreamSubtitles>> byLang = _groupSubtitlesByLanguage(tracks);
+    final List<String> languages = byLang.keys.toList()..sort();
+
+    // First: language selection
+    final String? selectedLang = await showDialog<String>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: const Text("Select subtitle language"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: languages.length,
+            itemBuilder: (BuildContext context, int index) {
+              final String lang = languages[index];
+              final bool selected = lang == _selectedSubtitleLanguageGroup;
+              return ListTile(
+                title: Text(
+                  lang,
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        color: selected ? Theme.of(context).primaryColor : Colors.white,
+                        fontWeight: selected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                ),
+                trailing: Text("${byLang[lang]?.length ?? 0}", style: Theme.of(context).textTheme.displaySmall),
+                onTap: () => Navigator.pop(context, lang),
+              );
+            },
+          ),
+        ),
+      ),
+    );
+
+    if (selectedLang == null || !mounted) {
+      return;
+    }
+
+    // Second: track selection within language
+    final List<StreamSubtitles> langTracks = byLang[selectedLang] ?? <StreamSubtitles>[];
+    await showDialog<void>(
+      context: context,
+      builder: (BuildContext context) => AlertDialog(
+        title: Text("$selectedLang subtitles"),
+        content: SizedBox(
+          width: double.maxFinite,
+          child: ListView.builder(
+            shrinkWrap: true,
+            itemCount: langTracks.length,
+            itemBuilder: (BuildContext context, int idx) {
+              final bool isSelected = selectedLang == _selectedSubtitleLanguageGroup && idx == _selectedSubtitleIndex;
+              final StreamSubtitles track = langTracks[idx];
+              return ListTile(
+                title: Text(
+                  track.name,
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                        color: isSelected ? Theme.of(context).primaryColor : Colors.white,
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                      ),
+                ),
+                onTap: () async {
+                  await _applySubtitle(track, indexInLanguage: idx, language: selectedLang);
+                  if (context.mounted) {
+                    Navigator.pop(context);
+                  }
+                },
+              );
+            },
+          ),
+        ),
+      ),
+    );
+  }
 
   void _handleTap() {
     if (_mediaProgress.total.inSeconds <= 0) {
@@ -512,7 +587,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                         ],
                       ),
                       actions: <Widget>[
-                        if (widget.subtitleFiles != null && widget.subtitleFiles!.isNotEmpty)
+                        if (widget.stream.subtitles?.isNotEmpty ?? false)
                           InkWell(
                             borderRadius: BorderRadius.circular(1000),
                             onTap: () async {
@@ -524,11 +599,20 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                                 await _showSubtitleSelector();
                                 await _videoPlayerController.play();
                               } else {
-                                await _setSubtitle(0);
-                                setState(() => _showSubtitles = true);
+                                // Auto-pick EN if available otherwise first available
+                                final List<StreamSubtitles> tracks = widget.stream.subtitles ?? <StreamSubtitles>[];
+                                if (tracks.isNotEmpty) {
+                                  final Map<String, List<StreamSubtitles>> grouped = _groupSubtitlesByLanguage(tracks);
+                                  String lang = grouped.containsKey("EN") ? "EN" : grouped.keys.first;
+                                  final StreamSubtitles track = grouped[lang]!.first;
+                                  await _applySubtitle(track, indexInLanguage: 0, language: lang);
+                                }
                               }
                             },
-                            onLongPress: () => _setSubtitle(-1),
+                            onLongPress: () {
+                              _subtitleController.updateSubtitleContent(content: "");
+                              setState(() => _showSubtitles = false);
+                            },
                             child: Padding(
                               padding: const EdgeInsets.all(8),
                               child: Icon(_showSubtitles ? Icons.closed_caption_rounded : Icons.closed_caption_off),
