@@ -1,3 +1,4 @@
+import "dart:async";
 import "dart:io";
 import "dart:math" as math;
 
@@ -79,6 +80,8 @@ class StreamExtractorService {
           _logger.w(
             "No streams found.\nStreamingServer: ${server.name}\nAttempt: ${attempt + 1} of $maxIndividualAttempts",
           );
+
+          await Future<void>.delayed(const Duration(milliseconds: 500));
         }
 
         return null;
@@ -101,6 +104,8 @@ class StreamExtractorService {
 
         _logger.w("No streams found.\nStreamingServer: ${server.name}");
         randomAttempts++;
+
+        await Future<void>.delayed(const Duration(milliseconds: 500));
       }
     } catch (e, s) {
       _logger.e("Failed to extract stream", error: e, stackTrace: s);
