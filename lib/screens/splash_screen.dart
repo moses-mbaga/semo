@@ -9,7 +9,11 @@ import "package:semo/screens/landing_screen.dart";
 import "package:semo/services/auth_service.dart";
 
 class SplashScreen extends BaseScreen {
-  const SplashScreen({super.key}) : super(shouldListenToAuthStateChanges: false);
+  const SplashScreen({super.key})
+      : super(
+          shouldListenToAppVersionChanges: false,
+          shouldListenToAuthStateChanges: false,
+        );
 
   @override
   BaseScreenState<SplashScreen> createState() => _SplashScreenState();
@@ -25,7 +29,7 @@ class _SplashScreenState extends BaseScreenState<SplashScreen> {
 
   void _checkAuthState() {
     Widget destination;
-    
+
     if (AuthService().isAuthenticated()) {
       destination = const FragmentsScreen();
     } else {
@@ -38,7 +42,7 @@ class _SplashScreenState extends BaseScreenState<SplashScreen> {
       }
     });
   }
-  
+
   @override
   String get screenName => "Splash";
 
@@ -50,46 +54,46 @@ class _SplashScreenState extends BaseScreenState<SplashScreen> {
 
   @override
   Widget buildContent(BuildContext context) => Scaffold(
-    backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-    body: SafeArea(
-      child: Center(
-        child: Column(
-          children: <Widget>[
-            const Spacer(),
-            Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
+        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+        body: SafeArea(
+          child: Center(
+            child: Column(
               children: <Widget>[
-                Assets.images.appIcon.image(
-                  width: 200,
-                  height: 200,
-                ),
-              ],
-            ),
-            const Spacer(),
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              mainAxisSize: MainAxisSize.max,
-              mainAxisAlignment: MainAxisAlignment.end,
-              children: <Widget>[
-                Padding(
-                  padding: const EdgeInsets.only(
-                    bottom: 10,
-                    right: 16,
-                    left: 16,
-                  ),
-                  child: Text(
-                    "Version $_appVersion",
-                    style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                      color: Colors.white54,
+                const Spacer(),
+                Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: <Widget>[
+                    Assets.images.appIcon.image(
+                      width: 200,
+                      height: 200,
                     ),
-                  ),
+                  ],
+                ),
+                const Spacer(),
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: <Widget>[
+                    Padding(
+                      padding: const EdgeInsets.only(
+                        bottom: 10,
+                        right: 16,
+                        left: 16,
+                      ),
+                      child: Text(
+                        "Version $_appVersion",
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                              color: Colors.white54,
+                            ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
-          ],
+          ),
         ),
-      ),
-    ),
-  );
+      );
 }
