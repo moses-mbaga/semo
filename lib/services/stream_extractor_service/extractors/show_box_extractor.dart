@@ -331,19 +331,22 @@ class ShowBoxExtractor implements BaseStreamExtractor {
 
       final Document qDoc = html_parser.parse(html);
       final List<Element> qualities = qDoc.querySelectorAll(".file_quality");
+      final List<MediaStream> streams = <MediaStream>[];
 
       for (final Element el in qualities) {
         final String? url = el.attributes["data-url"];
 
         if (url != null && url.isNotEmpty && (url.toLowerCase().contains("mp4") || url.toLowerCase().contains("mkv"))) {
-          return <MediaStream>[
+          streams.add(
             MediaStream(
               type: url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4,
               url: url,
             ),
-          ];
+          );
         }
       }
+
+      return streams;
     } catch (e, s) {
       _logger.e("Error in ShowBoxExtractor", error: e, stackTrace: s);
     }

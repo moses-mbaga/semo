@@ -165,14 +165,18 @@ class HlsParserService {
       ),
     );
 
-    final Response<List<int>> resp = await dio.get<List<int>>(url);
-    final List<int> bytes = resp.data ?? <int>[];
-
     try {
-      return utf8.decode(bytes);
-    } on FormatException {
-      return latin1.decode(bytes);
-    }
+      final Response<List<int>> resp = await dio.get<List<int>>(url);
+      final List<int> bytes = resp.data ?? <int>[];
+
+      try {
+        return utf8.decode(bytes);
+      } on FormatException {
+        return latin1.decode(bytes);
+      }
+    } catch (_) {}
+
+    return "";
   }
 
   Uri? _maybeResolveUri(String? value, Uri? baseUri) {

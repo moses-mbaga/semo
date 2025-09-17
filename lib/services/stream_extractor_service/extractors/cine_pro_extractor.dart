@@ -66,6 +66,7 @@ class CineProExtractor implements BaseStreamExtractor {
 
       final Response<dynamic> response = await _dio.get(url);
       final List<Map<String, dynamic>> streams = response.data["files"]?.cast<Map<String, dynamic>>() ?? <Map<String, dynamic>>[];
+      final List<MediaStream> mediaStreams = <MediaStream>[];
 
       for (Map<String, dynamic> stream in streams) {
         final String? streamUrl = stream["file"];
@@ -85,15 +86,17 @@ class CineProExtractor implements BaseStreamExtractor {
             !streamUrl.contains("cdn.niggaflix.xyz") && // Remove broken stream sources
             (type == "mp4" || type == "hls") &&
             (language == "en" || language == "english")) {
-          return <MediaStream>[
+          mediaStreams.add(
             MediaStream(
               type: type == "hls" ? StreamType.hls : StreamType.mp4,
               url: streamUrl,
               headers: headers,
             ),
-          ];
+          );
         }
       }
+
+      return mediaStreams;
     } catch (e, s) {
       _logger.e("Error in CineProExtractor", error: e, stackTrace: s);
     }
