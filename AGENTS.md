@@ -45,6 +45,7 @@
 ## Coding Style & Naming
 - Follow `analysis_options.yaml` (extends `flutter_lints`). Key prefs: double quotes, explicit types, package imports, constructors first, const where possible.
 - Files: `snake_case.dart` (`file_names` lint). Classes: `PascalCase`. Fields/locals: `camelCase`.
+- Always spell out descriptive variable and property names; avoid abbreviations like `lang`, `idx`, or bare `controller` when a more specific full word (e.g., `language`, `index`, `videoController`) communicates intent better.
 - Screens end with `...Screen`; services end with `...Service`. Keep widgets small and reusable in `components/`.
 
 ## Pre-commit Checks
