@@ -1,5 +1,5 @@
 name: semo
-description: "A VOD streaming application"
+description: "Semo is designed to offer a seamless movie and TV show streaming experience."
 version: 2.2.0+5
 
 environment:
