@@ -11,6 +11,7 @@ This document tracks a simple, high-level TODO list for the project. It’s a li
 5. Add multilingual support.
 6. Add more extractors.
 7. Use BottomNav instead of Drawer
+8. Add PnP support
 
 #### Future improvements
 
