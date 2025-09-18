@@ -5,7 +5,7 @@ import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:path/path.dart" as path;
-import "package:semo/services/subtitle_service.dart";
+import "package:semo/services/subtitles_service.dart";
 
 class ZipToVttService {
   factory ZipToVttService() => _instance;
@@ -21,7 +21,7 @@ class ZipToVttService {
       receiveTimeout: const Duration(seconds: 10),
     ),
   );
-  final SubtitleService _subtitleService = SubtitleService();
+  final SubtitlesService _subtitlesService = SubtitlesService();
 
   Future<String?> extract(String zipUrl) async {
     try {
@@ -45,7 +45,7 @@ class ZipToVttService {
         return text;
       }
 
-      return _subtitleService.srtToVtt(text);
+      return _subtitlesService.srtToVtt(text);
     } catch (e, s) {
       _logger.w("Failed to extract WebVTT from ZIP", error: e, stackTrace: s);
     }

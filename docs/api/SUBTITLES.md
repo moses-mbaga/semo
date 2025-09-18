@@ -1,9 +1,9 @@
 **Subtitle Service**
 
-- **Location:** `lib/services/subtitle_service.dart`
+- **Location:** `lib/services/subtitles_service.dart`
 - **Backend:** OpenSubtitles search + ZIP download; extracts `.srt` files.
 - **Storage:** App temporary directory via `path_provider`.
-- **Pattern:** Singleton (`SubtitleService()` returns one shared instance).
+- **Pattern:** Singleton (`SubtitlesService()` returns one shared instance).
 - **Logging:** `PrettyDioLogger` added for JSON requests; removed for binary ZIP downloads.
 
 **API**
@@ -33,15 +33,15 @@
 **Common Usage**
 
 - Load movie subtitles in BLoC handler:
-  - `final files = await SubtitleService().getSubtitles(movieId, locale: "EN");`
+  - `final files = await SubtitlesService().getSubtitles(movieId, locale: "EN");`
   - Example: `lib/bloc/handlers/subtitles_handler.dart` (`onLoadMovieSubtitles`).
 
 - Load episode subtitles in BLoC handler:
-  - `final files = await SubtitleService().getSubtitles(tvId, seasonNumber: s, episodeNumber: e, locale: "EN");`
+  - `final files = await SubtitlesService().getSubtitles(tvId, seasonNumber: s, episodeNumber: e, locale: "EN");`
   - Example: `lib/bloc/handlers/subtitles_handler.dart` (`onLoadEpisodeSubtitles`).
 
 - Clear cached subtitles (Settings):
-  - `await SubtitleService().deleteAllSubtitles();`
+  - `await SubtitlesService().deleteAllSubtitles();`
   - Example: `lib/screens/settings_screen.dart`.
 
 **Behavior & Error Handling**

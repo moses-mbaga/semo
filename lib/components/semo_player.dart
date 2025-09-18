@@ -13,7 +13,7 @@ import "package:semo/enums/stream_type.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/models/subtitle_style.dart" as local;
 import "package:semo/models/stream_subtitles.dart";
-import "package:semo/services/subtitle_service.dart";
+import "package:semo/services/subtitles_service.dart";
 import "package:semo/services/zip_to_vtt_service.dart";
 import "package:subtitle_wrapper_package/subtitle_wrapper_package.dart";
 import "package:video_player/video_player.dart";
@@ -67,7 +67,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       receiveTimeout: const Duration(seconds: 5),
     ),
   );
-  final SubtitleService _subtitleService = SubtitleService();
+  final SubtitlesService _subtitlesService = SubtitlesService();
   final ZipToVttService _zipToVttService = ZipToVttService();
   SubtitleStyle _subtitleStyle = const SubtitleStyle();
   MediaProgress _mediaProgress = const MediaProgress();
@@ -608,7 +608,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
         if (response.statusCode == 200) {
           if (response.data != null && response.data!.isNotEmpty) {
-            content = subtitles.type == SubtitlesType.webVtt ? response.data : _subtitleService.srtToVtt(response.data!);
+            content = subtitles.type == SubtitlesType.webVtt ? response.data : _subtitlesService.srtToVtt(response.data!);
           }
         }
       } else if (subtitles.type == SubtitlesType.zip) {

@@ -6,8 +6,8 @@ import "package:semo/enums/subtitles_type.dart";
 import "package:semo/models/stream_subtitles.dart";
 import "package:semo/utils/urls.dart";
 
-class SubtitleService {
-  factory SubtitleService() {
+class SubtitlesService {
+  factory SubtitlesService() {
     if (!_instance._isDioLoggerInitialized) {
       _instance._dio.interceptors.add(_instance._dioLogger);
       _instance._isDioLoggerInitialized = true;
@@ -16,9 +16,9 @@ class SubtitleService {
     return _instance;
   }
 
-  SubtitleService._internal();
+  SubtitlesService._internal();
 
-  static final SubtitleService _instance = SubtitleService._internal();
+  static final SubtitlesService _instance = SubtitlesService._internal();
 
   final Logger _logger = Logger();
   final Dio _dio = Dio(

@@ -7,13 +7,13 @@ import "package:semo/bloc/app_state.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/stream_subtitles.dart";
-import "package:semo/services/subtitle_service.dart";
+import "package:semo/services/subtitles_service.dart";
 import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 
 mixin StreamHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();
   final StreamExtractorService _streamExtractorService = StreamExtractorService();
-  final SubtitleService _subtitleService = SubtitleService();
+  final SubtitlesService _subtitlesService = SubtitlesService();
 
   Future<void> onExtractMovieStream(ExtractMovieStream event, Emitter<AppState> emit) async {
     final String movieId = event.movie.id.toString();
@@ -54,7 +54,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
       final Future<List<MediaStream>> streamsFuture = _streamExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
-        subtitlesFuture = _subtitleService.getSubtitles(imdbId: imdbId).catchError((Object? _) => <StreamSubtitles>[]);
+        subtitlesFuture = _subtitlesService.getSubtitles(imdbId: imdbId).catchError((Object? _) => <StreamSubtitles>[]);
       }
 
       final List<MediaStream> baseStreams = await streamsFuture;
@@ -125,7 +125,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
       final Future<List<MediaStream>> streamsFuture = _streamExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
-        subtitlesFuture = _subtitleService
+        subtitlesFuture = _subtitlesService
             .getSubtitles(
               imdbId: imdbId,
               seasonNumber: event.episode.season,
