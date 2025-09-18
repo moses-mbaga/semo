@@ -17,7 +17,6 @@ import "package:semo/screens/base_screen.dart";
 import "package:semo/screens/landing_screen.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/screens/open_source_libraries_screen.dart";
-import "package:semo/screens/subtitles_preferences_screen.dart";
 import "package:semo/services/auth_service.dart";
 import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
 import "package:semo/services/app_preferences_service.dart";
@@ -464,15 +463,6 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
               icon: Icons.dns_outlined,
               trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
               onPressed: (BuildContext context) => _openServerSelector(),
-            ),
-            _buildSectionTile(
-              title: "Subtitles",
-              description: "Customize the subtitles style to fit your preference",
-              icon: Icons.subtitles_outlined,
-              trailing: Platform.isIOS ? const Icon(Icons.keyboard_arrow_right_outlined) : null,
-              onPressed: (BuildContext context) async {
-                await navigate(const SubtitlesPreferencesScreen());
-              },
             ),
             _buildSectionTile(
               title: "Seek duration",

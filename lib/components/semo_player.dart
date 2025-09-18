@@ -11,11 +11,9 @@ import "package:semo/models/media_progress.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/services/app_preferences_service.dart";
-import "package:semo/models/subtitle_style.dart" as local;
 import "package:semo/models/stream_subtitles.dart";
 import "package:semo/services/subtitles_service.dart";
 import "package:semo/services/zip_to_vtt_service.dart";
-import "package:subtitle_wrapper_package/subtitle_wrapper_package.dart";
 import "package:video_player/video_player.dart";
 
 typedef OnProgressCallback = void Function(Duration progress, Duration total);
@@ -56,10 +54,6 @@ class SemoPlayer extends StatefulWidget {
 
 class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   late VideoPlayerController _videoPlayerController;
-  final SubtitleController _subtitleController = SubtitleController(
-    subtitleType: SubtitleType.webvtt,
-    showSubtitles: true,
-  );
   final AppPreferencesService _appPreferences = AppPreferencesService();
   final Dio _dio = Dio(
     BaseOptions(
@@ -69,7 +63,6 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   );
   final SubtitlesService _subtitlesService = SubtitlesService();
   final ZipToVttService _zipToVttService = ZipToVttService();
-  SubtitleStyle _subtitleStyle = const SubtitleStyle();
   MediaProgress _mediaProgress = const MediaProgress();
   late final int _seekDuration = _appPreferences.getSeekDuration();
   bool _isSeekedToInitialProgress = false;
@@ -205,27 +198,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
   Future<void> _initializePlayer({Duration? resumePosition, bool? autoPlayOverride}) async {
     try {
-      final local.SubtitleStyle localSubtitlesStyle = _appPreferences.getSubtitlesStyle();
-      final SubtitleStyle subtitleStyle = SubtitleStyle(
-        fontSize: localSubtitlesStyle.fontSize,
-        textColor: local.SubtitleStyle.getColors()[localSubtitlesStyle.color] ?? Colors.white,
-        hasBorder: localSubtitlesStyle.hasBorder,
-        borderStyle: SubtitleBorderStyle(
-          strokeWidth: localSubtitlesStyle.borderStyle.strokeWidth,
-          style: localSubtitlesStyle.borderStyle.style,
-          color: local.SubtitleStyle.getColors()[localSubtitlesStyle.borderStyle.color] ?? Colors.white,
-        ),
-      );
-
-      if (mounted) {
-        setState(() => _subtitleStyle = subtitleStyle);
-      }
-
       final MediaStream stream = _currentStream;
       final VideoPlayerController newController = VideoPlayerController.networkUrl(
         Uri.parse(stream.url),
         httpHeaders: stream.headers ?? <String, String>{},
         formatHint: stream.type == StreamType.hls ? VideoFormat.hls : VideoFormat.other,
+        closedCaptionFile: null,
       );
 
       try {
@@ -596,6 +574,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
   }
 
+  Future<ClosedCaptionFile> _createCaptionFile(String content) async => WebVTTCaptionFile(content);
+
   Future<void> _applySubtitle(StreamSubtitles subtitles, {required int indexInLanguage, required String language}) async {
     try {
       String? content;
@@ -616,7 +596,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       }
 
       if (content != null) {
-        _subtitleController.updateSubtitleContent(content: content);
+        await _videoPlayerController.setClosedCaptionFile(_createCaptionFile(content));
 
         setState(() {
           _selectedSubtitleLanguageGroup = language;
@@ -791,18 +771,24 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return const Center(child: CircularProgressIndicator());
     }
 
-    return SubtitleWrapper(
-      subtitleController: _subtitleController,
-      videoPlayerController: _videoPlayerController,
-      subtitleStyle: _subtitleStyle,
-      videoChild: ScaleTransition(
-        scale: _scaleVideoAnimation,
-        child: Center(
+    return ScaleTransition(
+      scale: _scaleVideoAnimation,
+      child: Center(
+        child: AspectRatio(
+          aspectRatio: _videoPlayerController.value.aspectRatio,
           child: AspectRatio(
-            aspectRatio: _videoPlayerController.value.aspectRatio,
-            child: AspectRatio(
-              aspectRatio: 16 / 9,
-              child: VideoPlayer(_videoPlayerController),
+            aspectRatio: 16 / 9,
+            child: Stack(
+              children: <Widget>[
+                VideoPlayer(_videoPlayerController),
+                ClosedCaption(
+                  text: _videoPlayerController.value.caption.text,
+                  textStyle: TextStyle(
+                    fontSize: MediaQuery.of(context).size.width * .02,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
           ),
         ),
@@ -886,7 +872,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                               }
                             },
                             onLongPress: () {
-                              _subtitleController.updateSubtitleContent(content: "");
+                              _videoPlayerController.setClosedCaptionFile(null);
                               setState(() => _showSubtitles = false);
                             },
                             child: Padding(
