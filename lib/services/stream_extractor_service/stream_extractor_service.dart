@@ -21,7 +21,6 @@ import "package:semo/services/stream_extractor_service/extractors/mapple_tv_extr
 import "package:semo/services/stream_extractor_service/extractors/movies_api_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/cine_pro_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/show_box_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/vid_fast_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/vid_link_extractor.dart";
 import "package:semo/services/hls_parser_service.dart";
@@ -39,7 +38,7 @@ class StreamExtractorService {
     if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
-    if (!Platform.isIOS) StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()),
+    // if (!Platform.isIOS) StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()), // As of 18.09.2025, returns 403 errors
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
   ];
