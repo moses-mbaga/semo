@@ -38,7 +38,7 @@ class StreamExtractorService {
     const StreamingServer(name: "Random", extractor: null),
     if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
-    StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
