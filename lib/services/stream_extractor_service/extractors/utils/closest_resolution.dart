@@ -1,3 +1,5 @@
+import "package:semo/utils/string_extensions.dart";
+
 String getClosestResolutionFromDimensions(int width, int height) {
   final Map<String, List<int>> resolutions = <String, List<int>>{
     "4K": <int>[3840, 2160],
@@ -26,6 +28,40 @@ String getClosestResolutionFromDimensions(int width, int height) {
   }
 
   return closestName;
+}
+
+String getClosestResolutionFromFileName(String fileName) {
+  final String normalized = fileName.normalize();
+
+  if (normalized.contains("4k") || normalized.contains("2160")) {
+    return "4K";
+  }
+
+  if (normalized.contains("2k") || normalized.contains("1440")) {
+    return "2K";
+  }
+
+  if (normalized.contains("1080")) {
+    return "1080p";
+  }
+
+  if (normalized.contains("720")) {
+    return "720p";
+  }
+
+  if (normalized.contains("480")) {
+    return "480p";
+  }
+
+  if (normalized.contains("360")) {
+    return "360p";
+  }
+
+  if (normalized.contains("240")) {
+    return "240p";
+  }
+
+  return "Auto";
 }
 
 String getClosestResolutionFromBandwidth(int bandwidth) {
