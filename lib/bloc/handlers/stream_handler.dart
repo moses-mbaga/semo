@@ -12,6 +12,7 @@ import "package:semo/services/stream_extractor_service/stream_extractor_service.
 
 mixin StreamHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();
+  final StreamExtractorService _streamExtractorService = StreamExtractorService();
   final SubtitleService _subtitleService = SubtitleService();
 
   Future<void> onExtractMovieStream(ExtractMovieStream event, Emitter<AppState> emit) async {
@@ -50,7 +51,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         imdbId: imdbId,
       );
 
-      final Future<List<MediaStream>> streamsFuture = StreamExtractorService.getStreams(options);
+      final Future<List<MediaStream>> streamsFuture = _streamExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
         subtitlesFuture = _subtitleService.getSubtitles(imdbId: imdbId).catchError((Object? _) => <StreamSubtitles>[]);
@@ -121,7 +122,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         imdbId: imdbId,
       );
 
-      final Future<List<MediaStream>> streamsFuture = StreamExtractorService.getStreams(options);
+      final Future<List<MediaStream>> streamsFuture = _streamExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
         subtitlesFuture = _subtitleService

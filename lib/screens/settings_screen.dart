@@ -41,7 +41,7 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
       await showModalBottomSheet(
         context: context,
         builder: (BuildContext context) {
-          List<StreamingServer> servers = StreamExtractorService.streamingServers;
+          List<StreamingServer> servers = StreamExtractorService().getStreamingServers();
           String savedServerName = _appPreferences.getStreamingServer();
 
           return StatefulBuilder(

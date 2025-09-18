@@ -27,9 +27,14 @@ import "package:semo/services/hls_parser_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/utils/closest_resolution.dart";
 
 class StreamExtractorService {
-  static final Logger _logger = Logger();
-  static const HlsParserService _hlsParserService = HlsParserService();
-  static final List<StreamingServer> _streamingServers = <StreamingServer>[
+  factory StreamExtractorService() => _instance;
+  StreamExtractorService._internal();
+
+  static final StreamExtractorService _instance = StreamExtractorService._internal();
+
+  final Logger _logger = Logger();
+  final HlsParserService _hlsParserService = const HlsParserService();
+  final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
     if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     StreamingServer(name: "CinePro", extractor: CineProExtractor()),
@@ -43,9 +48,9 @@ class StreamExtractorService {
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
   ];
 
-  static List<StreamingServer> get streamingServers => _streamingServers;
+  List<StreamingServer> getStreamingServers() => _streamingServers;
 
-  static Future<List<MediaStream>> getStreams(StreamExtractorOptions options) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options) async {
     try {
       const int maxIndividualAttempts = 3;
       const int maxRandomExtractors = 3;
@@ -113,7 +118,7 @@ class StreamExtractorService {
     return <MediaStream>[];
   }
 
-  static Future<List<MediaStream>> _extractStreamsForServer(
+  Future<List<MediaStream>> _extractStreamsForServer(
     BaseStreamExtractor extractor,
     StreamExtractorOptions options,
     String serverName,
@@ -148,7 +153,7 @@ class StreamExtractorService {
     return _postProcessStreams(rawStreams);
   }
 
-  static Future<List<MediaStream>> _postProcessStreams(List<MediaStream> streams) async {
+  Future<List<MediaStream>> _postProcessStreams(List<MediaStream> streams) async {
     final List<MediaStream> hlsStreams = streams.where((MediaStream stream) => stream.type == StreamType.hls).toList();
     final List<MediaStream> fileStreams = streams.where((MediaStream stream) => stream.type == StreamType.mp4 || stream.type == StreamType.mkv).toList();
 
@@ -169,7 +174,7 @@ class StreamExtractorService {
     return streams;
   }
 
-  static Future<List<MediaStream>?> _selectWorkingHlsStream(List<MediaStream> hlsStreams) async {
+  Future<List<MediaStream>?> _selectWorkingHlsStream(List<MediaStream> hlsStreams) async {
     List<MediaStream>? autoFallback;
 
     for (final MediaStream stream in hlsStreams) {
@@ -188,7 +193,7 @@ class StreamExtractorService {
     return autoFallback;
   }
 
-  static Future<List<MediaStream>?> _buildHlsQualityStreams(MediaStream stream) async {
+  Future<List<MediaStream>?> _buildHlsQualityStreams(MediaStream stream) async {
     try {
       final HlsManifest manifest = await _hlsParserService.fetchAndParseMasterPlaylist(
         stream.url,
@@ -293,7 +298,7 @@ class StreamExtractorService {
     return null;
   }
 
-  static Future<List<MediaStream>> _processFileStreams(List<MediaStream> fileStreams) async {
+  Future<List<MediaStream>> _processFileStreams(List<MediaStream> fileStreams) async {
     List<MediaStream> streams = <MediaStream>[];
 
     for (int i = 0; i < fileStreams.length; i++) {

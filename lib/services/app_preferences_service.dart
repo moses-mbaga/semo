@@ -21,7 +21,7 @@ class AppPreferencesService {
   static Future<void> ensureActiveStreamingServerValidity() async {
     try {
       AppPreferencesService appPreferencesService = AppPreferencesService();
-      List<StreamingServer> servers = StreamExtractorService.streamingServers;
+      List<StreamingServer> servers = StreamExtractorService().getStreamingServers();
       String savedServerName = appPreferencesService.getStreamingServer();
       int selectedServerIndex = servers.indexWhere((StreamingServer server) => server.name == savedServerName);
 
