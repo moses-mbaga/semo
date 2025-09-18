@@ -76,7 +76,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
     }
   }
 
-  Future<void> _playEpisode(Season season, Episode episode, MediaStream stream) async {
+  Future<void> _playEpisode(Season season, Episode episode, List<MediaStream> streams) async {
     await logEvent(
       "play_episode",
       parameters: <String, Object?>{
@@ -85,7 +85,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
         "season_number": season.number,
         "episode_id": episode.id,
         "episode_number": episode.number,
-        "has_stream_url": "${stream.url.isNotEmpty}",
+        "has_stream_url": "${streams.isNotEmpty && streams.first.url.isNotEmpty}",
       },
     );
 
@@ -96,7 +96,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
         subtitle: episode.name,
         seasonId: season.id,
         episodeId: episode.id,
-        stream: stream,
+        streams: streams,
         mediaType: MediaType.tvShows,
       ),
     );
@@ -195,7 +195,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
     );
   }
 
-  Widget _buildSelectedSeasonEpisodes(List<Season>? seasons, List<Episode>? episodes, {bool isLoadingEpisodes = false, Map<String, dynamic>? recentlyWatchedEpisodes, Map<String, bool>? extractingMap, Map<String, MediaStream>? episodeStreams}) {
+  Widget _buildSelectedSeasonEpisodes(List<Season>? seasons, List<Episode>? episodes, {bool isLoadingEpisodes = false, Map<String, dynamic>? recentlyWatchedEpisodes, Map<String, bool>? extractingMap, Map<String, List<MediaStream>>? episodeStreams}) {
     if (seasons == null || seasons.isEmpty) {
       return const SizedBox.shrink();
     }
@@ -223,7 +223,9 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
         final Episode episode = episodes[index];
         final bool isExtracting = extractingMap?[episode.id.toString()] ?? false;
         final bool disableAll = anyExtracting && !isExtracting;
-        final MediaStream? stream = episodeStreams?[episode.id.toString()];
+        final List<MediaStream>? streams = episodeStreams?[episode.id.toString()];
+        final bool hasStreams = streams != null && streams.isNotEmpty;
+        final bool hasPlayableStream = hasStreams && streams.first.url.isNotEmpty;
         final bool isRecentlyWatched = recentlyWatchedEpisodes?.keys.contains(episode.id.toString()) ?? false;
         final int watchedProgress = recentlyWatchedEpisodes?[episode.id.toString()]?["progress"] ?? 0;
 
@@ -237,17 +239,17 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
                   unawaited(logEvent(
                     "cta_click",
                     parameters: <String, Object?>{
-                      "button": "episode_${stream == null ? "extract" : "stream"}",
+                      "button": "episode_${hasPlayableStream ? "stream" : "extract"}",
                       "tv_show_id": widget.tvShow.id,
                       "season_id": selectedSeason.id,
                       "episode_id": episode.id,
-                      "has_stream": "${stream != null && stream.url.isNotEmpty}",
+                      "has_stream": "$hasPlayableStream",
                     },
                   ));
-                  if (stream == null) {
+                  if (!hasPlayableStream) {
                     _extractEpisodeStream(selectedSeason, episode);
                   } else {
-                    _playEpisode(selectedSeason, episode, stream);
+                    _playEpisode(selectedSeason, episode, streams);
                   }
                 },
           onMarkWatched: () => _markEpisodeAsWatched(selectedSeason, episode),
@@ -312,7 +314,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
           final List<Season>? seasons = state.tvShowSeasons?[widget.tvShow.id.toString()];
           final Season? selectedSeason = state.tvShowSeasons?[widget.tvShow.id.toString()]?[_currentSeasonIndex];
           final List<Episode> episodes = state.tvShowEpisodes?[widget.tvShow.id.toString()]?[selectedSeason?.number] ?? <Episode>[];
-          final Map<String, MediaStream>? episodeStreams = state.episodeStreams;
+          final Map<String, List<MediaStream>>? episodeStreams = state.episodeStreams;
           final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
 
           if (mounted) {
@@ -377,11 +379,11 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
           if (_extractingEpisodeId != null && extractingMap?[_extractingEpisodeId.toString()] == false && episodeStreams?[_extractingEpisodeId.toString()] != null) {
             try {
               final Episode selectedEpisode = episodes.firstWhere((Episode e) => e.id == _extractingEpisodeId);
-              final MediaStream? stream = episodeStreams?[_extractingEpisodeId.toString()];
+              final List<MediaStream>? streams = episodeStreams?[_extractingEpisodeId.toString()];
 
-              if (selectedSeason != null && selectedEpisode.id != 0 && stream != null) {
+              if (selectedSeason != null && selectedEpisode.id != 0 && (streams?.isNotEmpty ?? false)) {
                 setState(() => _extractingEpisodeId = null);
-                _playEpisode(selectedSeason, selectedEpisode, stream);
+                _playEpisode(selectedSeason, selectedEpisode, streams!);
               }
             } catch (e, s) {
               logger.e("Error playing episode", error: e, stackTrace: s);
@@ -402,7 +404,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
           final List<Person>? cast = state.tvShowCast?[widget.tvShow.id.toString()];
           final bool isTvShowLoaded = seasons != null && seasons.isNotEmpty && episodes != null && episodes.isNotEmpty;
           final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
-          final Map<String, MediaStream>? episodeStreams = state.episodeStreams;
+          final Map<String, List<MediaStream>>? episodeStreams = state.episodeStreams;
           final Map<String, dynamic>? recentlyWatchedEpisodes = state.recentlyWatched?[MediaType.tvShows.toJsonField()]?[widget.tvShow.id.toString()]?[selectedSeason?.id.toString()];
 
           return Scaffold(

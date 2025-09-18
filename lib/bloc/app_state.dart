@@ -125,8 +125,8 @@ class AppState {
   final List<String>? moviesRecentSearches;
   final List<String>? tvShowsRecentSearches;
 
-  final Map<String, MediaStream>? movieStreams;
-  final Map<String, MediaStream>? episodeStreams;
+  final Map<String, List<MediaStream>>? movieStreams;
+  final Map<String, List<MediaStream>>? episodeStreams;
 
   final Map<String, List<StreamSubtitles>>? movieSubtitles;
   final Map<String, List<StreamSubtitles>>? episodeSubtitles;
@@ -253,8 +253,8 @@ class AppState {
         personTvShows: personTvShows == _notProvided ? this.personTvShows : personTvShows as Map<String, List<TvShow>>?,
         moviesRecentSearches: moviesRecentSearches == _notProvided ? this.moviesRecentSearches : moviesRecentSearches as List<String>?,
         tvShowsRecentSearches: tvShowsRecentSearches == _notProvided ? this.tvShowsRecentSearches : tvShowsRecentSearches as List<String>?,
-        movieStreams: movieStreams == _notProvided ? this.movieStreams : movieStreams as Map<String, MediaStream>?,
-        episodeStreams: episodeStreams == _notProvided ? this.episodeStreams : episodeStreams as Map<String, MediaStream>?,
+        movieStreams: movieStreams == _notProvided ? this.movieStreams : movieStreams as Map<String, List<MediaStream>>?,
+        episodeStreams: episodeStreams == _notProvided ? this.episodeStreams : episodeStreams as Map<String, List<MediaStream>>?,
         movieSubtitles: movieSubtitles == _notProvided ? this.movieSubtitles : movieSubtitles as Map<String, List<StreamSubtitles>>?,
         episodeSubtitles: episodeSubtitles == _notProvided ? this.episodeSubtitles : episodeSubtitles as Map<String, List<StreamSubtitles>>?,
         isLoadingMovies: isLoadingMovies == _notProvided ? this.isLoadingMovies : isLoadingMovies as bool,

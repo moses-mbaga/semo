@@ -22,7 +22,7 @@ class PlayerScreen extends BaseScreen {
     this.episodeId,
     required this.title,
     this.subtitle,
-    required this.stream,
+    required this.streams,
     required this.mediaType,
   })  : assert(
           mediaType != MediaType.tvShows || (seasonId != null && episodeId != null),
@@ -37,7 +37,7 @@ class PlayerScreen extends BaseScreen {
   final int? episodeId;
   final String title;
   final String? subtitle;
-  final MediaStream stream;
+  final List<MediaStream> streams;
   final MediaType mediaType;
 
   @override
@@ -189,13 +189,14 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
     await WakelockPlus.enable();
     await _applyLandscapeIfNeeded();
     try {
-      final Uri? uri = Uri.tryParse(widget.stream.url);
+      final String? primaryUrl = widget.streams.isNotEmpty ? widget.streams.first.url : null;
+      final Uri? uri = primaryUrl != null ? Uri.tryParse(primaryUrl) : null;
       await logEvent(
         "player_open",
         parameters: <String, Object?>{
           "tmdb_id": widget.tmdbId,
           "media_type": widget.mediaType.toJsonField(),
-          "has_stream_url": "${widget.stream.url.isNotEmpty}",
+          "has_stream_url": "${(primaryUrl ?? "").isNotEmpty}",
           if (uri != null) "stream_host": uri.host,
         },
       );
@@ -232,7 +233,7 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
 
           return Scaffold(
             body: SemoPlayer(
-              stream: widget.stream,
+              streams: widget.streams,
               title: widget.title,
               subtitle: widget.subtitle,
               initialProgress: progressSeconds,

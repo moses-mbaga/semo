@@ -46,7 +46,7 @@ class StreamExtractorService {
 
   static List<StreamingServer> get streamingServers => _streamingServers;
 
-  static Future<MediaStream?> getStream(StreamExtractorOptions options) async {
+  static Future<List<MediaStream>> getStreams(StreamExtractorOptions options) async {
     try {
       const int maxIndividualAttempts = 3;
       const int maxRandomExtractors = 3;
@@ -74,7 +74,7 @@ class StreamExtractorService {
 
           if (streams.isNotEmpty) {
             _logger.i("Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
-            return streams.first;
+            return streams;
           }
 
           _logger.w(
@@ -84,7 +84,7 @@ class StreamExtractorService {
           await Future<void>.delayed(const Duration(milliseconds: 500));
         }
 
-        return null;
+        return <MediaStream>[];
       }
 
       final List<StreamingServer> randomServers = List<StreamingServer>.from(availableServers);
@@ -99,7 +99,7 @@ class StreamExtractorService {
 
         if (streams.isNotEmpty) {
           _logger.i("Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
-          return streams.first;
+          return streams;
         }
 
         _logger.w("No streams found.\nStreamingServer: ${server.name}");
@@ -111,7 +111,7 @@ class StreamExtractorService {
       _logger.e("Failed to extract stream", error: e, stackTrace: s);
     }
 
-    return null;
+    return <MediaStream>[];
   }
 
   static Future<List<MediaStream>> _extractStreamsForServer(

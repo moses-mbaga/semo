@@ -50,37 +50,28 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         imdbId: imdbId,
       );
 
-      final Future<MediaStream?> streamFuture = StreamExtractorService.getStream(options);
+      final Future<List<MediaStream>> streamsFuture = StreamExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
-        subtitlesFuture = _subtitleService
-            .getSubtitles(imdbId: imdbId)
-            .catchError((Object? _) => <StreamSubtitles>[]);
+        subtitlesFuture = _subtitleService.getSubtitles(imdbId: imdbId).catchError((Object? _) => <StreamSubtitles>[]);
       }
 
-      final MediaStream? baseStream = await streamFuture;
+      final List<MediaStream> baseStreams = await streamsFuture;
       final List<StreamSubtitles> subtitles = await subtitlesFuture;
 
-      if (baseStream == null || baseStream.url.isEmpty) {
-        throw Exception("Stream is null");
+      if (baseStreams.isEmpty) {
+        throw Exception("No streams returned");
       }
 
-      final MediaStream stream = MediaStream(
-        type: baseStream.type,
-        url: baseStream.url,
-        headers: baseStream.headers,
-        subtitles: subtitles,
-        audios: baseStream.audios,
-      );
+      final List<MediaStream> enrichedStreams = _attachSubtitles(baseStreams, subtitles);
 
-      final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.movieStreams ?? <String, MediaStream>{});
-      updatedStreams[movieId] = stream;
+      final Map<String, List<MediaStream>> updatedStreams = Map<String, List<MediaStream>>.from(state.movieStreams ?? <String, List<MediaStream>>{});
+      updatedStreams[movieId] = enrichedStreams;
 
       updatedExtractingStatus[movieId] = false;
       emit(state.copyWith(
         isExtractingMovieStream: updatedExtractingStatus,
         movieStreams: updatedStreams,
-        // We now carry subtitles inside MediaStream; keep map untouched
       ));
     } catch (e, s) {
       _logger.e("Error extracting stream for ID ${event.movie.id}", error: e, stackTrace: s);
@@ -130,7 +121,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         imdbId: imdbId,
       );
 
-      final Future<MediaStream?> streamFuture = StreamExtractorService.getStream(options);
+      final Future<List<MediaStream>> streamsFuture = StreamExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
         subtitlesFuture = _subtitleService
@@ -142,28 +133,21 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
             .catchError((Object? _) => <StreamSubtitles>[]);
       }
 
-      final MediaStream? baseStream = await streamFuture;
+      final List<MediaStream> baseStreams = await streamsFuture;
       final List<StreamSubtitles> subtitles = await subtitlesFuture;
 
-      if (baseStream == null || baseStream.url.isEmpty) {
-        throw Exception("Stream is null");
+      if (baseStreams.isEmpty) {
+        throw Exception("No streams returned");
       }
 
-      final MediaStream stream = MediaStream(
-        type: baseStream.type,
-        url: baseStream.url,
-        headers: baseStream.headers,
-        subtitles: subtitles,
-        audios: baseStream.audios,
-      );
-      final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.episodeStreams ?? <String, MediaStream>{});
-      updatedStreams[episodeId] = stream;
+      final List<MediaStream> enrichedStreams = _attachSubtitles(baseStreams, subtitles);
+      final Map<String, List<MediaStream>> updatedStreams = Map<String, List<MediaStream>>.from(state.episodeStreams ?? <String, List<MediaStream>>{});
+      updatedStreams[episodeId] = enrichedStreams;
 
       updatedExtractingStatus[episodeId] = false;
       emit(state.copyWith(
         isExtractingEpisodeStream: updatedExtractingStatus,
         episodeStreams: updatedStreams,
-        // Subtitles are embedded in MediaStream
       ));
     } catch (e, s) {
       _logger.e("Error extracting stream for ID ${event.episode.id}", error: e, stackTrace: s);
@@ -178,7 +162,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
 
   void onRemoveMovieStream(RemoveMovieStream event, Emitter<AppState> emit) {
     final String movieId = event.movieId.toString();
-    final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.movieStreams ?? <String, MediaStream>{});
+    final Map<String, List<MediaStream>> updatedStreams = Map<String, List<MediaStream>>.from(state.movieStreams ?? <String, List<MediaStream>>{});
     updatedStreams.remove(movieId);
 
     emit(state.copyWith(
@@ -188,11 +172,32 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
 
   void onRemoveEpisodeStream(RemoveEpisodeStream event, Emitter<AppState> emit) {
     final String episodeId = event.episodeId.toString();
-    final Map<String, MediaStream> updatedStreams = Map<String, MediaStream>.from(state.episodeStreams ?? <String, MediaStream>{});
+    final Map<String, List<MediaStream>> updatedStreams = Map<String, List<MediaStream>>.from(state.episodeStreams ?? <String, List<MediaStream>>{});
     updatedStreams.remove(episodeId);
 
     emit(state.copyWith(
       episodeStreams: updatedStreams,
     ));
+  }
+
+  List<MediaStream> _attachSubtitles(List<MediaStream> streams, List<StreamSubtitles> subtitles) {
+    if (streams.isEmpty) {
+      return streams;
+    }
+
+    return streams.map(
+      (MediaStream stream) {
+        final List<StreamSubtitles> existing = stream.subtitles ?? <StreamSubtitles>[];
+
+        return MediaStream(
+          type: stream.type,
+          url: stream.url,
+          headers: stream.headers,
+          quality: stream.quality,
+          subtitles: subtitles.isEmpty ? existing : subtitles,
+          audios: stream.audios,
+        );
+      },
+    ).toList();
   }
 }

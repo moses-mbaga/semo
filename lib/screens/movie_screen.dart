@@ -67,12 +67,12 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
     }
   }
 
-  Future<void> _playMovie(MediaStream stream) async {
+  Future<void> _playMovie(List<MediaStream> streams) async {
     await logEvent(
       "play_movie",
       parameters: <String, Object?>{
         "movie_id": _movie.id,
-        "has_stream_url": "${stream.url.isNotEmpty}",
+        "has_stream_url": "${streams.isNotEmpty && streams.first.url.isNotEmpty}",
       },
     );
 
@@ -81,7 +81,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
         tmdbId: _movie.id,
         title: _movie.title,
         subtitle: "Movie",
-        stream: stream,
+        streams: streams,
         mediaType: MediaType.movies,
       ),
     );
@@ -109,7 +109,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
     return "$mins ${mins == 1 ? "min" : "mins"}";
   }
 
-  Widget _buildPlayButton(MediaStream? stream, {required int progressSeconds, required int durationSeconds}) {
+  Widget _buildPlayButton(List<MediaStream>? streams, {required int progressSeconds, required int durationSeconds}) {
     final double progress = durationSeconds > 0 ? (progressSeconds / durationSeconds).clamp(0.0, 1.0) : 0.0;
     final bool isRecentlyWatched = progressSeconds > 0 && progress < 1.0;
 
@@ -136,7 +136,10 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
             child: ElevatedButton(
               onPressed: !_isExtractingStream
                   ? () {
-                      if (stream != null && stream.url.isNotEmpty) {
+                      final bool hasStreams = streams != null && streams.isNotEmpty;
+                      final bool hasPlayableStream = hasStreams && streams.first.url.isNotEmpty;
+
+                      if (hasPlayableStream) {
                         unawaited(logEvent(
                           "cta_click",
                           parameters: <String, Object?>{
@@ -154,8 +157,8 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
                           },
                         ));
                       }
-                      if (stream != null && stream.url.isNotEmpty) {
-                        _playMovie(stream);
+                      if (hasPlayableStream) {
+                        _playMovie(streams);
                       } else if (!_isExtractingStream) {
                         _extractMovieStream();
                       }
@@ -257,13 +260,13 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
             });
           }
 
-          final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
+          final List<MediaStream>? streams = state.movieStreams?[_movie.id.toString()];
 
-          if (_isPlayTriggered && !_isExtractingStream && stream != null) {
+          if (_isPlayTriggered && !_isExtractingStream && (streams?.isNotEmpty ?? false)) {
             if (mounted) {
               setState(() => _isPlayTriggered = false);
             }
-            _playMovie(stream);
+            _playMovie(streams!);
           }
 
           if (state.error != null) {
@@ -278,7 +281,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
               ) ??
               _movie;
           final bool isMovieLoaded = state.movies?.any((Movie m) => m.id == widget.movie.id) ?? false;
-          final MediaStream? stream = state.movieStreams?[_movie.id.toString()];
+          final List<MediaStream>? streams = state.movieStreams?[_movie.id.toString()];
 
           return Scaffold(
             appBar: AppBar(
@@ -322,7 +325,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
                                     overview: displayMovie.overview,
                                   ),
                                   _buildPlayButton(
-                                    stream,
+                                    streams,
                                     progressSeconds: _recentlyWatchedService.getMovieProgress(displayMovie.id, state.recentlyWatched),
                                     durationSeconds: (displayMovie.duration) * 60,
                                   ),
