@@ -52,5 +52,5 @@ jobs:
     uses: ./.github/workflows/ai-analysis.yml
     with:
       build_result: ${{ needs.run-build-and-test.result }}
-      origin_workflow_files: ${{ needs.run-build-and-test.result != 'skipped' && '.github/workflows/build-and-test.yml' || '' }}
+      origin_workflow_files: orchestrator.yml
     secrets: inherit

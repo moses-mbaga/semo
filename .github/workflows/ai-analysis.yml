@@ -12,7 +12,7 @@ on:
         description: Comma-separated workflow file paths of the origins
         required: false
         type: string
-        default: ".github/workflows/build-and-test.yml"
+        default: "orchestrator.yml"
 
 permissions:
   actions: read

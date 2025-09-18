@@ -26,7 +26,8 @@ def find_last_successful_run(token, workflow_file_name):
         log("Missing required GitHub environment variables", "error")
         return None
 
-    api_url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_file_name}/runs"
+    workflow_identifier = os.path.basename(workflow_file_name)
+    api_url = f"https://api.github.com/repos/{repo}/actions/workflows/{workflow_identifier}/runs"
     headers = {
         "Authorization": f"Bearer {token}",
         "Accept": "application/vnd.github+json",
@@ -39,7 +40,11 @@ def find_last_successful_run(token, workflow_file_name):
     }
 
     try:
-        log(f"Querying GitHub API for workflow runs: {api_url}", "info")
+        log(
+            "Querying GitHub API for workflow runs: "
+            f"{api_url} (input: {workflow_file_name})",
+            "info",
+        )
 
         response = requests.get(api_url, headers=headers, params=params)
         response.raise_for_status()
@@ -178,10 +183,16 @@ def main():
 
     # Log everything
     log("Adding commit information and diff to logs...", "info")
+    formatted_ranges = "\n- ".join(combined_ranges)
+    if formatted_ranges:
+        formatted_ranges = f"- {formatted_ranges}"
+    else:
+        formatted_ranges = "-"
+
     log_message = f"""
 Workflows: {', '.join(workflow_files)}
 
-Commit Ranges:\n- {'\n- '.join(combined_ranges)}
+Commit Ranges:\n{formatted_ranges}
 
 Commit Info file: {commit_info_file_path}
 Diff file: {diff_file_path}
