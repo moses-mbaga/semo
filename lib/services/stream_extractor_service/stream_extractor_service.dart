@@ -25,6 +25,7 @@ import "package:semo/services/stream_extractor_service/extractors/vid_fast_extra
 import "package:semo/services/stream_extractor_service/extractors/vid_link_extractor.dart";
 import "package:semo/services/hls_parser_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/utils/closest_resolution.dart";
+import "package:semo/services/video_quality_service.dart";
 
 class StreamExtractorService {
   factory StreamExtractorService() => _instance;
@@ -34,6 +35,7 @@ class StreamExtractorService {
 
   final Logger _logger = Logger();
   final HlsParserService _hlsParserService = const HlsParserService();
+  final VideoQualityService _videoQualityService = const VideoQualityService();
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
     if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
@@ -262,6 +264,21 @@ class StreamExtractorService {
 
       // Arrange streams, from highest to lowest quality (Auto is always first)
       if (result.length <= 1) {
+        final String? detectedQuality = await _videoQualityService.determineQuality(stream);
+
+        if (detectedQuality != null && detectedQuality.isNotEmpty) {
+          return <MediaStream>[
+            MediaStream(
+              type: StreamType.hls,
+              url: stream.url,
+              headers: stream.headers,
+              quality: detectedQuality,
+              subtitles: stream.subtitles,
+              audios: audios,
+            ),
+          ];
+        }
+
         return result;
       }
 
@@ -303,12 +320,13 @@ class StreamExtractorService {
 
     for (int i = 0; i < fileStreams.length; i++) {
       MediaStream stream = fileStreams[i];
+      final String? detectedQuality = await _videoQualityService.determineQuality(stream);
       streams.add(
         MediaStream(
           type: stream.type,
           url: stream.url,
           headers: stream.headers,
-          quality: "Stream ${i + 1}",
+          quality: detectedQuality ?? "Stream ${i + 1}",
           subtitles: stream.subtitles,
           audios: stream.audios,
         ),
