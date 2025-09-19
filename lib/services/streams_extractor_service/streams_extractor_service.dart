@@ -23,6 +23,7 @@ import "package:semo/services/streams_extractor_service/extractors/vid_fast_extr
 import "package:semo/services/streams_extractor_service/extractors/vid_link_extractor.dart";
 import "package:semo/services/hls_parser_service.dart";
 import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
+import "package:semo/services/streams_extractor_service/extractors/vid_rock_extractor.dart";
 import "package:semo/services/video_quality_service.dart";
 
 class StreamsExtractorService {
@@ -43,6 +44,7 @@ class StreamsExtractorService {
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
+    StreamingServer(name: "VidRock", extractor: VidRockExtractor()),
 
     // Broken
     // StreamingServer(name: "CinePro", extractor: CineProExtractor()), // As of 19.09.2025, all streams returned don't work
@@ -262,7 +264,6 @@ class StreamsExtractorService {
         }
       }
 
-      // Arrange streams, from highest to lowest quality (Auto is always first)
       if (result.length <= 1) {
         final String? detectedQuality = await _videoQualityService.determineQuality(stream);
 
@@ -282,30 +283,8 @@ class StreamsExtractorService {
         return result;
       }
 
-      int qualityWeight(String quality) {
-        final String normalized = quality.toLowerCase();
-
-        if (normalized == "4k") {
-          return 4000;
-        }
-
-        if (normalized == "2k") {
-          return 2000;
-        }
-
-        final RegExpMatch? match = RegExp(r"(\d{3,4})p").firstMatch(normalized);
-        if (match != null) {
-          return int.tryParse(match.group(1)!) ?? 0;
-        }
-
-        return 0;
-      }
-
       final MediaStream autoStream = result.first;
-      final List<MediaStream> variantStreams = result.skip(1).toList()
-        ..sort(
-          (MediaStream a, MediaStream b) => qualityWeight(b.quality).compareTo(qualityWeight(a.quality)),
-        );
+      final List<MediaStream> variantStreams = _arrangeStreamsByQualities(result.skip(1).toList());
 
       return <MediaStream>[autoStream, ...variantStreams];
     } catch (e, s) {
@@ -320,19 +299,52 @@ class StreamsExtractorService {
 
     for (int i = 0; i < fileStreams.length; i++) {
       MediaStream stream = fileStreams[i];
-      final String? detectedQuality = await _videoQualityService.determineQuality(stream);
+
+      String? quality;
+      if (isAlreadyResolution(stream.quality)) {
+        quality = stream.quality;
+      } else {
+        quality = await _videoQualityService.determineQuality(stream);
+      }
+
       streams.add(
         MediaStream(
           type: stream.type,
           url: stream.url,
           headers: stream.headers,
-          quality: detectedQuality ?? "Stream ${i + 1}",
+          quality: quality ?? "Stream ${i + 1}",
           subtitles: stream.subtitles,
           audios: stream.audios,
         ),
       );
     }
 
-    return streams;
+    return _arrangeStreamsByQualities(streams);
   }
+}
+
+List<MediaStream> _arrangeStreamsByQualities(List<MediaStream> streams) {
+  int qualityWeight(String quality) {
+    final String normalized = quality.toLowerCase();
+
+    if (normalized == "4k") {
+      return 4000;
+    }
+
+    if (normalized == "2k") {
+      return 2000;
+    }
+
+    final RegExpMatch? match = RegExp(r"(\d{3,4})p").firstMatch(normalized);
+    if (match != null) {
+      return int.tryParse(match.group(1)!) ?? 0;
+    }
+
+    return 0;
+  }
+
+  return streams
+    ..sort(
+      (MediaStream a, MediaStream b) => qualityWeight(b.quality).compareTo(qualityWeight(a.quality)),
+    );
 }

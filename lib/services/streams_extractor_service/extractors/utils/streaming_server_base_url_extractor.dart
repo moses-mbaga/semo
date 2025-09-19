@@ -41,6 +41,7 @@ class StreamingServerBaseUrlExtractor {
     "semo_mappletv": "https://mappletv.uk",
     "semo_vidfast": "https://vidfast.pro",
     "semo_vidlink": "https://vidlink.pro",
+    "semo_vidrock": "https://vidrock.net",
   };
 
   final Logger _logger = Logger();
