@@ -51,6 +51,10 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   bool _didLogPlaybackStart = false;
 
   void _updateRecentlyWatched(int progressSeconds) {
+    if (progressSeconds < 60) {
+      return;
+    }
+
     try {
       if (widget.mediaType == MediaType.movies) {
         context.read<AppBloc>().add(
@@ -150,9 +154,7 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
       },
     ));
     if (mounted) {
-      if (progressSeconds > 60) {
-        _updateRecentlyWatched(progressSeconds);
-      }
+      _updateRecentlyWatched(progressSeconds);
       Navigator.pop(context);
     }
   }
