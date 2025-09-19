@@ -5,15 +5,18 @@ import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
+import "package:just_audio/just_audio.dart";
 import "package:logger/logger.dart";
 import "package:semo/enums/subtitles_type.dart";
 import "package:semo/models/media_progress.dart";
 import "package:semo/models/media_stream.dart";
+import "package:semo/models/stream_audio.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/models/stream_subtitles.dart";
 import "package:semo/services/subtitles_service.dart";
 import "package:semo/services/zip_to_vtt_service.dart";
+import "package:semo/utils/string_extensions.dart";
 import "package:video_player/video_player.dart";
 
 typedef OnProgressCallback = void Function(Duration progress, Duration total);
@@ -53,7 +56,7 @@ class SemoPlayer extends StatefulWidget {
 }
 
 class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
-  late VideoPlayerController _videoPlayerController;
+  late VideoPlayerController _videoController;
   final AppPreferencesService _appPreferences = AppPreferencesService();
   final Dio _dio = Dio(
     BaseOptions(
@@ -89,6 +92,11 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   int _activeStreamIndex = 0;
   bool _videoControllerInitialized = false;
   bool _isHandlingFailure = false;
+  final AudioPlayer _audioPlayer = AudioPlayer();
+  List<StreamAudio> _availableAudios = <StreamAudio>[];
+  StreamAudio? _selectedAudio;
+  bool _isSynchronizingAudio = false;
+  bool _audioPlayerHasSource = false;
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
 
@@ -187,23 +195,27 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     _hideControlsTimer?.cancel();
     _progressTimer?.cancel();
     if (_videoControllerInitialized) {
-      _videoPlayerController.removeListener(_playerListener);
-      _videoPlayerController.dispose();
+      _videoController.removeListener(_playerListener);
+      unawaited(_videoController.dispose());
     }
     _scaleVideoAnimationController.dispose();
     _leftRippleController.dispose();
     _rightRippleController.dispose();
+    unawaited(_audioPlayer.dispose());
     super.dispose();
   }
 
   Future<void> _initializePlayer({Duration? resumePosition, bool? autoPlayOverride}) async {
     try {
       final MediaStream stream = _currentStream;
+      final List<StreamAudio> streamAudios = List<StreamAudio>.from(stream.audios ?? <StreamAudio>[]);
+      final StreamAudio? resolvedAudio = _resolveAudioSelection(streamAudios);
       final VideoPlayerController newController = VideoPlayerController.networkUrl(
         Uri.parse(stream.url),
         httpHeaders: stream.headers ?? <String, String>{},
         formatHint: stream.type == StreamType.hls ? VideoFormat.hls : VideoFormat.other,
         closedCaptionFile: null,
+        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
       );
 
       try {
@@ -227,19 +239,26 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         await newController.seekTo(targetSeek);
       }
 
-      final bool shouldPlay = autoPlayOverride ?? (_videoControllerInitialized ? _isPlaying : widget.autoPlay);
+      final Duration targetAudioPosition = targetSeek ?? newController.value.position;
 
-      if (shouldPlay) {
-        await newController.play();
-      }
+      await _prepareAudioForStream(
+        stream: stream,
+        audios: streamAudios,
+        selection: resolvedAudio,
+        targetPosition: targetAudioPosition,
+      );
+
+      await newController.setVolume(_audioPlayerHasSource ? 0 : 1);
+
+      final bool shouldPlay = autoPlayOverride ?? (_videoControllerInitialized ? _isPlaying : widget.autoPlay);
 
       newController.addListener(_playerListener);
 
-      final VideoPlayerController? oldController = _videoControllerInitialized ? _videoPlayerController : null;
+      final VideoPlayerController? oldController = _videoControllerInitialized ? _videoController : null;
 
       if (mounted) {
         setState(() {
-          _videoPlayerController = newController;
+          _videoController = newController;
           _videoControllerInitialized = true;
           _isPlaying = shouldPlay;
         });
@@ -248,6 +267,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         _setTargetNativeScale(targetScale);
         _startHideControlsTimer();
         _ensureProgressTimer();
+      }
+
+      if (shouldPlay) {
+        await _startPlayback();
+      } else if (_audioPlayerHasSource) {
+        await _audioPlayer.pause().catchError((_) {});
       }
 
       if (oldController != null) {
@@ -267,6 +292,188 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         _updateProgress();
       }
     });
+  }
+
+  Future<void> _prepareAudioForStream({
+    required MediaStream stream,
+    required List<StreamAudio> audios,
+    required StreamAudio? selection,
+    required Duration targetPosition,
+  }) async {
+    _availableAudios = audios;
+
+    if (selection == null) {
+      if (_audioPlayerHasSource) {
+        try {
+          await _audioPlayer.stop();
+        } catch (e, s) {
+          _logger.w("Failed to stop audio player", error: e, stackTrace: s);
+        }
+      }
+
+      _audioPlayerHasSource = false;
+      _selectedAudio = null;
+
+      return;
+    }
+
+    final bool requiresNewSource = !_audioPlayerHasSource || _selectedAudio == null || _selectedAudio!.url != selection.url;
+
+    try {
+      if (requiresNewSource) {
+        await _audioPlayer.setAudioSource(
+          AudioSource.uri(
+            Uri.parse(selection.url),
+            headers: stream.headers,
+          ),
+        );
+      }
+
+      if (_audioPlayer.playing) {
+        await _audioPlayer.pause();
+      }
+
+      await _audioPlayer.seek(targetPosition > Duration.zero ? targetPosition : Duration.zero);
+
+      _selectedAudio = selection;
+      _audioPlayerHasSource = true;
+    } catch (e, s) {
+      _logger.w("Failed to prepare audio stream", error: e, stackTrace: s);
+      widget.onError?.call(e);
+      _selectedAudio = null;
+      _audioPlayerHasSource = false;
+
+      try {
+        await _audioPlayer.stop();
+      } catch (_) {}
+    }
+  }
+
+  Future<void> _startPlayback() async {
+    try {
+      if (_audioPlayerHasSource && _audioPlayer.playing) {
+        await _audioPlayer.pause();
+      }
+
+      await _videoController.play();
+    } catch (e, s) {
+      _logger.w("Failed to start playback", error: e, stackTrace: s);
+      widget.onError?.call(e);
+    }
+  }
+
+  StreamAudio? _resolveAudioSelection(List<StreamAudio> audios) {
+    if (audios.isEmpty) {
+      return null;
+    }
+
+    if (_selectedAudio != null) {
+      final StreamAudio? matched = _matchAudio(audios, _selectedAudio!);
+      if (matched != null) {
+        return matched;
+      }
+    }
+
+    return _chooseInitialAudio(audios);
+  }
+
+  StreamAudio? _chooseInitialAudio(List<StreamAudio> audios) {
+    if (audios.isEmpty) {
+      return null;
+    }
+
+    final List<StreamAudio> defaultAudios = audios.where((StreamAudio audio) => audio.isDefault).toList();
+    StreamAudio? englishAudio;
+
+    for (final StreamAudio audio in audios) {
+      if (_languageIsEnglish(audio.language)) {
+        englishAudio = audio;
+        break;
+      }
+    }
+    final bool allNotDefaults = audios.every((StreamAudio audio) => !audio.isDefault);
+    final bool hasEnglishDefault = defaultAudios.any((StreamAudio audio) => _languageIsEnglish(audio.language));
+
+    if (englishAudio != null && (allNotDefaults || (defaultAudios.isNotEmpty && !hasEnglishDefault))) {
+      return englishAudio;
+    }
+
+    if (englishAudio != null) {
+      return englishAudio;
+    }
+
+    if (defaultAudios.isNotEmpty) {
+      return defaultAudios.first;
+    }
+
+    return audios.first;
+  }
+
+  StreamAudio? _matchAudio(List<StreamAudio> audios, StreamAudio reference) {
+    for (final StreamAudio candidate in audios) {
+      if (candidate.url == reference.url) {
+        return candidate;
+      }
+    }
+
+    final String referenceLanguage = reference.language.normalize();
+
+    for (final StreamAudio candidate in audios) {
+      if (candidate.language.normalize() == referenceLanguage) {
+        return candidate;
+      }
+    }
+
+    return null;
+  }
+
+  bool _languageIsEnglish(String language) {
+    final String normalized = language.normalize();
+    if (normalized.isEmpty) {
+      return false;
+    }
+
+    if (normalized == "en" || normalized == "eng" || normalized == "english") {
+      return true;
+    }
+
+    if (normalized.startsWith("en-")) {
+      return true;
+    }
+
+    return normalized.contains("english");
+  }
+
+  Future<void> _syncAudio(
+    Duration videoPosition, {
+    required bool isPlaying,
+    required bool isBuffering,
+  }) async {
+    if (!_audioPlayerHasSource || _isSynchronizingAudio) {
+      return;
+    }
+
+    _isSynchronizingAudio = true;
+    try {
+      final Duration audioPosition = _audioPlayer.position;
+      final int positionDelta = (audioPosition.inMilliseconds - videoPosition.inMilliseconds).abs();
+
+      if (positionDelta > 350) {
+        await _audioPlayer.seek(videoPosition);
+      }
+
+      final bool shouldPlayAudio = isPlaying && !isBuffering;
+
+      if (shouldPlayAudio && !_audioPlayer.playing) {
+        await _audioPlayer.play();
+      } else if (!shouldPlayAudio && _audioPlayer.playing) {
+        await _audioPlayer.pause();
+      }
+    } catch (e, s) {
+      _logger.w("Failed to synchronize audio", error: e, stackTrace: s);
+    } finally {
+      _isSynchronizingAudio = false;
+    }
   }
 
   void _setTargetNativeScale(double newValue) {
@@ -289,7 +496,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return 1.0;
     }
     final Size screenSize = MediaQuery.of(context).size;
-    final double videoAR = _videoPlayerController.value.aspectRatio;
+    final double videoAR = _videoController.value.aspectRatio;
 
     if (screenSize.height == 0 || videoAR <= 0 || !videoAR.isFinite) {
       return 1.0;
@@ -305,7 +512,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
 
     try {
-      final VideoPlayerValue value = _videoPlayerController.value;
+      final VideoPlayerValue value = _videoController.value;
       final bool isPlaying = value.isPlaying;
       if (mounted) {
         setState(() => _isPlaying = isPlaying);
@@ -373,6 +580,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         isBuffering = true;
       }
 
+      await _syncAudio(
+        progress,
+        isPlaying: isPlaying,
+        isBuffering: value.isBuffering,
+      );
+
       // Seek to initial progress if not done yet
       if (!_isSeekedToInitialProgress && total.inSeconds != 0 && progress.inSeconds < widget.initialProgress) {
         Duration initialProgress = Duration(seconds: widget.initialProgress);
@@ -412,11 +625,19 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       final bool wasPlaying = _isPlaying;
 
       if (_videoControllerInitialized) {
-        _videoPlayerController.removeListener(_playerListener);
-        await _videoPlayerController.pause().catchError((_) {});
-        await _videoPlayerController.dispose().catchError((_) {});
+        _videoController.removeListener(_playerListener);
+        await _videoController.pause().catchError((_) {});
+        await _videoController.dispose().catchError((_) {});
         _videoControllerInitialized = false;
       }
+
+      if (_audioPlayerHasSource) {
+        await _audioPlayer.stop().catchError((_) {});
+        _audioPlayerHasSource = false;
+        _selectedAudio = null;
+      }
+
+      _availableAudios = <StreamAudio>[];
 
       if (_streams.isNotEmpty) {
         _streams.removeAt(_activeStreamIndex);
@@ -487,7 +708,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
 
     final Duration resumePosition = _mediaProgress.progress;
-    final bool wasPlaying = _videoControllerInitialized && _videoPlayerController.value.isPlaying;
+    final bool wasPlaying = _videoControllerInitialized && _videoController.value.isPlaying;
 
     setState(() => _activeStreamIndex = selectedIndex);
 
@@ -497,10 +718,93 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     );
   }
 
+  Future<void> _showAudioSelector() async {
+    if (_availableAudios.length <= 1) {
+      return;
+    }
+
+    final int? selectedIndex = await showDialog<int>(
+      context: context,
+      builder: (BuildContext context) => SimpleDialog(
+        title: const Text("Select audio"),
+        children: _availableAudios.asMap().entries.map((MapEntry<int, StreamAudio> entry) {
+          final StreamAudio audio = entry.value;
+          final bool isActive = _selectedAudio != null && audio.url == _selectedAudio!.url;
+
+          return ListTile(
+            title: Text(
+              audio.language.toUpperCase(),
+              style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                    color: isActive ? Theme.of(context).primaryColor : Colors.white,
+                    fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                  ),
+            ),
+            trailing: isActive
+                ? Icon(
+                    Icons.check,
+                    color: Theme.of(context).primaryColor,
+                  )
+                : null,
+            onTap: () => Navigator.pop(context, entry.key),
+          );
+        }).toList(),
+      ),
+    );
+
+    if (selectedIndex == null) {
+      return;
+    }
+
+    final StreamAudio selected = _availableAudios[selectedIndex];
+
+    if (_selectedAudio != null && selected.url == _selectedAudio!.url) {
+      return;
+    }
+
+    await _changeAudioTrack(selected);
+  }
+
+  Future<void> _changeAudioTrack(StreamAudio audio) async {
+    if (!_videoControllerInitialized) {
+      return;
+    }
+
+    final bool wasPlaying = _isPlaying;
+    final Duration currentPosition = _videoController.value.position;
+
+    try {
+      await _videoController.pause();
+
+      if (_audioPlayerHasSource) {
+        await _audioPlayer.pause();
+      }
+
+      await _prepareAudioForStream(
+        stream: _currentStream,
+        audios: _availableAudios,
+        selection: audio,
+        targetPosition: currentPosition,
+      );
+
+      await _videoController.setVolume(_audioPlayerHasSource ? 0 : 1);
+
+      if (mounted) {
+        setState(() {});
+      }
+
+      if (wasPlaying) {
+        await _startPlayback();
+      }
+    } catch (e, s) {
+      _logger.w("Failed to switch audio track", error: e, stackTrace: s);
+      widget.onError?.call(e);
+    }
+  }
+
   void _updateProgress() {
-    if (_videoPlayerController.value.isInitialized) {
-      final Duration progress = _videoPlayerController.value.position;
-      final Duration total = _videoPlayerController.value.duration;
+    if (_videoController.value.isInitialized) {
+      final Duration progress = _videoController.value.position;
+      final Duration total = _videoController.value.duration;
       widget.onProgress?.call(progress, total);
     }
   }
@@ -525,9 +829,15 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
     try {
       if (_isPlaying) {
-        await _videoPlayerController.pause();
+        final List<Future<void>> operations = <Future<void>>[_videoController.pause(), if (_audioPlayerHasSource) _audioPlayer.pause()];
+
+        await Future.wait(operations);
       } else {
-        await _videoPlayerController.play();
+        if (_audioPlayerHasSource) {
+          await _audioPlayer.seek(_videoController.value.position);
+        }
+
+        await _startPlayback();
       }
     } catch (e) {
       widget.onError?.call(e);
@@ -539,9 +849,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return;
     }
     try {
-      Duration currentPosition = _videoPlayerController.value.position;
+      Duration currentPosition = _videoController.value.position;
       Duration targetPosition = Duration(seconds: currentPosition.inSeconds + _seekDuration);
-      await _videoPlayerController.seekTo(targetPosition);
+      await seek(targetPosition);
     } catch (e) {
       widget.onError?.call(e);
     }
@@ -552,12 +862,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return;
     }
     try {
-      Duration currentPosition = _videoPlayerController.value.position;
+      Duration currentPosition = _videoController.value.position;
       int seekBackSeconds = currentPosition.inSeconds < _seekDuration ? currentPosition.inSeconds : _seekDuration;
       Duration targetPosition = Duration(
         seconds: currentPosition.inSeconds - seekBackSeconds,
       );
-      await _videoPlayerController.seekTo(targetPosition);
+      await seek(targetPosition);
     } catch (e) {
       widget.onError?.call(e);
     }
@@ -568,7 +878,18 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return;
     }
     try {
-      await _videoPlayerController.seekTo(target);
+      final List<Future<void>> operations = <Future<void>>[
+        // Pause
+        if (_isPlaying) _videoController.pause(),
+        if (_audioPlayerHasSource && _audioPlayer.playing) _audioPlayer.pause(),
+
+        // Seek
+        _videoController.seekTo(target),
+        if (_audioPlayerHasSource) _audioPlayer.seek(target)
+      ];
+
+      await Future.wait(operations);
+      await _startPlayback();
     } catch (e) {
       widget.onError?.call(e);
     }
@@ -596,7 +917,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       }
 
       if (content != null) {
-        await _videoPlayerController.setClosedCaptionFile(_createCaptionFile(content));
+        await _videoController.setClosedCaptionFile(_createCaptionFile(content));
 
         setState(() {
           _selectedSubtitleLanguageGroup = language;
@@ -775,14 +1096,14 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       scale: _scaleVideoAnimation,
       child: Center(
         child: AspectRatio(
-          aspectRatio: _videoPlayerController.value.aspectRatio,
+          aspectRatio: _videoController.value.aspectRatio,
           child: AspectRatio(
             aspectRatio: 16 / 9,
             child: Stack(
               children: <Widget>[
-                VideoPlayer(_videoPlayerController),
+                VideoPlayer(_videoController),
                 ClosedCaption(
-                  text: _videoPlayerController.value.caption.text,
+                  text: _videoController.value.caption.text,
                   textStyle: TextStyle(
                     fontSize: MediaQuery.of(context).size.width * .02,
                     fontWeight: FontWeight.bold,
@@ -849,17 +1170,28 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                               icon: const Icon(Icons.hd_outlined, size: 20),
                             ),
                           ),
+                        if (_availableAudios.length > 1)
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 8),
+                            child: IconButton(
+                              onPressed: _showAudioSelector,
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.white,
+                              ),
+                              icon: const Icon(Icons.translate, size: 20),
+                            ),
+                          ),
                         if (_currentStream.subtitles?.isNotEmpty ?? false)
                           InkWell(
                             borderRadius: BorderRadius.circular(1000),
                             onTap: () async {
                               if (_showSubtitles) {
                                 if (_isPlaying) {
-                                  await _videoPlayerController.pause();
+                                  await _videoController.pause();
                                 }
 
                                 await _showSubtitleSelector();
-                                await _videoPlayerController.play();
+                                await _videoController.play();
                               } else {
                                 // Auto-pick EN if available otherwise first available
                                 final List<StreamSubtitles> streamSubtitles = _currentStream.subtitles ?? <StreamSubtitles>[];
@@ -872,7 +1204,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                               }
                             },
                             onLongPress: () {
-                              _videoPlayerController.setClosedCaptionFile(null);
+                              _videoController.setClosedCaptionFile(null);
                               setState(() => _showSubtitles = false);
                             },
                             child: Padding(

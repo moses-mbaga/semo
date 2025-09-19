@@ -26,6 +26,7 @@ dependencies:
   flutter_inappwebview: ^6.1.5
   flutter_settings_ui: ^3.0.1
   font_awesome_flutter: ^10.10.0
+  just_audio: ^0.10.5
   google_fonts: ^6.3.1
   google_sign_in: ^7.1.1
   html: ^0.15.6
