@@ -5,7 +5,7 @@ import "package:video_player/video_player.dart";
 
 import "package:semo/enums/stream_type.dart";
 import "package:semo/models/media_stream.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/closest_resolution.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
 
 class VideoQualityService {
   const VideoQualityService();

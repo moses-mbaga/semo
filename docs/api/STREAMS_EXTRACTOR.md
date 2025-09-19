@@ -1,11 +1,11 @@
-**Stream Extractor**
+**Streams Extractor**
 
-- Location: `lib/services/stream_extractor_service/stream_extractor_service.dart`
+- Location: `lib/services/streams_extractor_service/streams_extractor_service.dart`
 - Purpose: Resolve one or more playable `MediaStream`s for a movie or TV episode (auto + quality variants) by delegating to one of the supported extractors.
 
 **Concepts**
 
-- `StreamExtractorService`: Static façade that chooses an extractor and returns an ordered `List<MediaStream>` (auto first, then descending qualities).
+- `StreamsExtractorService`: Static façade that chooses an extractor and returns an ordered `List<MediaStream>` (auto first, then descending qualities).
 - `StreamingServer`: UI‑friendly descriptor of a source with a `name` and an associated extractor instance (or `null` for randomized selection).
 - `BaseStreamExtractor`: Interface every extractor implements with `Future<List<MediaStream>> getStreams(StreamExtractorOptions options, { String? externalLink, Map<String, String>? externalLinkHeaders })`.
 - `StreamExtractorOptions`: Options passed to extractors (TMDB ID, title, and optionally season/episode or `releaseYear`). Includes optional `imdbId` when available.
@@ -44,28 +44,28 @@
 **Preference & Selection**
 
 - Read current preference: `AppPreferencesService().getStreamingServer()` returns the server name or `"Random"` by default.
-- Update preference: `await AppPreferencesService().setStreamingServer(server)` where `server` is a `StreamingServer` from `StreamExtractorService.streamingServers`.
-- Present options: Use `StreamExtractorService.streamingServers` to populate a selection UI by `name`.
+- Update preference: `await AppPreferencesService().setStreamingServer(server)` where `server` is a `StreamingServer` from `StreamsExtractorService.streamingServers`.
+- Present options: Use `StreamsExtractorService.streamingServers` to populate a selection UI by `name`.
 
 **Usage Examples**
 
 - Movie stream
   - `final opts = StreamExtractorOptions(tmdbId: movie.id, title: movie.title, releaseYear: movie.releaseDate.split('-').first, imdbId: imdbId);`
-  - `final streams = await StreamExtractorService.getStreams(opts);`
+  - `final streams = await StreamsExtractorService.getStreams(opts);`
   - `if (streams.isNotEmpty) { /* pass ordered list to the player */ }`
 
 - Episode stream
   - `final opts = StreamExtractorOptions(tmdbId: show.id, season: ep.season, episode: ep.number, title: show.name, imdbId: imdbId);`
-  - `final streams = await StreamExtractorService.getStreams(opts);`
+  - `final streams = await StreamsExtractorService.getStreams(opts);`
   - `if (streams.isNotEmpty) { /* pass ordered list to the player */ }`
 
 - Listing servers for a settings screen
-  - `final servers = StreamExtractorService.streamingServers;`
+  - `final servers = StreamsExtractorService.streamingServers;`
   - `await AppPreferencesService().setStreamingServer(servers[index]);`
 
 **Extensibility**
 
-- Add a new extractor by implementing `BaseStreamExtractor` and registering it in the `_streamingServers` list inside `stream_extractor_service.dart`:
+- Add a new extractor by implementing `BaseStreamExtractor` and registering it in the `_streamingServers` list inside `streams_extractor_service.dart`:
   - `StreamingServer(name: "YourProvider", extractor: YourProviderExtractor()),`
 - No UI changes needed if your settings UI lists `streamingServers` dynamically.
 

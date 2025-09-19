@@ -10,9 +10,9 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
-import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/extract_stream_from_page_requests_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/base_stream_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/extract_stream_from_page_requests_service.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
 
 class MoviesApiExtractor implements BaseStreamExtractor {
   MoviesApiExtractor() {

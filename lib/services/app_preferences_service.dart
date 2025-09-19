@@ -1,5 +1,5 @@
 import "package:semo/models/streaming_server.dart";
-import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
+import "package:semo/services/streams_extractor_service/streams_extractor_service.dart";
 import "package:shared_preferences/shared_preferences.dart";
 
 class AppPreferencesService {
@@ -17,7 +17,7 @@ class AppPreferencesService {
   static Future<void> ensureActiveStreamingServerValidity() async {
     try {
       AppPreferencesService appPreferencesService = AppPreferencesService();
-      List<StreamingServer> servers = StreamExtractorService().getStreamingServers();
+      List<StreamingServer> servers = StreamsExtractorService().getStreamingServers();
       String savedServerName = appPreferencesService.getStreamingServer();
       int selectedServerIndex = servers.indexWhere((StreamingServer server) => server.name == savedServerName);
 

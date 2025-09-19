@@ -12,24 +12,24 @@ import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/enums/media_type.dart";
-import "package:semo/services/stream_extractor_service/extractors/auto_embed_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/holly_movie_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/auto_embed_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/base_stream_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/holly_movie_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/movies_api_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/vid_fast_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/vid_link_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/movies_api_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/multi_movies_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/vid_fast_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/vid_link_extractor.dart";
 import "package:semo/services/hls_parser_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/closest_resolution.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
 import "package:semo/services/video_quality_service.dart";
 
-class StreamExtractorService {
-  factory StreamExtractorService() => _instance;
-  StreamExtractorService._internal();
+class StreamsExtractorService {
+  factory StreamsExtractorService() => _instance;
+  StreamsExtractorService._internal();
 
-  static final StreamExtractorService _instance = StreamExtractorService._internal();
+  static final StreamsExtractorService _instance = StreamsExtractorService._internal();
 
   final Logger _logger = Logger();
   final HlsParserService _hlsParserService = const HlsParserService();

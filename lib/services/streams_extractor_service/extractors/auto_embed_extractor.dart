@@ -8,13 +8,13 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
-import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/common_headers.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/extract_stream_from_page_requests_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/base_stream_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/common_headers.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/extract_stream_from_page_requests_service.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
 
-class VidFastExtractor implements BaseStreamExtractor {
-  VidFastExtractor() {
+class AutoEmbedExtractor implements BaseStreamExtractor {
+  AutoEmbedExtractor() {
     _dio.interceptors.add(
       PrettyDioLogger(
         requestHeader: true,
@@ -27,7 +27,7 @@ class VidFastExtractor implements BaseStreamExtractor {
     );
   }
 
-  final String _providerKey = "semo_vidfast";
+  final String _providerKey = "autoEmbed";
   final StreamingServerBaseUrlExtractor _streamingServerBaseUrlExtractor = StreamingServerBaseUrlExtractor();
   final ExtractStreamFromPageRequestsService _extractStreamFromPageRequestsService = const ExtractStreamFromPageRequestsService();
   final Dio _dio = Dio(
@@ -58,16 +58,25 @@ class VidFastExtractor implements BaseStreamExtractor {
       }
 
       final bool isTv = options.season != null && options.episode != null;
-      final String path = isTv ? "/tv/${options.tmdbId}/${options.season}/${options.episode}" : "/movie/${options.tmdbId}";
+      final String path = "/embed${isTv ? "/tv/${options.tmdbId}/${options.season}/${options.episode}" : "/movie/${options.tmdbId}"}?server=2";
 
+      baseUrl = "https://test.${baseUrl.replaceFirst("https://", "")}";
       final Uri pageUri = Uri.parse(baseUrl).resolve(path);
 
-      final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(pageUri.toString());
+      final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(
+        pageUri.toString(),
+        filter: (String url) => url.startsWith("https://proxy.vidsrc.co/?u="),
+        hasAds: true,
+      );
       final String? url = stream?["url"];
       Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 
       if (url == null || url.isEmpty) {
         throw Exception("No stream URL found for: $_providerKey");
+      }
+
+      if (!headers.containsKey("Referer")) {
+        headers["Referer"] = baseUrl;
       }
 
       return <MediaStream>[
@@ -78,7 +87,7 @@ class VidFastExtractor implements BaseStreamExtractor {
         ),
       ];
     } catch (e, s) {
-      _logger.e("Error extracting stream in VidFastExtractor", error: e, stackTrace: s);
+      _logger.e("Error extracting stream in AutoEmbedExtractor", error: e, stackTrace: s);
     }
 
     return <MediaStream>[];

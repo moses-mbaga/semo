@@ -8,12 +8,13 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/stream_extractor_options.dart";
-import "package:semo/services/stream_extractor_service/extractors/base_stream_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/extract_stream_from_page_requests_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/base_stream_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/extract_stream_from_page_requests_service.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/streaming_server_base_url_extractor.dart";
+import "package:semo/utils/string_extensions.dart";
 
-class MappleTvExtractor implements BaseStreamExtractor {
-  MappleTvExtractor() {
+class HollyMovieExtractor implements BaseStreamExtractor {
+  HollyMovieExtractor() {
     _dio.interceptors.add(
       PrettyDioLogger(
         requestHeader: true,
@@ -26,7 +27,7 @@ class MappleTvExtractor implements BaseStreamExtractor {
     );
   }
 
-  final String _providerKey = "semo_mappletv";
+  final String _providerKey = "semo_hollymovie";
   final StreamingServerBaseUrlExtractor _streamingServerBaseUrlExtractor = StreamingServerBaseUrlExtractor();
   final ExtractStreamFromPageRequestsService _extractStreamFromPageRequestsService = const ExtractStreamFromPageRequestsService();
   final Dio _dio = Dio(
@@ -56,14 +57,21 @@ class MappleTvExtractor implements BaseStreamExtractor {
       }
 
       final bool isTv = options.season != null && options.episode != null;
-      final String path = "/watch${isTv ? "/tv/${options.tmdbId}-${options.season}-${options.episode}" : "/movie/${options.tmdbId}"}";
+      String formattedTitle = options.title.removeSpecialChars().replaceAll(" ", "-").normalize();
+      String path = "/$formattedTitle";
+
+      if (isTv) {
+        path = "/episode$path-season-${options.season}-episode-${options.episode}/";
+      } else {
+        path += "-${options.releaseYear}/";
+      }
 
       final Uri pageUri = Uri.parse(baseUrl).resolve(path);
 
       final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(
         pageUri.toString(),
-        includePatterns: <String>["proxy.heistotron.uk"],
-        filter: (String url) => url.contains("proxy.heistotron.uk"),
+        includePatterns: <String>["pkaystream.cc"],
+        filter: (String url) => url.startsWith("https://pkaystream.cc/streamsvr"),
         acceptAnyOnFilterMatch: true,
       );
       final String? url = stream?["url"];
@@ -81,7 +89,7 @@ class MappleTvExtractor implements BaseStreamExtractor {
         ),
       ];
     } catch (e, s) {
-      _logger.e("Error extracting stream in MappleTvExtractor", error: e, stackTrace: s);
+      _logger.e("Error extracting stream in HollyMovieExtractor", error: e, stackTrace: s);
     }
 
     return <MediaStream>[];

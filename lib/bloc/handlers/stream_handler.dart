@@ -8,11 +8,11 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/stream_subtitles.dart";
 import "package:semo/services/subtitles_service.dart";
-import "package:semo/services/stream_extractor_service/stream_extractor_service.dart";
+import "package:semo/services/streams_extractor_service/streams_extractor_service.dart";
 
 mixin StreamHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();
-  final StreamExtractorService _streamExtractorService = StreamExtractorService();
+  final StreamsExtractorService _streamsExtractorService = StreamsExtractorService();
   final SubtitlesService _subtitlesService = SubtitlesService();
 
   Future<void> onExtractMovieStream(ExtractMovieStream event, Emitter<AppState> emit) async {
@@ -51,7 +51,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         imdbId: imdbId,
       );
 
-      final Future<List<MediaStream>> streamsFuture = _streamExtractorService.getStreams(options);
+      final Future<List<MediaStream>> streamsFuture = _streamsExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
         subtitlesFuture = _subtitlesService.getSubtitles(imdbId: imdbId).catchError((Object? _) => <StreamSubtitles>[]);
@@ -122,7 +122,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
         imdbId: imdbId,
       );
 
-      final Future<List<MediaStream>> streamsFuture = _streamExtractorService.getStreams(options);
+      final Future<List<MediaStream>> streamsFuture = _streamsExtractorService.getStreams(options);
       Future<List<StreamSubtitles>> subtitlesFuture = Future<List<StreamSubtitles>>.value(<StreamSubtitles>[]);
       if (imdbId != null && imdbId.isNotEmpty) {
         subtitlesFuture = _subtitlesService
