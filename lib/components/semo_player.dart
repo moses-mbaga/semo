@@ -97,6 +97,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool _isSynchronizingAudio = false;
   bool _audioPlayerHasSource = false;
   Object? _pendingStreamFailure;
+  bool _isSwitchingStream = false;
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
 
@@ -575,15 +576,15 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         }
       }
 
-      bool isBuffering = false;
-      if (isPlaying && value.isBuffering && (progress == _mediaProgress.progress)) {
+      bool isBuffering = _isSwitchingStream;
+      if (!isBuffering && isPlaying && value.isBuffering && (progress == _mediaProgress.progress)) {
         isBuffering = true;
       }
 
       await _syncAudio(
         progress,
         isPlaying: isPlaying,
-        isBuffering: value.isBuffering,
+        isBuffering: isBuffering,
       );
 
       // Seek to initial progress if not done yet
@@ -679,6 +680,67 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _prepareForStreamSwitch({required bool wasPlaying}) async {
+    if (!_videoControllerInitialized) {
+      if (mounted) {
+        _hideControlsTimer?.cancel();
+        setState(() {
+          _showControls = true;
+          _isPlaying = false;
+          _mediaProgress = MediaProgress(
+            progress: _mediaProgress.progress,
+            total: _mediaProgress.total,
+            buffered: _mediaProgress.progress,
+            isBuffering: true,
+          );
+        });
+      }
+      return;
+    }
+
+    final VideoPlayerValue currentValue = _videoController.value;
+    final bool shouldPauseVideo = wasPlaying || currentValue.isPlaying;
+
+    if (shouldPauseVideo) {
+      try {
+        await _videoController.pause();
+      } on Object catch (error, stackTrace) {
+        _logger.w(
+          "Failed to pause video controller before stream switch",
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+
+    final bool shouldPauseAudio = _audioPlayerHasSource && (_audioPlayer.playing || wasPlaying);
+    if (shouldPauseAudio) {
+      try {
+        await _audioPlayer.pause();
+      } on Object catch (error, stackTrace) {
+        _logger.w(
+          "Failed to pause audio player before stream switch",
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+
+    if (mounted) {
+      _hideControlsTimer?.cancel();
+      setState(() {
+        _showControls = true;
+        _isPlaying = false;
+        _mediaProgress = MediaProgress(
+          progress: currentValue.position,
+          total: currentValue.duration,
+          buffered: currentValue.position,
+          isBuffering: true,
+        );
+      });
+    }
+  }
+
   Future<void> _showQualitySelector() async {
     if (_streams.length <= 1) {
       return;
@@ -717,12 +779,30 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     final Duration resumePosition = _mediaProgress.progress;
     final bool wasPlaying = _videoControllerInitialized && _videoController.value.isPlaying;
 
-    setState(() => _activeStreamIndex = selectedIndex);
+    if (mounted) {
+      setState(() {
+        _isSwitchingStream = true;
+      });
+    }
 
-    await _initializePlayer(
-      resumePosition: resumePosition,
-      autoPlayOverride: wasPlaying,
-    );
+    await _prepareForStreamSwitch(wasPlaying: wasPlaying);
+
+    if (mounted) {
+      setState(() => _activeStreamIndex = selectedIndex);
+    }
+
+    try {
+      await _initializePlayer(
+        resumePosition: resumePosition,
+        autoPlayOverride: wasPlaying,
+      );
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isSwitchingStream = false;
+        });
+      }
+    }
   }
 
   Future<void> _showAudioSelector() async {
