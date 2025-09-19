@@ -150,7 +150,9 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
       },
     ));
     if (mounted) {
-      _updateRecentlyWatched(progressSeconds);
+      if (progressSeconds > 60) {
+        _updateRecentlyWatched(progressSeconds);
+      }
       Navigator.pop(context);
     }
   }
