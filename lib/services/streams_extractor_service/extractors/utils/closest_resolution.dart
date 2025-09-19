@@ -91,11 +91,11 @@ String getClosestResolutionFromBandwidth(int bandwidth) {
 }
 
 bool isAlreadyResolution(String value) {
-  if (value == "4K") {
+  if (value == "4K" || value == "2160p") {
     return true;
   }
 
-  if (value == "2K") {
+  if (value == "2K" || value == "1440p") {
     return true;
   }
 
