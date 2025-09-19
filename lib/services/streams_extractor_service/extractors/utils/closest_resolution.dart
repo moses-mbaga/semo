@@ -89,3 +89,35 @@ String getClosestResolutionFromBandwidth(int bandwidth) {
 
   return closestName;
 }
+
+bool isAlreadyResolution(String value) {
+  if (value == "4K") {
+    return true;
+  }
+
+  if (value == "2K") {
+    return true;
+  }
+
+  if (value == "1080p") {
+    return true;
+  }
+
+  if (value == "720p") {
+    return true;
+  }
+
+  if (value == "480p") {
+    return true;
+  }
+
+  if (value == "360p") {
+    return true;
+  }
+
+  if (value == "240p") {
+    return true;
+  }
+
+  return false;
+}
