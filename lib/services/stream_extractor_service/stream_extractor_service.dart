@@ -20,7 +20,6 @@ import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/stream_extractor_service/extractors/mapple_tv_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/movies_api_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
-import "package:semo/services/stream_extractor_service/extractors/cine_pro_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/vid_fast_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/vid_link_extractor.dart";
 import "package:semo/services/hls_parser_service.dart";
@@ -39,7 +38,7 @@ class StreamExtractorService {
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
     if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
-    StreamingServer(name: "CinePro", extractor: CineProExtractor()),
+    // StreamingServer(name: "CinePro", extractor: CineProExtractor()), // As of 19.09.2025, all streams returned don't work
     if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
