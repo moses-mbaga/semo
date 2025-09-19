@@ -17,7 +17,6 @@ import "package:semo/services/stream_extractor_service/extractors/base_stream_ex
 import "package:semo/services/stream_extractor_service/extractors/holly_movie_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
-import "package:semo/services/stream_extractor_service/extractors/mapple_tv_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/movies_api_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/multi_movies_extractor.dart";
 import "package:semo/services/stream_extractor_service/extractors/vid_fast_extractor.dart";
@@ -38,15 +37,17 @@ class StreamExtractorService {
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
     if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
-    // StreamingServer(name: "CinePro", extractor: CineProExtractor()), // As of 19.09.2025, all streams returned don't work
     if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
-    if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
-    // if (!Platform.isIOS) StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()), // As of 18.09.2025, returns 403 errors
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
+
+    // Broken
+    // StreamingServer(name: "CinePro", extractor: CineProExtractor()), // As of 19.09.2025, all streams returned don't work
+    // if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()), // As of 19.09.2025, blocked by Cloudflare
+    // if (!Platform.isIOS) StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()), // As of 18.09.2025, blocked by Cloudflare
   ];
 
   List<StreamingServer> getStreamingServers() => _streamingServers;
