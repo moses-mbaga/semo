@@ -84,6 +84,7 @@ class CineProExtractor implements BaseStreamExtractor {
 
         if (!streamUrl.contains("shadowlandschronicles.com") && // Remove broken stream sources
             !streamUrl.contains("cdn.niggaflix.xyz") && // Remove broken stream sources
+            !streamUrl.contains("streamta.site") && // Remove broken stream sources
             (type == "mp4" || type == "hls") &&
             (language == "en" || language == "english")) {
           mediaStreams.add(
