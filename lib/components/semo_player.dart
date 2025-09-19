@@ -2,7 +2,6 @@ import "dart:async";
 
 import "package:audio_video_progress_bar/audio_video_progress_bar.dart";
 import "package:dio/dio.dart";
-import "package:flutter/foundation.dart";
 import "package:flutter/material.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:just_audio/just_audio.dart";
@@ -97,6 +96,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   StreamAudio? _selectedAudio;
   bool _isSynchronizingAudio = false;
   bool _audioPlayerHasSource = false;
+  Object? _pendingStreamFailure;
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
 
@@ -220,10 +220,10 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
       try {
         await newController.initialize();
-      } catch (e, s) {
-        _logger.w("Failed to initialize stream", error: e, stackTrace: s);
+      } on Object catch (error, stackTrace) {
+        _logger.w("Failed to initialize stream", error: error, stackTrace: stackTrace);
         await newController.dispose();
-        await _handleStreamFailure(errorTextConfiguration);
+        await _handleStreamFailure(error);
         return;
       }
 
@@ -617,6 +617,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
   Future<void> _handleStreamFailure(Object? error) async {
     if (_isHandlingFailure) {
+      _pendingStreamFailure = error;
       return;
     }
 
@@ -669,6 +670,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       );
     } finally {
       _isHandlingFailure = false;
+
+      if (_pendingStreamFailure != null) {
+        final Object? pendingError = _pendingStreamFailure;
+        _pendingStreamFailure = null;
+        await _handleStreamFailure(pendingError);
+      }
     }
   }
 
