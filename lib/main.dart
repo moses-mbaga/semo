@@ -87,7 +87,7 @@ class Semo extends StatelessWidget {
               platform: const BackGesturePageTransitionsBuilder(
                 parentTransitionBuilder: PredictiveBackPageTransitionsBuilder(),
                 config: BackGestureConfig(
-                  cancelAnimationDuration: Duration(seconds: 1),
+                  cancelAnimationDuration: Duration(milliseconds: 300),
                 ),
               ),
           },
