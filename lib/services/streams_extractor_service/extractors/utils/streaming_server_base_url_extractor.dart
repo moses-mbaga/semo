@@ -39,6 +39,8 @@ class StreamingServerBaseUrlExtractor {
     "semo_cinepro": SecretsService.cineProBaseUrl,
     "semo_hollymovie": "https://hollymoviehd.cc",
     "semo_mappletv": "https://mappletv.uk",
+    "semo_moviesjoy": "https://moviesjoy.is",
+    "semo_videasy": "https://videasy.net",
     "semo_vidfast": "https://vidfast.pro",
     "semo_vidlink": "https://vidlink.pro",
     "semo_vidrock": "https://vidrock.net",

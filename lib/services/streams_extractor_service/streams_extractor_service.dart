@@ -18,6 +18,7 @@ import "package:semo/services/streams_extractor_service/extractors/holly_movie_e
 import "package:semo/services/streams_extractor_service/extractors/kiss_kh_extractor.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/services/streams_extractor_service/extractors/movies_api_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/movies_joy_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/multi_movies_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/vid_fast_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/vid_link_extractor.dart";
@@ -41,6 +42,7 @@ class StreamsExtractorService {
     if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
+    StreamingServer(name: "MoviesJoy", extractor: MoviesJoyExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
