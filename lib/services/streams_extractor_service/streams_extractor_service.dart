@@ -42,7 +42,7 @@ class StreamsExtractorService {
     if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
-    StreamingServer(name: "MoviesJoy", extractor: MoviesJoyExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "MoviesJoy", extractor: MoviesJoyExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
