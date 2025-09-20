@@ -1186,20 +1186,23 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
           aspectRatio: _videoController.value.aspectRatio,
           child: AspectRatio(
             aspectRatio: 16 / 9,
-            child: Stack(
-              children: <Widget>[
-                VideoPlayer(_videoController),
-                ClosedCaption(
-                  text: _videoController.value.caption.text,
-                  textStyle: TextStyle(
-                    fontSize: MediaQuery.of(context).size.width * .02,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ),
+            child: VideoPlayer(_videoController),
           ),
         ),
+      ),
+    );
+  }
+
+  Widget _buildSubtitles() {
+    if (!_videoControllerInitialized) {
+      return const SizedBox.shrink();
+    }
+
+    return ClosedCaption(
+      text: _videoController.value.caption.text,
+      textStyle: TextStyle(
+        fontSize: MediaQuery.of(context).size.width * .02,
+        fontWeight: FontWeight.bold,
       ),
     );
   }
@@ -1498,6 +1501,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         children: <Widget>[
           Container(color: Colors.black),
           _buildPlayer(),
+          _buildSubtitles(),
           _buildControls(),
           _buildDoubleTapFeedback(),
         ],
