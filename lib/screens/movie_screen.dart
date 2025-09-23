@@ -18,6 +18,7 @@ import "package:semo/screens/base_screen.dart";
 import "package:semo/screens/player_screen.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/services/recently_watched_service.dart";
+import "package:url_launcher/url_launcher.dart";
 
 class MovieScreen extends BaseScreen {
   const MovieScreen(this.movie, {super.key});
@@ -34,6 +35,8 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
   bool _isLoading = true;
   bool _isPlayTriggered = false;
   bool _isExtractingStream = false;
+  bool _isTrailerPlayTriggered = false;
+  String? _pendingTrailerUrl;
   final RecentlyWatchedService _recentlyWatchedService = RecentlyWatchedService();
 
   void _toggleFavorite() {
@@ -85,6 +88,93 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
         mediaType: MediaType.movies,
       ),
     );
+  }
+
+  String _trailerStreamKey() => "${MediaType.movies.toJsonField()}_${_movie.id}";
+
+  Future<void> _openTrailer(List<MediaStream> streams) async {
+    await logEvent(
+      "play_trailer",
+      parameters: <String, Object?>{
+        "movie_id": _movie.id,
+        "has_stream_url": "${streams.isNotEmpty && streams.first.url.isNotEmpty}",
+      },
+    );
+
+    await navigate(
+      PlayerScreen(
+        tmdbId: _movie.id,
+        title: _movie.title,
+        subtitle: "Trailer",
+        streams: streams,
+        mediaType: MediaType.trailers,
+      ),
+    );
+  }
+
+  Future<void> _openTrailerExternally(String url) async {
+    final Uri? trailerUri = Uri.tryParse(url);
+
+    if (trailerUri == null) {
+      if (mounted) {
+        showSnackBar(context, "Unable to open trailer");
+      }
+      return;
+    }
+
+    try {
+      final bool didLaunch = await launchUrl(
+        trailerUri,
+        mode: LaunchMode.externalNonBrowserApplication,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!didLaunch) {
+        showSnackBar(context, "Unable to open trailer");
+      }
+    } catch (_) {
+      if (mounted) {
+        showSnackBar(context, "Unable to open trailer");
+      }
+    }
+  }
+
+  Future<void> _playTrailer(String? trailerUrl) async {
+    final String? sanitizedUrl = trailerUrl?.trim();
+
+    if (sanitizedUrl == null || sanitizedUrl.isEmpty) {
+      if (mounted) {
+        showSnackBar(context, "No trailer found");
+      }
+      return;
+    }
+
+    await logEvent(
+      "extract_trailer_stream_start",
+      parameters: <String, Object?>{
+        "movie_id": _movie.id,
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isTrailerPlayTriggered = true;
+      _pendingTrailerUrl = sanitizedUrl;
+    });
+
+    context.read<AppBloc>().add(
+          ExtractTrailerStreams(
+            tmdbId: _movie.id,
+            mediaType: MediaType.movies,
+            trailerUrl: sanitizedUrl,
+          ),
+        );
   }
 
   Future<void> _refreshData() async {
@@ -260,7 +350,25 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
             });
           }
 
+          final String trailerKey = _trailerStreamKey();
+          final List<MediaStream>? trailerStreams = state.trailerStreams?[trailerKey];
+          final bool isExtractingTrailer = state.isExtractingTrailerStream?[trailerKey] ?? false;
           final List<MediaStream>? streams = state.movieStreams?[_movie.id.toString()];
+
+          if (_isTrailerPlayTriggered && !isExtractingTrailer) {
+            if (mounted) {
+              setState(() => _isTrailerPlayTriggered = false);
+            }
+
+            if (trailerStreams != null && trailerStreams.isNotEmpty) {
+              _pendingTrailerUrl = null;
+              _openTrailer(trailerStreams);
+            } else if (_pendingTrailerUrl != null) {
+              final String pendingUrl = _pendingTrailerUrl!;
+              _pendingTrailerUrl = null;
+              unawaited(_openTrailerExternally(pendingUrl));
+            }
+          }
 
           if (_isPlayTriggered && !_isExtractingStream && (streams?.isNotEmpty ?? false)) {
             if (mounted) {
@@ -282,6 +390,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
               _movie;
           final bool isMovieLoaded = state.movies?.any((Movie m) => m.id == widget.movie.id) ?? false;
           final List<MediaStream>? streams = state.movieStreams?[_movie.id.toString()];
+          final String? trailerUrl = state.movieTrailers?[displayMovie.id.toString()];
 
           return Scaffold(
             appBar: AppBar(
@@ -309,7 +418,8 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
                           children: <Widget>[
                             MediaPoster(
                               backdropPath: displayMovie.backdropPath,
-                              trailerUrl: state.movieTrailers?[displayMovie.id.toString()],
+                              trailerUrl: trailerUrl,
+                              onPlayTrailer: () => _playTrailer(trailerUrl),
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(

@@ -50,8 +50,11 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
   bool _forcedLandscape = false;
   bool _didLogPlaybackStart = false;
 
+  bool get _shouldTrackProgress =>
+      widget.mediaType == MediaType.movies || widget.mediaType == MediaType.tvShows;
+
   void _updateRecentlyWatched(int progressSeconds) {
-    if (progressSeconds < 60) {
+    if (!_shouldTrackProgress || progressSeconds < 60) {
       return;
     }
 
@@ -63,7 +66,7 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
                 progressSeconds,
               ),
             );
-      } else {
+      } else if (widget.mediaType == MediaType.tvShows) {
         context.read<AppBloc>().add(
               UpdateEpisodeProgress(
                 widget.tmdbId,
@@ -154,7 +157,9 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
       },
     ));
     if (mounted) {
-      _updateRecentlyWatched(progressSeconds);
+      if (_shouldTrackProgress) {
+        _updateRecentlyWatched(progressSeconds);
+      }
       Navigator.pop(context);
     }
   }
@@ -226,13 +231,15 @@ class _PlayerScreenState extends BaseScreenState<PlayerScreen> {
 
           if (widget.mediaType == MediaType.movies) {
             progressSeconds = _recentlyWatchedService.getMovieProgress(widget.tmdbId, state.recentlyWatched);
-          } else {
+          } else if (widget.mediaType == MediaType.tvShows) {
             progressSeconds = _recentlyWatchedService.getEpisodeProgress(
               widget.tmdbId,
               widget.seasonId!,
               widget.episodeId!,
               state.recentlyWatched,
             );
+          } else {
+            progressSeconds = 0;
           }
 
           return Scaffold(

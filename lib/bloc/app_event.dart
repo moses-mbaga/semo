@@ -210,6 +210,18 @@ class ClearRecentSearches extends AppEvent {}
 
 // Streams
 
+class ExtractTrailerStreams extends AppEvent {
+  const ExtractTrailerStreams({
+    required this.tmdbId,
+    required this.mediaType,
+    required this.trailerUrl,
+  });
+
+  final int tmdbId;
+  final MediaType mediaType;
+  final String trailerUrl;
+}
+
 class ExtractMovieStream extends AppEvent {
   const ExtractMovieStream(this.movie);
 

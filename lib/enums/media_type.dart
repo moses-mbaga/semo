@@ -1,7 +1,8 @@
 enum MediaType {
   none,
   movies,
-  tvShows;
+  tvShows,
+  trailers;
 
   @override
   String toString() {
@@ -12,6 +13,8 @@ enum MediaType {
         return "Movies";
       case MediaType.tvShows:
         return "TV Shows";
+      case MediaType.trailers:
+        return "Trailers";
     }
   }
 
@@ -23,6 +26,8 @@ enum MediaType {
         return "movies";
       case MediaType.tvShows:
         return "tv_shows";
+      case MediaType.trailers:
+        return "trailers";
     }
   }
 }

@@ -13,13 +13,14 @@ import "package:semo/bloc/handlers/person_handler.dart";
 import "package:semo/bloc/handlers/recent_searches_handler.dart";
 import "package:semo/bloc/handlers/recently_watched_handler.dart";
 import "package:semo/bloc/handlers/stream_handler.dart";
+import "package:semo/bloc/handlers/trailer_handler.dart";
 import "package:semo/bloc/handlers/streaming_platforms_handler.dart";
 import "package:semo/bloc/handlers/tv_show_handler.dart";
 import "package:semo/bloc/handlers/tv_shows_handler.dart";
 import "package:semo/services/auth_service.dart";
 
 class AppBloc extends Bloc<AppEvent, AppState>
-    with GeneralHandler, CacheHandler, MoviesHandler, TvShowsHandler, StreamingPlatformsHandler, GenresHandler, RecentlyWatchedHandler, FavoritesHandler, MovieHandler, TvShowHandler, PersonHandler, RecentSearchesHandler, StreamHandler {
+    with GeneralHandler, CacheHandler, MoviesHandler, TvShowsHandler, StreamingPlatformsHandler, GenresHandler, RecentlyWatchedHandler, FavoritesHandler, MovieHandler, TvShowHandler, PersonHandler, RecentSearchesHandler, StreamHandler, TrailerHandler {
   AppBloc() : super(const AppState()) {
     // General
     on<LoadInitialData>(onLoadInitialData);
@@ -85,6 +86,7 @@ class AppBloc extends Bloc<AppEvent, AppState>
     on<ClearRecentSearches>(onClearRecentSearches);
 
     // Streams
+    on<ExtractTrailerStreams>(onExtractTrailerStreams);
     on<ExtractMovieStream>(onExtractMovieStream);
     on<ExtractEpisodeStream>(onExtractEpisodeStream);
     on<RemoveMovieStream>(onRemoveMovieStream);

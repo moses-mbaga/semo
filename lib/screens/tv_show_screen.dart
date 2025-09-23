@@ -21,6 +21,7 @@ import "package:semo/models/tv_show.dart";
 import "package:semo/screens/base_screen.dart";
 import "package:semo/screens/player_screen.dart";
 import "package:semo/enums/media_type.dart";
+import "package:url_launcher/url_launcher.dart";
 
 class TvShowScreen extends BaseScreen {
   const TvShowScreen(this.tvShow, {super.key});
@@ -37,6 +38,8 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
   int _currentSeasonIndex = 0;
   int? _extractingEpisodeId;
   bool _hasSetInitialSeason = false;
+  bool _isTrailerPlayTriggered = false;
+  String? _pendingTrailerUrl;
 
   void _toggleFavorite() {
     try {
@@ -74,6 +77,93 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
     if (mounted) {
       context.read<AppBloc>().add(ExtractEpisodeStream(widget.tvShow, episode));
     }
+  }
+
+  String _trailerStreamKey() => "${MediaType.tvShows.toJsonField()}_${widget.tvShow.id}";
+
+  Future<void> _openTrailer(List<MediaStream> streams) async {
+    await logEvent(
+      "play_trailer",
+      parameters: <String, Object?>{
+        "tv_show_id": widget.tvShow.id,
+        "has_stream_url": "${streams.isNotEmpty && streams.first.url.isNotEmpty}",
+      },
+    );
+
+    await navigate(
+      PlayerScreen(
+        tmdbId: widget.tvShow.id,
+        title: widget.tvShow.name,
+        subtitle: "Trailer",
+        streams: streams,
+        mediaType: MediaType.trailers,
+      ),
+    );
+  }
+
+  Future<void> _openTrailerExternally(String url) async {
+    final Uri? trailerUri = Uri.tryParse(url);
+
+    if (trailerUri == null) {
+      if (mounted) {
+        showSnackBar(context, "Unable to open trailer");
+      }
+      return;
+    }
+
+    try {
+      final bool didLaunch = await launchUrl(
+        trailerUri,
+        mode: LaunchMode.externalNonBrowserApplication,
+      );
+
+      if (!mounted) {
+        return;
+      }
+
+      if (!didLaunch) {
+        showSnackBar(context, "Unable to open trailer");
+      }
+    } catch (_) {
+      if (mounted) {
+        showSnackBar(context, "Unable to open trailer");
+      }
+    }
+  }
+
+  Future<void> _playTrailer(String? trailerUrl) async {
+    final String? sanitizedUrl = trailerUrl?.trim();
+
+    if (sanitizedUrl == null || sanitizedUrl.isEmpty) {
+      if (mounted) {
+        showSnackBar(context, "No trailer found");
+      }
+      return;
+    }
+
+    await logEvent(
+      "extract_trailer_stream_start",
+      parameters: <String, Object?>{
+        "tv_show_id": widget.tvShow.id,
+      },
+    );
+
+    if (!mounted) {
+      return;
+    }
+
+    setState(() {
+      _isTrailerPlayTriggered = true;
+      _pendingTrailerUrl = sanitizedUrl;
+    });
+
+    context.read<AppBloc>().add(
+          ExtractTrailerStreams(
+            tmdbId: widget.tvShow.id,
+            mediaType: MediaType.tvShows,
+            trailerUrl: sanitizedUrl,
+          ),
+        );
   }
 
   Future<void> _playEpisode(Season season, Episode episode, List<MediaStream> streams) async {
@@ -334,6 +424,25 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
             });
           }
 
+          final String trailerKey = _trailerStreamKey();
+          final List<MediaStream>? trailerStreams = state.trailerStreams?[trailerKey];
+          final bool isExtractingTrailer = state.isExtractingTrailerStream?[trailerKey] ?? false;
+
+          if (_isTrailerPlayTriggered && !isExtractingTrailer) {
+            if (mounted) {
+              setState(() => _isTrailerPlayTriggered = false);
+            }
+
+            if (trailerStreams != null && trailerStreams.isNotEmpty) {
+              _pendingTrailerUrl = null;
+              _openTrailer(trailerStreams);
+            } else if (_pendingTrailerUrl != null) {
+              final String pendingUrl = _pendingTrailerUrl!;
+              _pendingTrailerUrl = null;
+              unawaited(_openTrailerExternally(pendingUrl));
+            }
+          }
+
           // Set initial season based on recently watched (only once)
           if (!_hasSetInitialSeason && seasons != null && seasons.isNotEmpty && state.recentlyWatched != null) {
             int? mostRecentSeasonId;
@@ -406,6 +515,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
           final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
           final Map<String, List<MediaStream>>? episodeStreams = state.episodeStreams;
           final Map<String, dynamic>? recentlyWatchedEpisodes = state.recentlyWatched?[MediaType.tvShows.toJsonField()]?[widget.tvShow.id.toString()]?[selectedSeason?.id.toString()];
+          final String? trailerUrl = state.tvShowTrailers?[widget.tvShow.id.toString()];
 
           return Scaffold(
             appBar: AppBar(
@@ -431,7 +541,8 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
                           children: <Widget>[
                             MediaPoster(
                               backdropPath: widget.tvShow.backdropPath,
-                              trailerUrl: state.tvShowTrailers?[widget.tvShow.id.toString()],
+                              trailerUrl: trailerUrl,
+                              onPlayTrailer: () => _playTrailer(trailerUrl),
                             ),
                             Padding(
                               padding: const EdgeInsets.symmetric(

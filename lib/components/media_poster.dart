@@ -11,11 +11,13 @@ class MediaPoster extends StatelessWidget {
     required this.backdropPath,
     this.trailerUrl,
     this.playTrailerText = "Play trailer",
+    this.onPlayTrailer,
   });
 
   final String backdropPath;
   final String? trailerUrl;
   final String playTrailerText;
+  final Future<void> Function()? onPlayTrailer;
 
   @override
   Widget build(BuildContext context) => LayoutBuilder(
@@ -62,6 +64,11 @@ class MediaPoster extends StatelessWidget {
                           icon: const Icon(Icons.play_arrow),
                           color: Colors.white,
                           onPressed: () async {
+                            if (onPlayTrailer != null) {
+                              await onPlayTrailer!();
+                              return;
+                            }
+
                             if (trailerUrl != null) {
                               await launchUrl(
                                 Uri.parse(trailerUrl!),

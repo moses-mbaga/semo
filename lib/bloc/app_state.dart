@@ -52,6 +52,7 @@ class AppState {
     this.personTvShows,
     this.moviesRecentSearches,
     this.tvShowsRecentSearches,
+    this.trailerStreams,
     this.movieStreams,
     this.episodeStreams,
     this.movieSubtitles,
@@ -69,6 +70,7 @@ class AppState {
     this.isLoadingPersonMedia,
     this.isExtractingMovieStream,
     this.isExtractingEpisodeStream,
+    this.isExtractingTrailerStream,
     this.error,
     this.cacheTimer,
   });
@@ -125,6 +127,7 @@ class AppState {
   final List<String>? moviesRecentSearches;
   final List<String>? tvShowsRecentSearches;
 
+  final Map<String, List<MediaStream>>? trailerStreams;
   final Map<String, List<MediaStream>>? movieStreams;
   final Map<String, List<MediaStream>>? episodeStreams;
 
@@ -144,6 +147,7 @@ class AppState {
   final Map<String, bool>? isLoadingPersonMedia;
   final Map<String, bool>? isExtractingMovieStream;
   final Map<String, bool>? isExtractingEpisodeStream;
+  final Map<String, bool>? isExtractingTrailerStream;
 
   final String? error;
 
@@ -192,6 +196,7 @@ class AppState {
     Object? personTvShows = _notProvided,
     Object? moviesRecentSearches = _notProvided,
     Object? tvShowsRecentSearches = _notProvided,
+    Object? trailerStreams = _notProvided,
     Object? movieStreams = _notProvided,
     Object? episodeStreams = _notProvided,
     Object? movieSubtitles = _notProvided,
@@ -209,6 +214,7 @@ class AppState {
     Object? isLoadingPersonMedia = _notProvided,
     Object? isExtractingMovieStream = _notProvided,
     Object? isExtractingEpisodeStream = _notProvided,
+    Object? isExtractingTrailerStream = _notProvided,
     Object? error = _notProvided,
     Object? cacheTimer = _notProvided,
   }) =>
@@ -253,6 +259,7 @@ class AppState {
         personTvShows: personTvShows == _notProvided ? this.personTvShows : personTvShows as Map<String, List<TvShow>>?,
         moviesRecentSearches: moviesRecentSearches == _notProvided ? this.moviesRecentSearches : moviesRecentSearches as List<String>?,
         tvShowsRecentSearches: tvShowsRecentSearches == _notProvided ? this.tvShowsRecentSearches : tvShowsRecentSearches as List<String>?,
+        trailerStreams: trailerStreams == _notProvided ? this.trailerStreams : trailerStreams as Map<String, List<MediaStream>>?,
         movieStreams: movieStreams == _notProvided ? this.movieStreams : movieStreams as Map<String, List<MediaStream>>?,
         episodeStreams: episodeStreams == _notProvided ? this.episodeStreams : episodeStreams as Map<String, List<MediaStream>>?,
         movieSubtitles: movieSubtitles == _notProvided ? this.movieSubtitles : movieSubtitles as Map<String, List<StreamSubtitles>>?,
@@ -270,6 +277,7 @@ class AppState {
         isLoadingPersonMedia: isLoadingPersonMedia == _notProvided ? this.isLoadingPersonMedia : isLoadingPersonMedia as Map<String, bool>?,
         isExtractingMovieStream: isExtractingMovieStream == _notProvided ? this.isExtractingMovieStream : isExtractingMovieStream as Map<String, bool>?,
         isExtractingEpisodeStream: isExtractingEpisodeStream == _notProvided ? this.isExtractingEpisodeStream : isExtractingEpisodeStream as Map<String, bool>?,
+        isExtractingTrailerStream: isExtractingTrailerStream == _notProvided ? this.isExtractingTrailerStream : isExtractingTrailerStream as Map<String, bool>?,
         error: error == _notProvided ? this.error : error as String?,
         cacheTimer: cacheTimer == _notProvided ? this.cacheTimer : cacheTimer as Timer?,
       );
