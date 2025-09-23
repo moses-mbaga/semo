@@ -86,6 +86,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   Timer? _hideControlsTimer;
   Timer? _progressTimer;
   static const double _eps = 1e-3;
+  static const int _seekCompletionToleranceMs = 500;
   final Logger _logger = Logger();
   late List<MediaStream> _streams;
   int _activeStreamIndex = 0;
@@ -98,6 +99,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool _audioPlayerHasSource = false;
   Object? _pendingStreamFailure;
   bool _isSwitchingStream = false;
+  Duration? _pendingSeekTarget;
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
 
@@ -262,6 +264,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
           _videoController = newController;
           _videoControllerInitialized = true;
           _isPlaying = shouldPlay;
+          _pendingSeekTarget = null;
         });
 
         final double targetScale = _computeZoomInScale();
@@ -527,6 +530,17 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       Duration progress = value.position;
       Duration total = value.duration;
       Duration buffered = Duration.zero;
+      Duration? pendingSeekTarget = _pendingSeekTarget;
+
+      if (pendingSeekTarget != null && !value.isBuffering) {
+        final int deltaMs = (progress.inMilliseconds - pendingSeekTarget.inMilliseconds).abs();
+        if (deltaMs <= _seekCompletionToleranceMs) {
+          _pendingSeekTarget = null;
+          pendingSeekTarget = null;
+        }
+      }
+
+      final bool hasPendingSeek = pendingSeekTarget != null;
       final List<DurationRange> ranges = value.buffered;
 
       if (ranges.isNotEmpty) {
@@ -576,8 +590,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         }
       }
 
-      bool isBuffering = _isSwitchingStream;
-      if (!isBuffering && isPlaying && value.isBuffering && (progress == _mediaProgress.progress)) {
+      bool isBuffering = _isSwitchingStream || value.isBuffering || hasPendingSeek;
+      if (!isBuffering && isPlaying && progress == _mediaProgress.progress) {
         isBuffering = true;
       }
 
@@ -624,6 +638,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
     _isHandlingFailure = true;
     try {
+      _pendingSeekTarget = null;
       final bool wasPlaying = _isPlaying;
 
       if (_videoControllerInitialized) {
@@ -693,6 +708,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
             buffered: _mediaProgress.progress,
             isBuffering: true,
           );
+          _pendingSeekTarget = null;
         });
       }
       return;
@@ -737,6 +753,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
           buffered: currentValue.position,
           isBuffering: true,
         );
+        _pendingSeekTarget = null;
       });
     }
   }
@@ -936,8 +953,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return;
     }
     try {
-      Duration currentPosition = _videoController.value.position;
-      Duration targetPosition = Duration(seconds: currentPosition.inSeconds + _seekDuration);
+      final Duration currentPosition = _videoController.value.position;
+      final Duration targetPosition = currentPosition + Duration(seconds: _seekDuration);
       await seek(targetPosition);
     } catch (e) {
       widget.onError?.call(e);
@@ -949,35 +966,67 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       return;
     }
     try {
-      Duration currentPosition = _videoController.value.position;
-      int seekBackSeconds = currentPosition.inSeconds < _seekDuration ? currentPosition.inSeconds : _seekDuration;
-      Duration targetPosition = Duration(
-        seconds: currentPosition.inSeconds - seekBackSeconds,
-      );
+      final Duration currentPosition = _videoController.value.position;
+      final int seekBackSeconds = currentPosition.inSeconds < _seekDuration ? currentPosition.inSeconds : _seekDuration;
+      final Duration targetPosition = currentPosition - Duration(seconds: seekBackSeconds);
       await seek(targetPosition);
     } catch (e) {
       widget.onError?.call(e);
     }
   }
 
+  Duration _clampSeekTarget(Duration target) {
+    Duration clamped = target;
+
+    if (clamped < Duration.zero) {
+      clamped = Duration.zero;
+    }
+
+    if (_videoControllerInitialized) {
+      final Duration total = _videoController.value.duration;
+      if (total > Duration.zero && clamped > total) {
+        clamped = total;
+      }
+    }
+
+    return clamped;
+  }
+
   Future<void> seek(Duration target) async {
     if (!_videoControllerInitialized) {
       return;
     }
+    final VideoPlayerValue currentValue = _videoController.value;
+    final bool shouldPauseVideo = currentValue.isPlaying;
+    final bool shouldPauseAudio = _audioPlayerHasSource && _audioPlayer.playing;
+    final Duration clampedTarget = _clampSeekTarget(target);
+    final Duration totalDuration = currentValue.duration;
+
+    _pendingSeekTarget = clampedTarget;
+
+    if (mounted) {
+      setState(() {
+        _mediaProgress = MediaProgress(
+          progress: clampedTarget,
+          total: totalDuration > Duration.zero ? totalDuration : _mediaProgress.total,
+          buffered: clampedTarget,
+          isBuffering: true,
+        );
+      });
+    }
+
     try {
       final List<Future<void>> operations = <Future<void>>[
-        // Pause
-        if (_isPlaying) _videoController.pause(),
-        if (_audioPlayerHasSource && _audioPlayer.playing) _audioPlayer.pause(),
-
-        // Seek
-        _videoController.seekTo(target),
-        if (_audioPlayerHasSource) _audioPlayer.seek(target)
+        if (shouldPauseVideo) _videoController.pause(),
+        if (shouldPauseAudio) _audioPlayer.pause(),
+        _videoController.seekTo(clampedTarget),
+        if (_audioPlayerHasSource) _audioPlayer.seek(clampedTarget)
       ];
 
       await Future.wait(operations);
       await _startPlayback();
     } catch (e) {
+      _pendingSeekTarget = null;
       widget.onError?.call(e);
     }
   }
