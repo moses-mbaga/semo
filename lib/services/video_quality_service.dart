@@ -1,9 +1,7 @@
 import "dart:async";
 
-import "package:flutter/widgets.dart";
-import "package:video_player/video_player.dart";
+import "package:media_kit/media_kit.dart";
 
-import "package:semo/enums/stream_type.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
 
@@ -11,32 +9,27 @@ class VideoQualityService {
   const VideoQualityService();
 
   Future<String?> determineQuality(MediaStream stream) async {
-    VideoPlayerController? controller;
+    Player? player;
 
     try {
-      controller = VideoPlayerController.networkUrl(
-        Uri.parse(stream.url),
-        httpHeaders: stream.headers ?? <String, String>{},
-        formatHint: stream.type == StreamType.hls ? VideoFormat.hls : VideoFormat.other,
-        closedCaptionFile: null,
-        videoPlayerOptions: VideoPlayerOptions(mixWithOthers: true),
+      player = Player();
+      await player.open(
+        Media(
+          stream.url,
+          httpHeaders: stream.headers ?? <String, String>{},
+        ),
+        play: false,
       );
-
-      await controller.initialize();
-      await controller.setLooping(false);
-      await controller.setVolume(0);
-      await controller.seekTo(Duration.zero);
-      await controller.play();
 
       const Duration delayBetweenChecks = Duration(milliseconds: 100);
       const int maxAttempts = 20;
 
       for (int attempt = 0; attempt < maxAttempts; attempt++) {
-        final Size size = controller.value.size;
+        final int? width = player.state.width;
+        final int? height = player.state.height;
 
-        if (size.width > 0 && size.height > 0) {
-          await controller.pause();
-          return getClosestResolutionFromDimensions(size.width.round(), size.height.round());
+        if ((width ?? 0) > 0 && (height ?? 0) > 0) {
+          return getClosestResolutionFromDimensions(width!, height!);
         }
 
         await Future<void>.delayed(delayBetweenChecks);
@@ -44,14 +37,11 @@ class VideoQualityService {
     } catch (_) {
       return null;
     } finally {
-      if (controller != null) {
+      if (player != null) {
         try {
-          await controller.pause();
+          await player.stop();
         } catch (_) {}
-
-        try {
-          await controller.dispose();
-        } catch (_) {}
+        await player.dispose();
       }
     }
 
