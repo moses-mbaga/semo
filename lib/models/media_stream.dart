@@ -10,6 +10,7 @@ class MediaStream {
     this.quality = "Auto",
     this.subtitles,
     this.audios,
+    this.hasDefaultAudio = true,
   });
 
   final StreamType type;
@@ -18,4 +19,5 @@ class MediaStream {
   final String quality;
   final List<StreamSubtitles>? subtitles;
   final List<StreamAudio>? audios;
+  final bool hasDefaultAudio;
 }

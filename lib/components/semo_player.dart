@@ -8,6 +8,7 @@ import "package:logger/logger.dart";
 import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/subtitles_type.dart";
 import "package:semo/models/media_stream.dart";
+import "package:semo/models/stream_audio.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/models/stream_subtitles.dart";
 import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
@@ -94,6 +95,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   VideoTrack? _selectedVideoTrack;
   List<AudioTrack> _availableAudioTracks = <AudioTrack>[];
   AudioTrack? _selectedAudioTrack;
+  List<AudioTrack> _manualAudioTracks = <AudioTrack>[];
+  final Map<String, StreamAudio> _manualAudioMetadata = <String, StreamAudio>{};
   Object? _pendingStreamFailure;
   Duration? _pendingSeekTarget;
   DateTime? _lastSeekRetryTime;
@@ -104,9 +107,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool _isBuffering = false;
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
-  bool get _isCurrentStreamAdaptive =>
-      _streams.isNotEmpty && (_currentStream.type == StreamType.hls || _currentStream.type == StreamType.dash);
+  bool get _isCurrentStreamAdaptive => _streams.isNotEmpty && (_currentStream.type == StreamType.hls || _currentStream.type == StreamType.dash);
   bool get _hasMultipleQualityOptions => _isCurrentStreamAdaptive ? _availableVideoTracks.length > 1 : _streams.length > 1;
+  bool get _requiresManualAudio => _manualAudioTracks.isNotEmpty && !_currentStream.hasDefaultAudio;
 
   @override
   void initState() {
@@ -312,11 +315,20 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   void _handleTracksChanged(Tracks tracks) {
-    final List<AudioTrack> audioTracks = tracks.audio
-        .where(
-          (AudioTrack track) => !track.uri && (track.id == "auto" || (track.title != null && track.title!.isNotEmpty) || (track.language != null && track.language!.isNotEmpty)),
-        )
-        .toList();
+    final List<AudioTrack> audioTracks = tracks.audio.where((AudioTrack track) {
+      if (track.uri) {
+        return _manualAudioMetadata.containsKey(_audioTrackKey(track));
+      }
+      return track.id == "auto" || (track.title != null && track.title!.isNotEmpty) || (track.language != null && track.language!.isNotEmpty);
+    }).toList();
+    final Set<String> seenAudioTrackKeys = audioTracks.map(_audioTrackKey).toSet();
+
+    for (final AudioTrack manualTrack in _manualAudioTracks) {
+      final String key = _audioTrackKey(manualTrack);
+      if (seenAudioTrackKeys.add(key)) {
+        audioTracks.add(manualTrack);
+      }
+    }
     final bool isAdaptive = _isCurrentStreamAdaptive;
     final List<VideoTrack> videoTracks = isAdaptive ? _collectAdaptiveVideoTracks(tracks.video) : <VideoTrack>[];
     final VideoTrack currentVideoTrack = _player.state.track.video;
@@ -328,7 +340,19 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     setState(() {
       _availableAudioTracks = audioTracks;
       if (!_availableAudioTracks.contains(_selectedAudioTrack)) {
-        _selectedAudioTrack = _player.state.track.audio;
+        final AudioTrack currentAudioTrack = _player.state.track.audio;
+        if (_availableAudioTracks.contains(currentAudioTrack)) {
+          _selectedAudioTrack = currentAudioTrack;
+        } else {
+          final AudioTrack? defaultManualTrack = _defaultManualAudioTrack();
+          if (defaultManualTrack != null) {
+            _selectedAudioTrack = defaultManualTrack;
+          } else if (_availableAudioTracks.isNotEmpty) {
+            _selectedAudioTrack = _availableAudioTracks.first;
+          } else {
+            _selectedAudioTrack = currentAudioTrack;
+          }
+        }
       }
 
       if (isAdaptive) {
@@ -390,6 +414,55 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     return ordered;
   }
 
+  void _prepareManualAudioTracks(MediaStream stream) {
+    _manualAudioTracks = <AudioTrack>[];
+    _manualAudioMetadata.clear();
+
+    final List<StreamAudio>? audios = stream.audios;
+    if (audios == null || audios.isEmpty || stream.hasDefaultAudio) {
+      return;
+    }
+
+    for (final StreamAudio audio in audios) {
+      final AudioTrack track = _createAudioTrackForStreamAudio(audio);
+      _manualAudioTracks.add(track);
+      _manualAudioMetadata[_audioTrackKey(track)] = audio;
+    }
+  }
+
+  AudioTrack _createAudioTrackForStreamAudio(StreamAudio audio) {
+    final String trimmedLanguage = audio.language.trim();
+    final String title;
+    if (trimmedLanguage.isEmpty) {
+      title = audio.isDefault ? "External (Default)" : "External";
+    } else {
+      title = audio.isDefault ? "$trimmedLanguage (Default)" : trimmedLanguage;
+    }
+
+    return AudioTrack.uri(
+      audio.url,
+      title: title,
+      language: trimmedLanguage.isEmpty ? null : trimmedLanguage,
+    );
+  }
+
+  AudioTrack? _defaultManualAudioTrack() {
+    if (_manualAudioTracks.isEmpty) {
+      return null;
+    }
+
+    for (final AudioTrack track in _manualAudioTracks) {
+      final StreamAudio? audio = _manualAudioMetadata[_audioTrackKey(track)];
+      if (audio?.isDefault == true) {
+        return track;
+      }
+    }
+
+    return _manualAudioTracks.first;
+  }
+
+  String _audioTrackKey(AudioTrack track) => "${track.id}|${track.uri ? 1 : 0}";
+
   void _clearPendingSeek() {
     _pendingSeekTarget = null;
     _lastSeekRetryTime = null;
@@ -417,6 +490,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       }
 
       final MediaStream stream = _currentStream;
+      _prepareManualAudioTracks(stream);
       final bool shouldPlay = autoPlayOverride ?? (_playerInitialized ? _isPlaying : widget.autoPlay);
 
       Duration? targetSeek;
@@ -459,6 +533,22 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       if (targetSeek != null && targetSeek > Duration.zero) {
         await _player.seek(targetSeek);
         _lastSeekRetryTime = DateTime.now();
+      }
+
+      if (_requiresManualAudio) {
+        final AudioTrack? manualDefaultTrack = _defaultManualAudioTrack();
+        if (manualDefaultTrack != null) {
+          try {
+            await _player.setAudioTrack(manualDefaultTrack);
+            _selectedAudioTrack = manualDefaultTrack;
+          } on Object catch (error, stackTrace) {
+            _logger.w(
+              "Failed to attach external audio track",
+              error: error,
+              stackTrace: stackTrace,
+            );
+          }
+        }
       }
 
       if (shouldPlay) {

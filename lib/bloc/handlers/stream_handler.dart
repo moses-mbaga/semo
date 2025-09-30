@@ -197,6 +197,7 @@ mixin StreamHandler on Bloc<AppEvent, AppState> {
           quality: stream.quality,
           subtitles: subtitles.isEmpty ? existing : subtitles,
           audios: stream.audios,
+          hasDefaultAudio: stream.hasDefaultAudio,
         );
       },
     ).toList();

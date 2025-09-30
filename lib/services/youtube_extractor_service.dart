@@ -222,6 +222,7 @@ class YoutubeExtractorService {
             isDefault: false,
           ),
         ],
+        hasDefaultAudio: false,
       );
     }
 
