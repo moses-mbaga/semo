@@ -4,7 +4,7 @@ import "package:semo/bloc/app_event.dart";
 import "package:semo/bloc/app_state.dart";
 import "package:semo/enums/media_type.dart";
 import "package:semo/models/media_stream.dart";
-import "package:semo/services/youtube_extractor_service.dart";
+import "package:semo/services/youtube_extractor_service/youtube_extractor_service.dart";
 
 mixin TrailerHandler on Bloc<AppEvent, AppState> {
   final Logger _logger = Logger();
