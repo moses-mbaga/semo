@@ -180,16 +180,53 @@ class Semo extends StatelessWidget {
         ),
       );
 
+  ThemeData _applyFontScale(ThemeData baseTheme, double scale) {
+    TextTheme scaledTextTheme = baseTheme.textTheme.apply(fontSizeFactor: scale);
+    AppBarTheme appBarTheme = baseTheme.appBarTheme;
+    TextStyle? titleStyle = appBarTheme.titleTextStyle;
+
+    return baseTheme.copyWith(
+      textTheme: scaledTextTheme,
+      appBarTheme: appBarTheme.copyWith(
+        titleTextStyle: titleStyle?.copyWith(
+          fontSize: (titleStyle.fontSize ?? 24) * scale,
+        ),
+      ),
+    );
+  }
+
+  double _resolveFontScale(double width) {
+    double scale = width / 375;
+    if (scale < 0.85) {
+      scale = 0.85;
+    } else if (scale > 1.25) {
+      scale = 1.25;
+    }
+    return scale;
+  }
+
   @override
   Widget build(BuildContext context) => BlocProvider<AppBloc>(
         create: (BuildContext context) => AppBloc()..init(),
         child: BlocBuilder<AppBloc, AppState>(
-          builder: (BuildContext context, AppState state) => MaterialApp(
-            title: "Semo",
-            debugShowCheckedModeBanner: false,
-            theme: _buildTheme(),
-            home: const SplashScreen(),
-          ),
+          builder: (BuildContext context, AppState state) {
+            ThemeData baseTheme = _buildTheme();
+            return MaterialApp(
+              title: "Semo",
+              debugShowCheckedModeBanner: false,
+              theme: baseTheme,
+              builder: (BuildContext context, Widget? child) {
+                MediaQueryData mediaQuery = MediaQuery.of(context);
+                double scale = _resolveFontScale(mediaQuery.size.width);
+                ThemeData scaledTheme = _applyFontScale(baseTheme, scale);
+                return Theme(
+                  data: scaledTheme,
+                  child: child ?? const SizedBox.shrink(),
+                );
+              },
+              home: const SplashScreen(),
+            );
+          },
         ),
       );
 }
