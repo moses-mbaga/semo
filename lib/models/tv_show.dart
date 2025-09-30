@@ -16,6 +16,7 @@ class TvShow {
     required this.name,
     required this.voteAverage,
     required this.voteCount,
+    this.trailerUrl,
   });
 
   factory TvShow.fromJson(Map<String, dynamic> json) => TvShow(
@@ -34,6 +35,7 @@ class TvShow {
       name: json["name"] ?? "",
       voteAverage: double.parse((json["vote_average"]?.toDouble() ?? 0.0).toStringAsFixed(1)),
       voteCount: json["vote_count"] ?? 0,
+      trailerUrl: json["trailer_url"] ?? json["trailerUrl"],
     );
 
   final bool adult;
@@ -50,4 +52,39 @@ class TvShow {
   final String name;
   final double voteAverage;
   final int voteCount;
+  final String? trailerUrl;
+
+  TvShow copyWith({
+    bool? adult,
+    String? backdropPath,
+    List<int>? genreIds,
+    List<Genre>? genres,
+    int? id,
+    String? originalLanguage,
+    String? originalName,
+    String? overview,
+    double? popularity,
+    String? posterPath,
+    String? firstAirDate,
+    String? name,
+    double? voteAverage,
+    int? voteCount,
+    String? trailerUrl,
+  }) => TvShow(
+        adult: adult ?? this.adult,
+        backdropPath: backdropPath ?? this.backdropPath,
+        genreIds: genreIds ?? this.genreIds,
+        genres: genres ?? this.genres,
+        id: id ?? this.id,
+        originalLanguage: originalLanguage ?? this.originalLanguage,
+        originalName: originalName ?? this.originalName,
+        overview: overview ?? this.overview,
+        popularity: popularity ?? this.popularity,
+        posterPath: posterPath ?? this.posterPath,
+        firstAirDate: firstAirDate ?? this.firstAirDate,
+        name: name ?? this.name,
+        voteAverage: voteAverage ?? this.voteAverage,
+        voteCount: voteCount ?? this.voteCount,
+        trailerUrl: trailerUrl ?? this.trailerUrl,
+      );
 }

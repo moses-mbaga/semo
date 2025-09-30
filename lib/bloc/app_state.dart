@@ -36,7 +36,6 @@ class AppState {
     this.tvShowGenres,
     this.genreMoviesPagingControllers,
     this.genreTvShowsPagingControllers,
-    this.movieTrailers,
     this.movieImdbIds,
     this.movieCast,
     this.movieRecommendationsPagingControllers,
@@ -44,7 +43,6 @@ class AppState {
     this.tvShowSeasons,
     this.tvShowEpisodes,
     this.tvShowCast,
-    this.tvShowTrailers,
     this.tvShowImdbIds,
     this.tvShowRecommendationsPagingControllers,
     this.similarTvShowsPagingControllers,
@@ -108,7 +106,6 @@ class AppState {
   final Map<String, PagingController<int, TvShow>>? genreTvShowsPagingControllers;
 
   final Map<String, List<Person>>? movieCast;
-  final Map<String, String>? movieTrailers;
   final Map<String, String>? movieImdbIds;
   final Map<String, PagingController<int, Movie>>? movieRecommendationsPagingControllers;
   final Map<String, PagingController<int, Movie>>? similarMoviesPagingControllers;
@@ -116,7 +113,6 @@ class AppState {
   final Map<String, List<Season>>? tvShowSeasons;
   final Map<String, Map<int, List<Episode>>>? tvShowEpisodes;
   final Map<String, List<Person>>? tvShowCast;
-  final Map<String, String>? tvShowTrailers;
   final Map<String, String>? tvShowImdbIds;
   final Map<String, PagingController<int, TvShow>>? tvShowRecommendationsPagingControllers;
   final Map<String, PagingController<int, TvShow>>? similarTvShowsPagingControllers;
@@ -180,7 +176,6 @@ class AppState {
     Object? tvShowGenres = _notProvided,
     Object? genreMoviesPagingControllers = _notProvided,
     Object? genreTvShowsPagingControllers = _notProvided,
-    Object? movieTrailers = _notProvided,
     Object? movieImdbIds = _notProvided,
     Object? movieCast = _notProvided,
     Object? movieRecommendationsPagingControllers = _notProvided,
@@ -188,7 +183,6 @@ class AppState {
     Object? tvShowSeasons = _notProvided,
     Object? tvShowEpisodes = _notProvided,
     Object? tvShowCast = _notProvided,
-    Object? tvShowTrailers = _notProvided,
     Object? tvShowImdbIds = _notProvided,
     Object? tvShowRecommendationsPagingControllers = _notProvided,
     Object? similarTvShowsPagingControllers = _notProvided,
@@ -244,14 +238,12 @@ class AppState {
         genreMoviesPagingControllers: genreMoviesPagingControllers == _notProvided ? this.genreMoviesPagingControllers : genreMoviesPagingControllers as Map<String, PagingController<int, Movie>>?,
         genreTvShowsPagingControllers: genreTvShowsPagingControllers == _notProvided ? this.genreTvShowsPagingControllers : genreTvShowsPagingControllers as Map<String, PagingController<int, TvShow>>?,
         movieCast: movieCast == _notProvided ? this.movieCast : movieCast as Map<String, List<Person>>?,
-        movieTrailers: movieTrailers == _notProvided ? this.movieTrailers : movieTrailers as Map<String, String>?,
         movieImdbIds: movieImdbIds == _notProvided ? this.movieImdbIds : movieImdbIds as Map<String, String>?,
         movieRecommendationsPagingControllers: movieRecommendationsPagingControllers == _notProvided ? this.movieRecommendationsPagingControllers : movieRecommendationsPagingControllers as Map<String, PagingController<int, Movie>>?,
         similarMoviesPagingControllers: similarMoviesPagingControllers == _notProvided ? this.similarMoviesPagingControllers : similarMoviesPagingControllers as Map<String, PagingController<int, Movie>>?,
         tvShowSeasons: tvShowSeasons == _notProvided ? this.tvShowSeasons : tvShowSeasons as Map<String, List<Season>>?,
         tvShowEpisodes: tvShowEpisodes == _notProvided ? this.tvShowEpisodes : tvShowEpisodes as Map<String, Map<int, List<Episode>>>?,
         tvShowCast: tvShowCast == _notProvided ? this.tvShowCast : tvShowCast as Map<String, List<Person>>?,
-        tvShowTrailers: tvShowTrailers == _notProvided ? this.tvShowTrailers : tvShowTrailers as Map<String, String>?,
         tvShowImdbIds: tvShowImdbIds == _notProvided ? this.tvShowImdbIds : tvShowImdbIds as Map<String, String>?,
         tvShowRecommendationsPagingControllers: tvShowRecommendationsPagingControllers == _notProvided ? this.tvShowRecommendationsPagingControllers : tvShowRecommendationsPagingControllers as Map<String, PagingController<int, TvShow>>?,
         similarTvShowsPagingControllers: similarTvShowsPagingControllers == _notProvided ? this.similarTvShowsPagingControllers : similarTvShowsPagingControllers as Map<String, PagingController<int, TvShow>>?,

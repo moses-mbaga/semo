@@ -506,6 +506,13 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
           }
         },
         builder: (BuildContext context, AppState state) {
+          TvShow displayTvShow = widget.tvShow;
+          if (state.tvShows != null) {
+            try {
+              displayTvShow = state.tvShows!.firstWhere((TvShow tvShow) => tvShow.id == widget.tvShow.id);
+            } catch (_) {}
+          }
+
           final List<Season>? seasons = state.tvShowSeasons?[widget.tvShow.id.toString()];
           final Season? selectedSeason = seasons?[_currentSeasonIndex];
           final List<Episode>? episodes = state.tvShowEpisodes?[widget.tvShow.id.toString()]?[selectedSeason?.number];
@@ -515,7 +522,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
           final Map<String, bool>? extractingMap = state.isExtractingEpisodeStream;
           final Map<String, List<MediaStream>>? episodeStreams = state.episodeStreams;
           final Map<String, dynamic>? recentlyWatchedEpisodes = state.recentlyWatched?[MediaType.tvShows.toJsonField()]?[widget.tvShow.id.toString()]?[selectedSeason?.id.toString()];
-          final String? trailerUrl = state.tvShowTrailers?[widget.tvShow.id.toString()];
+          final String? trailerUrl = displayTvShow.trailerUrl;
 
           return Scaffold(
             appBar: AppBar(
@@ -540,7 +547,7 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
                         child: Column(
                           children: <Widget>[
                             MediaPoster(
-                              backdropPath: widget.tvShow.backdropPath,
+                              backdropPath: displayTvShow.backdropPath,
                               trailerUrl: trailerUrl,
                               onPlayTrailer: () => _playTrailer(trailerUrl),
                             ),
@@ -553,9 +560,9 @@ class _TvShowScreenState extends BaseScreenState<TvShowScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: <Widget>[
                                   MediaInfo(
-                                    title: widget.tvShow.name,
-                                    subtitle: "${widget.tvShow.firstAirDate.split("-")[0]} ·  ${seasons?.length ?? 1} Seasons",
-                                    overview: widget.tvShow.overview,
+                                    title: displayTvShow.name,
+                                    subtitle: "${displayTvShow.firstAirDate.split("-")[0]} ·  ${seasons?.length ?? 1} Seasons",
+                                    overview: displayTvShow.overview,
                                   ),
                                   const SizedBox(height: 30),
                                   _buildSeasonSelector(

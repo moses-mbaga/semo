@@ -390,7 +390,7 @@ class _MovieScreenState extends BaseScreenState<MovieScreen> {
               _movie;
           final bool isMovieLoaded = state.movies?.any((Movie m) => m.id == widget.movie.id) ?? false;
           final List<MediaStream>? streams = state.movieStreams?[_movie.id.toString()];
-          final String? trailerUrl = state.movieTrailers?[displayMovie.id.toString()];
+          final String? trailerUrl = displayMovie.trailerUrl;
 
           return Scaffold(
             appBar: AppBar(

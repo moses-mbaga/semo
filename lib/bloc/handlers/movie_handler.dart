@@ -24,7 +24,13 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
     }
 
     final bool isMovieLoaded = state.movies?.indexWhere((Movie movie) => movie.id.toString() == movieId) != -1;
-    final bool isTrailerLoaded = state.movieTrailers?.containsKey(movieId) ?? false;
+    Movie? existingMovie;
+    if (state.movies != null) {
+      try {
+        existingMovie = state.movies!.firstWhere((Movie movie) => movie.id.toString() == movieId);
+      } catch (_) {}
+    }
+    final bool isTrailerLoaded = existingMovie?.trailerUrl?.isNotEmpty ?? false;
     final bool isCastLoaded = state.movieCast?.containsKey(movieId) ?? false;
     final bool isRecommendationsLoaded = state.movieRecommendationsPagingControllers?.containsKey(movieId) ?? false;
     final bool isSimilarLoaded = state.similarMoviesPagingControllers?.containsKey(movieId) ?? false;
@@ -50,7 +56,6 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
     try {
       await Future.wait(<Future<dynamic>>[
         _loadMovieBasicDetails(event.movieId, emit),
-        _loadMovieTrailer(event.movieId, emit),
         _loadMovieImdbId(event.movieId, emit),
         _loadMovieCast(event.movieId, emit),
         _loadMovieRecommendations(event.movieId, emit),
@@ -92,15 +97,17 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
   Future<void> _loadMovieBasicDetails(int movieId, Emitter<AppState> emit) async {
     try {
       final Movie? movie = await _tmdbService.getMovie(movieId);
-
       if (movie != null) {
+        final String? trailerUrl = await _tmdbService.getTrailerUrl(MediaType.movies, movieId);
+        final Movie updatedMovie = movie.copyWith(trailerUrl: trailerUrl);
+
         final List<Movie> movies = List<Movie>.from(state.movies ?? <Movie>[]);
         final int existingIndex = movies.indexWhere((Movie m) => m.id == movieId);
 
         if (existingIndex != -1) {
-          movies[existingIndex] = movie;
+          movies[existingIndex] = updatedMovie;
         } else {
-          movies.add(movie);
+          movies.add(updatedMovie);
         }
 
         emit(state.copyWith(
@@ -109,23 +116,6 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
       }
     } catch (e, s) {
       _logger.e("Error loading basic movie details for ID $movieId", error: e, stackTrace: s);
-    }
-  }
-
-  Future<void> _loadMovieTrailer(int movieId, Emitter<AppState> emit) async {
-    try {
-      final String? trailerUrl = await _tmdbService.getTrailerUrl(MediaType.movies, movieId);
-
-      if (trailerUrl != null) {
-        Map<String, String> movieTrailers = Map<String, String>.from(state.movieTrailers ?? <String, String>{});
-        movieTrailers[movieId.toString()] = trailerUrl;
-
-        emit(state.copyWith(
-          movieTrailers: movieTrailers,
-        ));
-      }
-    } catch (e, s) {
-      _logger.e("Error loading movie trailer for ID $movieId", error: e, stackTrace: s);
     }
   }
 
@@ -198,9 +188,6 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
     final List<Movie> movies = List<Movie>.from(state.movies ?? <Movie>[]);
     movies.removeWhere((Movie movie) => movie.id == event.movieId);
 
-    Map<String, String> movieTrailers = Map<String, String>.from(state.movieTrailers ?? <String, String>{});
-    movieTrailers.remove(event.movieId.toString());
-
     Map<String, List<Person>> movieCast = Map<String, List<Person>>.from(state.movieCast ?? <String, List<Person>>{});
     movieCast.remove(event.movieId.toString());
 
@@ -215,7 +202,6 @@ mixin MovieHandler on Bloc<AppEvent, AppState> {
 
     emit(state.copyWith(
       movies: movies,
-      movieTrailers: movieTrailers,
       movieCast: movieCast,
       movieRecommendationsPagingControllers: recommendationsControllers,
       similarMoviesPagingControllers: similarMoviesControllers,

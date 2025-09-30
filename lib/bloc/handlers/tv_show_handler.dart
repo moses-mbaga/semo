@@ -25,15 +25,23 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
       return;
     }
 
+    TvShow? existingTvShow;
+    if (state.tvShows != null) {
+      try {
+        existingTvShow = state.tvShows!.firstWhere((TvShow tvShow) => tvShow.id.toString() == tvShowId);
+      } catch (_) {}
+    }
+
     final bool isSeasonsLoaded = state.tvShowSeasons?.containsKey(tvShowId) ?? false;
     final bool isFirstSeasonEpisodesLoaded = _isFirstSeasonEpisodesLoaded(tvShowId);
     final bool isCastLoaded = state.tvShowCast?.containsKey(tvShowId) ?? false;
     final bool isRecommendationsLoaded = state.tvShowRecommendationsPagingControllers?.containsKey(tvShowId) ?? false;
     final bool isSimilarLoaded = state.similarTvShowsPagingControllers?.containsKey(tvShowId) ?? false;
+    final bool isTrailerLoaded = existingTvShow?.trailerUrl?.isNotEmpty ?? false;
 
     final Map<String, bool> updatedLoadingStatus = Map<String, bool>.from(state.isTvShowLoading ?? <String, bool>{});
 
-    if (isSeasonsLoaded && isFirstSeasonEpisodesLoaded && isCastLoaded && isRecommendationsLoaded && isSimilarLoaded) {
+    if (isTrailerLoaded && isSeasonsLoaded && isFirstSeasonEpisodesLoaded && isCastLoaded && isRecommendationsLoaded && isSimilarLoaded) {
       updatedLoadingStatus[tvShowId] = false;
       emit(state.copyWith(
         isTvShowLoading: updatedLoadingStatus,
@@ -51,8 +59,8 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
 
     try {
       await Future.wait(<Future<dynamic>>[
+        _loadTvShowBasicDetails(event.tvShowId, emit),
         _loadTvShowSeasons(event.tvShowId, emit),
-        _loadTvShowTrailer(event.tvShowId, emit),
         _loadTvShowImdbId(event.tvShowId, emit),
         _loadTvShowCast(event.tvShowId, emit),
         _loadTvShowRecommendations(event.tvShowId, emit),
@@ -71,6 +79,31 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
         isTvShowLoading: updatedLoadingStatus,
         error: "Failed to load TV show details",
       ));
+    }
+  }
+
+  Future<void> _loadTvShowBasicDetails(int tvShowId, Emitter<AppState> emit) async {
+    try {
+      final TvShow? tvShow = await _tmdbService.getTvShow(tvShowId);
+      if (tvShow != null) {
+        final String? trailerUrl = await _tmdbService.getTrailerUrl(MediaType.tvShows, tvShowId);
+        final TvShow updatedTvShow = tvShow.copyWith(trailerUrl: trailerUrl);
+
+        final List<TvShow> tvShows = List<TvShow>.from(state.tvShows ?? <TvShow>[]);
+        final int existingIndex = tvShows.indexWhere((TvShow m) => m.id == tvShowId);
+
+        if (existingIndex != -1) {
+          tvShows[existingIndex] = updatedTvShow;
+        } else {
+          tvShows.add(updatedTvShow);
+        }
+
+        emit(state.copyWith(
+          tvShows: tvShows,
+        ));
+      }
+    } catch (e, s) {
+      _logger.e("Error loading TV show basic details for ID $tvShowId", error: e, stackTrace: s);
     }
   }
 
@@ -185,23 +218,6 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
     }
   }
 
-  Future<void> _loadTvShowTrailer(int tvShowId, Emitter<AppState> emit) async {
-    try {
-      final String? trailerUrl = await _tmdbService.getTrailerUrl(MediaType.tvShows, tvShowId);
-
-      if (trailerUrl != null) {
-        Map<String, String> tvShowTrailers = Map<String, String>.from(state.tvShowTrailers ?? <String, String>{});
-        tvShowTrailers[tvShowId.toString()] = trailerUrl;
-
-        emit(state.copyWith(
-          tvShowTrailers: tvShowTrailers,
-        ));
-      }
-    } catch (e, s) {
-      _logger.e("Error loading TV show trailer for ID $tvShowId", error: e, stackTrace: s);
-    }
-  }
-
   Future<void> _loadTvShowCast(int tvShowId, Emitter<AppState> emit) async {
     try {
       final List<Person> cast = await _tmdbService.getCast(MediaType.tvShows, tvShowId);
@@ -271,9 +287,6 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
     final List<TvShow> tvShows = List<TvShow>.from(state.tvShows ?? <TvShow>[]);
     tvShows.removeWhere((TvShow tvShow) => tvShow.id == event.tvShowId);
 
-    Map<String, String> tvShowTrailers = Map<String, String>.from(state.tvShowTrailers ?? <String, String>{});
-    tvShowTrailers.remove(event.tvShowId.toString());
-
     Map<String, List<Person>> tvShowCast = Map<String, List<Person>>.from(state.tvShowCast ?? <String, List<Person>>{});
     tvShowCast.remove(event.tvShowId.toString());
 
@@ -294,7 +307,6 @@ mixin TvShowHandler on Bloc<AppEvent, AppState> {
 
     emit(state.copyWith(
       tvShows: tvShows,
-      tvShowTrailers: tvShowTrailers,
       tvShowCast: tvShowCast,
       tvShowSeasons: tvShowSeasons,
       tvShowEpisodes: tvShowEpisodes,

@@ -18,6 +18,7 @@ class Movie {
     required this.voteAverage,
     required this.voteCount,
     required this.duration,
+    this.trailerUrl,
   });
 
   factory Movie.fromJson(Map<String, dynamic> json) => Movie(
@@ -38,6 +39,7 @@ class Movie {
     voteAverage: double.parse((json["vote_average"]?.toDouble() ?? 0.0).toStringAsFixed(1)),
     voteCount: json["vote_count"] ?? 0,
     duration: json["runtime"] ?? 0,
+    trailerUrl: json["trailer_url"] ?? json["trailerUrl"],
   );
 
   final bool adult;
@@ -56,4 +58,43 @@ class Movie {
   final double voteAverage;
   final int voteCount;
   final int duration;
+  final String? trailerUrl;
+
+  Movie copyWith({
+    bool? adult,
+    String? backdropPath,
+    List<int>? genreIds,
+    List<Genre>? genres,
+    int? id,
+    String? originalLanguage,
+    String? originalTitle,
+    String? overview,
+    double? popularity,
+    String? posterPath,
+    String? releaseDate,
+    String? title,
+    bool? video,
+    double? voteAverage,
+    int? voteCount,
+    int? duration,
+    String? trailerUrl,
+  }) => Movie(
+        adult: adult ?? this.adult,
+        backdropPath: backdropPath ?? this.backdropPath,
+        genreIds: genreIds ?? this.genreIds,
+        genres: genres ?? this.genres,
+        id: id ?? this.id,
+        originalLanguage: originalLanguage ?? this.originalLanguage,
+        originalTitle: originalTitle ?? this.originalTitle,
+        overview: overview ?? this.overview,
+        popularity: popularity ?? this.popularity,
+        posterPath: posterPath ?? this.posterPath,
+        releaseDate: releaseDate ?? this.releaseDate,
+        title: title ?? this.title,
+        video: video ?? this.video,
+        voteAverage: voteAverage ?? this.voteAverage,
+        voteCount: voteCount ?? this.voteCount,
+        duration: duration ?? this.duration,
+        trailerUrl: trailerUrl ?? this.trailerUrl,
+      );
 }

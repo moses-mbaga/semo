@@ -20,6 +20,21 @@ mixin TrailerHandler on Bloc<AppEvent, AppState> {
     }
 
     final Map<String, bool> extractingMap = Map<String, bool>.from(state.isExtractingTrailerStream ?? <String, bool>{});
+    final bool hasCachedStreams = state.trailerStreams?[key]?.isNotEmpty ?? false;
+
+    if (hasCachedStreams) {
+      extractingMap[key] = false;
+
+      emit(
+        state.copyWith(
+          isExtractingTrailerStream: extractingMap,
+          error: null,
+        ),
+      );
+
+      return;
+    }
+
     extractingMap[key] = true;
 
     emit(
