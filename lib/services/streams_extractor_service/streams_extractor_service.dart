@@ -4,10 +4,6 @@ import "dart:math" as math;
 
 import "package:logger/logger.dart";
 import "package:semo/enums/stream_type.dart";
-import "package:semo/models/hls_audio_rendition.dart";
-import "package:semo/models/hls_manifest.dart";
-import "package:semo/models/hls_variant_stream.dart";
-import "package:semo/models/stream_audio.dart";
 import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
@@ -22,7 +18,6 @@ import "package:semo/services/streams_extractor_service/extractors/movies_joy_ex
 import "package:semo/services/streams_extractor_service/extractors/multi_movies_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/vid_fast_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/vid_link_extractor.dart";
-import "package:semo/services/hls_parser_service.dart";
 import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
 import "package:semo/services/streams_extractor_service/extractors/vid_rock_extractor.dart";
 import "package:semo/services/video_quality_service.dart";
@@ -34,7 +29,6 @@ class StreamsExtractorService {
   static final StreamsExtractorService _instance = StreamsExtractorService._internal();
 
   final Logger _logger = Logger();
-  final HlsParserService _hlsParserService = const HlsParserService();
   final VideoQualityService _videoQualityService = const VideoQualityService();
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
@@ -164,10 +158,7 @@ class StreamsExtractorService {
     final List<MediaStream> fileStreams = streams.where((MediaStream stream) => stream.type == StreamType.mp4 || stream.type == StreamType.mkv).toList();
 
     if (hlsStreams.isNotEmpty) {
-      final List<MediaStream>? processedHls = await _selectWorkingHlsStream(hlsStreams);
-      if (processedHls != null && processedHls.isNotEmpty) {
-        return processedHls;
-      }
+      return hlsStreams;
     }
 
     if (fileStreams.isNotEmpty) {
@@ -178,122 +169,6 @@ class StreamsExtractorService {
     }
 
     return streams;
-  }
-
-  Future<List<MediaStream>?> _selectWorkingHlsStream(List<MediaStream> hlsStreams) async {
-    List<MediaStream>? autoFallback;
-
-    for (final MediaStream stream in hlsStreams) {
-      final List<MediaStream>? processed = await _buildHlsQualityStreams(stream);
-      if (processed == null || processed.isEmpty) {
-        continue;
-      }
-
-      if (processed.length > 1) {
-        return processed;
-      }
-
-      autoFallback ??= processed;
-    }
-
-    return autoFallback;
-  }
-
-  Future<List<MediaStream>?> _buildHlsQualityStreams(MediaStream stream) async {
-    try {
-      final HlsManifest manifest = await _hlsParserService.fetchAndParseMasterPlaylist(
-        stream.url,
-        headers: stream.headers,
-      );
-
-      List<StreamAudio>? audios;
-
-      if (manifest.audios.isNotEmpty) {
-        final List<StreamAudio> collectedAudios = <StreamAudio>[];
-
-        for (final HlsAudioRendition audio in manifest.audios) {
-          if (audio.language == null || audio.uri == null) {
-            continue;
-          }
-
-          collectedAudios.add(
-            StreamAudio(
-              language: audio.language!,
-              url: audio.uri!.toString(),
-              isDefault: audio.isDefault,
-            ),
-          );
-        }
-
-        if (collectedAudios.isNotEmpty) {
-          audios = collectedAudios;
-        }
-      }
-
-      final List<MediaStream> result = <MediaStream>[
-        MediaStream(
-          type: StreamType.hls,
-          url: stream.url,
-          headers: stream.headers,
-          quality: "Auto",
-          subtitles: stream.subtitles,
-          audios: audios,
-        ),
-      ];
-
-      if (!manifest.isEmpty) {
-        for (final HlsVariantStream variant in manifest.variants) {
-          String quality = "Auto";
-
-          try {
-            if (variant.width != null && variant.height != null) {
-              quality = getClosestResolutionFromDimensions(variant.width!, variant.height!);
-            } else if (variant.bandwidth != null) {
-              quality = getClosestResolutionFromBandwidth(variant.bandwidth!);
-            }
-          } catch (_) {}
-
-          result.add(
-            MediaStream(
-              type: StreamType.hls,
-              url: variant.uri.toString(),
-              headers: stream.headers,
-              quality: quality,
-              subtitles: stream.subtitles,
-              audios: audios,
-            ),
-          );
-        }
-      }
-
-      if (result.length <= 1) {
-        final String? detectedQuality = await _videoQualityService.determineQuality(stream);
-
-        if (detectedQuality != null && detectedQuality.isNotEmpty) {
-          return <MediaStream>[
-            MediaStream(
-              type: StreamType.hls,
-              url: stream.url,
-              headers: stream.headers,
-              quality: detectedQuality,
-              subtitles: stream.subtitles,
-              audios: audios,
-            ),
-          ];
-        }
-
-        return result;
-      }
-
-      final MediaStream autoStream = result.first;
-      final List<MediaStream> variantStreams = _arrangeStreamsByQualities(result.skip(1).toList());
-
-      return <MediaStream>[autoStream, ...variantStreams];
-    } catch (e, s) {
-      _logger.w("Failed to extract stream qualities", error: e, stackTrace: s);
-    }
-
-    return null;
   }
 
   Future<List<MediaStream>> _processFileStreams(List<MediaStream> fileStreams) async {
@@ -316,7 +191,6 @@ class StreamsExtractorService {
           headers: stream.headers,
           quality: quality ?? "Stream ${i + 1}",
           subtitles: stream.subtitles,
-          audios: stream.audios,
         ),
       );
     }

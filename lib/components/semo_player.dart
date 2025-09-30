@@ -5,10 +5,12 @@ import "package:dio/dio.dart";
 import "package:flutter/material.dart";
 import "package:font_awesome_flutter/font_awesome_flutter.dart";
 import "package:logger/logger.dart";
+import "package:semo/enums/stream_type.dart";
 import "package:semo/enums/subtitles_type.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/services/app_preferences_service.dart";
 import "package:semo/models/stream_subtitles.dart";
+import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
 import "package:semo/services/subtitles_service.dart";
 import "package:semo/services/zip_to_vtt_service.dart";
 import "package:media_kit/media_kit.dart";
@@ -88,6 +90,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool _playerInitialized = false;
   bool _isHandlingFailure = false;
   final List<StreamSubscription<dynamic>> _subscriptions = <StreamSubscription<dynamic>>[];
+  List<VideoTrack> _availableVideoTracks = <VideoTrack>[];
+  VideoTrack? _selectedVideoTrack;
   List<AudioTrack> _availableAudioTracks = <AudioTrack>[];
   AudioTrack? _selectedAudioTrack;
   Object? _pendingStreamFailure;
@@ -100,6 +104,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool _isBuffering = false;
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
+  bool get _isCurrentStreamHls => _streams.isNotEmpty && _currentStream.type == StreamType.hls;
+  bool get _hasMultipleQualityOptions => _isCurrentStreamHls ? _availableVideoTracks.length > 1 : _streams.length > 1;
 
   @override
   void initState() {
@@ -310,6 +316,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
           (AudioTrack track) => !track.uri && (track.id == "auto" || (track.title != null && track.title!.isNotEmpty) || (track.language != null && track.language!.isNotEmpty)),
         )
         .toList();
+    final bool isHls = _isCurrentStreamHls;
+    final List<VideoTrack> videoTracks = isHls ? _collectHlsVideoTracks(tracks.video) : <VideoTrack>[];
+    final VideoTrack currentVideoTrack = _player.state.track.video;
 
     if (!mounted) {
       return;
@@ -319,6 +328,20 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       _availableAudioTracks = audioTracks;
       if (!_availableAudioTracks.contains(_selectedAudioTrack)) {
         _selectedAudioTrack = _player.state.track.audio;
+      }
+
+      if (isHls) {
+        _availableVideoTracks = videoTracks;
+        if (videoTracks.contains(currentVideoTrack)) {
+          _selectedVideoTrack = currentVideoTrack;
+        } else if (_availableVideoTracks.isNotEmpty) {
+          _selectedVideoTrack = _availableVideoTracks.first;
+        } else {
+          _selectedVideoTrack = currentVideoTrack;
+        }
+      } else {
+        _availableVideoTracks = <VideoTrack>[];
+        _selectedVideoTrack = null;
       }
     });
   }
@@ -330,7 +353,40 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
     setState(() {
       _selectedAudioTrack = track.audio;
+      if (_isCurrentStreamHls) {
+        _selectedVideoTrack = track.video;
+      } else {
+        _selectedVideoTrack = null;
+      }
     });
+  }
+
+  List<VideoTrack> _collectHlsVideoTracks(List<VideoTrack> tracks) {
+    final VideoTrack autoTrack = tracks.firstWhere(
+      (VideoTrack track) => track.id == "auto",
+      orElse: VideoTrack.auto,
+    );
+    final List<VideoTrack> variants = tracks
+        .where(
+          (VideoTrack track) => track.id != "auto" && track.w != null && track.h != null && track.w! > 0 && track.h! > 0,
+        )
+        .toList()
+      ..sort((VideoTrack a, VideoTrack b) => (b.h ?? 0).compareTo(a.h ?? 0));
+
+    final List<VideoTrack> ordered = <VideoTrack>[];
+    final Set<String> seen = <String>{};
+
+    if (seen.add(autoTrack.id)) {
+      ordered.add(autoTrack);
+    }
+
+    for (final VideoTrack track in variants) {
+      if (seen.add(track.id)) {
+        ordered.add(track);
+      }
+    }
+
+    return ordered;
   }
 
   void _clearPendingSeek() {
@@ -381,6 +437,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
           _currentDuration = Duration.zero;
           _isBuffering = true;
           _showControls = true;
+          _availableVideoTracks = <VideoTrack>[];
+          _selectedVideoTrack = null;
           _availableAudioTracks = <AudioTrack>[];
           _selectedAudioTrack = null;
           _showSubtitles = false;
@@ -482,6 +540,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     try {
       _clearPendingSeek();
       final bool wasPlaying = _isPlaying;
+      _availableVideoTracks = <VideoTrack>[];
+      _selectedVideoTrack = null;
       _availableAudioTracks = <AudioTrack>[];
       _selectedAudioTrack = null;
 
@@ -509,6 +569,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
       if (mounted) {
         setState(() {
+          _availableVideoTracks = <VideoTrack>[];
+          _selectedVideoTrack = null;
           _selectedSubtitleLanguageGroup = null;
           _selectedSubtitleIndex = 0;
           _showSubtitles = false;
@@ -567,6 +629,55 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   Future<void> _showQualitySelector() async {
+    if (_isCurrentStreamHls) {
+      if (_availableVideoTracks.length <= 1) {
+        return;
+      }
+
+      final int? selectedIndex = await showDialog<int>(
+        context: context,
+        builder: (BuildContext context) => SimpleDialog(
+          title: Text(
+            "Select quality",
+            style: Theme.of(context).textTheme.titleSmall,
+          ),
+          children: _availableVideoTracks.asMap().entries.map((MapEntry<int, VideoTrack> entry) {
+            final VideoTrack track = entry.value;
+            final bool isActive = track == _selectedVideoTrack;
+            return ListTile(
+              title: Text(
+                _describeVideoTrack(track),
+                style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                      color: isActive ? Theme.of(context).primaryColor : Colors.white,
+                      fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
+                    ),
+              ),
+              trailing: isActive
+                  ? Icon(
+                      Icons.check,
+                      color: Theme.of(context).primaryColor,
+                    )
+                  : null,
+              onTap: () => Navigator.pop(context, entry.key),
+            );
+          }).toList(),
+        ),
+      );
+
+      if (selectedIndex == null) {
+        return;
+      }
+
+      final VideoTrack selectedTrack = _availableVideoTracks[selectedIndex];
+
+      if (_selectedVideoTrack == selectedTrack) {
+        return;
+      }
+
+      await _changeVideoTrack(selectedTrack);
+      return;
+    }
+
     if (_streams.length <= 1) {
       return;
     }
@@ -693,6 +804,31 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
   }
 
+  Future<void> _changeVideoTrack(VideoTrack track) async {
+    final bool wasPlaying = _player.state.playing;
+
+    try {
+      if (wasPlaying) {
+        await _player.pause();
+      }
+
+      await _player.setVideoTrack(track);
+
+      if (mounted) {
+        setState(() {
+          _selectedVideoTrack = track;
+        });
+      }
+
+      if (wasPlaying) {
+        await _player.play();
+      }
+    } catch (e, s) {
+      _logger.w("Failed to switch video track", error: e, stackTrace: s);
+      widget.onError?.call(e);
+    }
+  }
+
   String _describeAudioTrack(AudioTrack track) {
     if (track.id == "auto") {
       return "Default";
@@ -707,6 +843,33 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
 
     return track.id;
+  }
+
+  String _describeVideoTrack(VideoTrack track) {
+    if (track.id == "auto") {
+      return "Auto";
+    }
+
+    String? description;
+
+    if (track.w != null && track.h != null && track.w! > 0 && track.h! > 0) {
+      final String resolution = getClosestResolutionFromDimensions(track.w!, track.h!);
+      if (resolution.isNotEmpty) {
+        description = resolution;
+      } else {
+        description = "${track.h}p";
+      }
+    }
+
+    if ((description == null || description.isEmpty) && track.title != null && track.title!.isNotEmpty) {
+      description = track.title!;
+    }
+
+    if (description == null || description.isEmpty) {
+      description = track.id;
+    }
+
+    return description;
   }
 
   void _updateProgress() {
@@ -1123,7 +1286,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                         ],
                       ),
                       actions: <Widget>[
-                        if (_streams.length > 1)
+                        if (_hasMultipleQualityOptions)
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 8),
                             child: IconButton(
