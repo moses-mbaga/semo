@@ -134,7 +134,7 @@ jobs:
         if: ${{ success() }}
         run: |
           set -o pipefail
-          { flutter build apk --release --split-per-abi; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
+          { flutter build apk --release --split-per-abi --no-tree-shake-icons; } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Upload logs artifact
         if: ${{ always() }}
