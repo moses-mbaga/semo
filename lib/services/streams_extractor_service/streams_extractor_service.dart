@@ -154,11 +154,13 @@ class StreamsExtractorService {
   }
 
   Future<List<MediaStream>> _postProcessStreams(List<MediaStream> streams) async {
-    final List<MediaStream> hlsStreams = streams.where((MediaStream stream) => stream.type == StreamType.hls).toList();
+    final List<MediaStream> adaptiveStreams = streams
+        .where((MediaStream stream) => stream.type == StreamType.hls || stream.type == StreamType.dash)
+        .toList();
     final List<MediaStream> fileStreams = streams.where((MediaStream stream) => stream.type == StreamType.mp4 || stream.type == StreamType.mkv).toList();
 
-    if (hlsStreams.isNotEmpty) {
-      return hlsStreams;
+    if (adaptiveStreams.isNotEmpty) {
+      return adaptiveStreams;
     }
 
     if (fileStreams.isNotEmpty) {

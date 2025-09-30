@@ -104,8 +104,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool _isBuffering = false;
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
-  bool get _isCurrentStreamHls => _streams.isNotEmpty && _currentStream.type == StreamType.hls;
-  bool get _hasMultipleQualityOptions => _isCurrentStreamHls ? _availableVideoTracks.length > 1 : _streams.length > 1;
+  bool get _isCurrentStreamAdaptive =>
+      _streams.isNotEmpty && (_currentStream.type == StreamType.hls || _currentStream.type == StreamType.dash);
+  bool get _hasMultipleQualityOptions => _isCurrentStreamAdaptive ? _availableVideoTracks.length > 1 : _streams.length > 1;
 
   @override
   void initState() {
@@ -316,8 +317,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
           (AudioTrack track) => !track.uri && (track.id == "auto" || (track.title != null && track.title!.isNotEmpty) || (track.language != null && track.language!.isNotEmpty)),
         )
         .toList();
-    final bool isHls = _isCurrentStreamHls;
-    final List<VideoTrack> videoTracks = isHls ? _collectHlsVideoTracks(tracks.video) : <VideoTrack>[];
+    final bool isAdaptive = _isCurrentStreamAdaptive;
+    final List<VideoTrack> videoTracks = isAdaptive ? _collectAdaptiveVideoTracks(tracks.video) : <VideoTrack>[];
     final VideoTrack currentVideoTrack = _player.state.track.video;
 
     if (!mounted) {
@@ -330,7 +331,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         _selectedAudioTrack = _player.state.track.audio;
       }
 
-      if (isHls) {
+      if (isAdaptive) {
         _availableVideoTracks = videoTracks;
         if (videoTracks.contains(currentVideoTrack)) {
           _selectedVideoTrack = currentVideoTrack;
@@ -353,7 +354,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
     setState(() {
       _selectedAudioTrack = track.audio;
-      if (_isCurrentStreamHls) {
+      if (_isCurrentStreamAdaptive) {
         _selectedVideoTrack = track.video;
       } else {
         _selectedVideoTrack = null;
@@ -361,7 +362,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     });
   }
 
-  List<VideoTrack> _collectHlsVideoTracks(List<VideoTrack> tracks) {
+  List<VideoTrack> _collectAdaptiveVideoTracks(List<VideoTrack> tracks) {
     final VideoTrack autoTrack = tracks.firstWhere(
       (VideoTrack track) => track.id == "auto",
       orElse: VideoTrack.auto,
@@ -629,7 +630,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   Future<void> _showQualitySelector() async {
-    if (_isCurrentStreamHls) {
+    if (_isCurrentStreamAdaptive) {
       if (_availableVideoTracks.length <= 1) {
         return;
       }
