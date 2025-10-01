@@ -1,5 +1,6 @@
 import "dart:async";
 
+import "package:audio_session/audio_session.dart";
 import "package:firebase_core/firebase_core.dart";
 import "package:firebase_crashlytics/firebase_crashlytics.dart";
 import "package:firebase_remote_config/firebase_remote_config.dart";
@@ -22,10 +23,17 @@ import "package:media_kit/media_kit.dart";
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   MediaKit.ensureInitialized();
+  await _flagAsMediaApp();
   await _initializeFirebase();
   await AppPreferencesService.init();
   await GoogleSignIn.instance.initialize();
   runApp(const Semo());
+}
+
+Future<void> _flagAsMediaApp() async {
+  final AudioSession session = await AudioSession.instance;
+  await session.configure(const AudioSessionConfiguration.music());
+  await session.setActive(true);
 }
 
 Future<void> _initializeFirebase() async {
