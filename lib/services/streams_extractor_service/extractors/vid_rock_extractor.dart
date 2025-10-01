@@ -1,4 +1,5 @@
 import "dart:async";
+import "dart:convert";
 
 import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
@@ -100,7 +101,7 @@ class VidRockExtractor implements BaseStreamExtractor {
       final Response<dynamic> response = await _dio.get(externalLink);
 
       if (response.statusCode == 200) {
-        final Map<String, dynamic> sources = Map<String, dynamic>.from(response.data as Map<dynamic, dynamic>);
+        final Map<String, dynamic> sources = Map<String, dynamic>.from(jsonDecode(response.data) as Map<dynamic, dynamic>);
 
         for (final MapEntry<String, dynamic> sourceEntry in sources.entries) {
           if (sourceEntry.value is! Map) {
