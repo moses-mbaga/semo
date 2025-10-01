@@ -6,7 +6,4 @@ part "secrets_service.g.dart";
 abstract class SecretsService {
   @EnviedField(varName: "TMDB_ACCESS_TOKEN", obfuscate: true)
   static String tmdbAccessToken = _SecretsService.tmdbAccessToken;
-
-  @EnviedField(varName: "CINEPRO_BASE_URL", obfuscate: true)
-  static String cineProBaseUrl = _SecretsService.cineProBaseUrl;
 }

@@ -26,28 +26,23 @@ class StreamsExtractorService {
   factory StreamsExtractorService() => _instance;
   StreamsExtractorService._internal();
 
-  static final StreamsExtractorService _instance =
-      StreamsExtractorService._internal();
+  static final StreamsExtractorService _instance = StreamsExtractorService._internal();
 
   final Logger _logger = Logger();
   final VideoQualityService _videoQualityService = const VideoQualityService();
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
-    if (!Platform.isIOS)
-      StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
-    if (!Platform.isIOS)
-      StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
-    if (!Platform.isIOS)
-      StreamingServer(name: "MoviesJoy", extractor: MoviesJoyExtractor()),
+    if (!Platform.isIOS) StreamingServer(name: "MoviesJoy", extractor: MoviesJoyExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
     StreamingServer(name: "VidRock", extractor: VidRockExtractor()),
 
     // Broken
-    // StreamingServer(name: "CinePro", extractor: CineProExtractor()), // As of 19.09.2025, all streams returned don't work
     // if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()), // As of 19.09.2025, blocked by Cloudflare
     // if (!Platform.isIOS) StreamingServer(name: "ShowBox", extractor: ShowBoxExtractor()), // As of 18.09.2025, blocked by Cloudflare
   ];
@@ -59,40 +54,29 @@ class StreamsExtractorService {
       const int maxIndividualAttempts = 3;
       const int maxRandomExtractors = 3;
       final math.Random random = math.Random();
-      final String storedServerName =
-          AppPreferencesService().getStreamingServer();
+      final String storedServerName = AppPreferencesService().getStreamingServer();
       final bool isTv = options.season != null && options.episode != null;
-      final MediaType requestedMediaType =
-          isTv ? MediaType.tvShows : MediaType.movies;
+      final MediaType requestedMediaType = isTv ? MediaType.tvShows : MediaType.movies;
 
       if (requestedMediaType == MediaType.none) {
         throw Exception("Unable to determine media type for extraction");
       }
 
-      final List<StreamingServer> availableServers = _streamingServers
-          .where((StreamingServer s) =>
-              s.extractor != null &&
-              s.extractor!.acceptedMediaTypes.contains(requestedMediaType))
-          .toList();
+      final List<StreamingServer> availableServers = _streamingServers.where((StreamingServer s) => s.extractor != null && s.extractor!.acceptedMediaTypes.contains(requestedMediaType)).toList();
 
       if (storedServerName != "Random") {
-        final StreamingServer server = _streamingServers.firstWhere(
-            (StreamingServer server) => server.name == storedServerName);
+        final StreamingServer server = _streamingServers.firstWhere((StreamingServer server) => server.name == storedServerName);
         final BaseStreamExtractor? extractor = server.extractor;
 
-        if (extractor == null ||
-            !extractor.acceptedMediaTypes.contains(requestedMediaType)) {
-          throw Exception(
-              "Selected server '$storedServerName' does not support ${requestedMediaType.toString()}");
+        if (extractor == null || !extractor.acceptedMediaTypes.contains(requestedMediaType)) {
+          throw Exception("Selected server '$storedServerName' does not support ${requestedMediaType.toString()}");
         }
 
         for (int attempt = 0; attempt < maxIndividualAttempts; attempt++) {
-          final List<MediaStream> streams =
-              await _extractStreamsForServer(extractor, options, server.name);
+          final List<MediaStream> streams = await _extractStreamsForServer(extractor, options, server.name);
 
           if (streams.isNotEmpty) {
-            _logger.i(
-                "Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
+            _logger.i("Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
             return streams;
           }
 
@@ -106,8 +90,7 @@ class StreamsExtractorService {
         return <MediaStream>[];
       }
 
-      final List<StreamingServer> randomServers =
-          List<StreamingServer>.from(availableServers);
+      final List<StreamingServer> randomServers = List<StreamingServer>.from(availableServers);
       int randomAttempts = 0;
 
       while (randomAttempts < maxRandomExtractors && randomServers.isNotEmpty) {
@@ -115,12 +98,10 @@ class StreamsExtractorService {
         final StreamingServer server = randomServers.removeAt(randomIndex);
         final BaseStreamExtractor extractor = server.extractor!;
 
-        final List<MediaStream> streams =
-            await _extractStreamsForServer(extractor, options, server.name);
+        final List<MediaStream> streams = await _extractStreamsForServer(extractor, options, server.name);
 
         if (streams.isNotEmpty) {
-          _logger.i(
-              "Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
+          _logger.i("Streams found.\nStreamingServer: ${server.name}\nCount: ${streams.length}");
           return streams;
         }
 
@@ -145,20 +126,16 @@ class StreamsExtractorService {
     Map<String, String>? externalLinkHeaders;
 
     if (extractor.needsExternalLink) {
-      final Map<String, Object?>? external =
-          await extractor.getExternalLink(options);
+      final Map<String, Object?>? external = await extractor.getExternalLink(options);
       externalLinkUrl = (external?["url"] as String?)?.trim();
-      final Map<dynamic, dynamic>? rawHeaders =
-          external?["headers"] as Map<dynamic, dynamic>?;
+      final Map<dynamic, dynamic>? rawHeaders = external?["headers"] as Map<dynamic, dynamic>?;
       if (rawHeaders != null) {
         // ignore: avoid_annotating_with_dynamic
-        externalLinkHeaders = rawHeaders.map((dynamic k, dynamic v) =>
-            MapEntry<String, String>(k.toString(), v.toString()));
+        externalLinkHeaders = rawHeaders.map((dynamic k, dynamic v) => MapEntry<String, String>(k.toString(), v.toString()));
       }
 
       if (externalLinkUrl == null || externalLinkUrl.isEmpty) {
-        throw Exception(
-            "Failed to retrieve external link for ${options.title} in $serverName");
+        throw Exception("Failed to retrieve external link for ${options.title} in $serverName");
       }
     }
 
@@ -175,24 +152,16 @@ class StreamsExtractorService {
     return _postProcessStreams(rawStreams);
   }
 
-  Future<List<MediaStream>> _postProcessStreams(
-      List<MediaStream> streams) async {
-    final List<MediaStream> adaptiveStreams = streams
-        .where((MediaStream stream) =>
-            stream.type == StreamType.hls || stream.type == StreamType.dash)
-        .toList();
-    final List<MediaStream> fileStreams = streams
-        .where((MediaStream stream) =>
-            stream.type == StreamType.mp4 || stream.type == StreamType.mkv)
-        .toList();
+  Future<List<MediaStream>> _postProcessStreams(List<MediaStream> streams) async {
+    final List<MediaStream> adaptiveStreams = streams.where((MediaStream stream) => stream.type == StreamType.hls || stream.type == StreamType.dash).toList();
+    final List<MediaStream> fileStreams = streams.where((MediaStream stream) => stream.type == StreamType.mp4 || stream.type == StreamType.mkv).toList();
 
     if (adaptiveStreams.isNotEmpty) {
       return adaptiveStreams;
     }
 
     if (fileStreams.isNotEmpty) {
-      final List<MediaStream> processedFiles =
-          await _processFileStreams(fileStreams);
+      final List<MediaStream> processedFiles = await _processFileStreams(fileStreams);
       if (processedFiles.isNotEmpty) {
         return processedFiles;
       }
@@ -201,8 +170,7 @@ class StreamsExtractorService {
     return streams;
   }
 
-  Future<List<MediaStream>> _processFileStreams(
-      List<MediaStream> fileStreams) async {
+  Future<List<MediaStream>> _processFileStreams(List<MediaStream> fileStreams) async {
     List<MediaStream> streams = <MediaStream>[];
 
     for (int i = 0; i < fileStreams.length; i++) {
@@ -254,7 +222,6 @@ List<MediaStream> _arrangeStreamsByQualities(List<MediaStream> streams) {
 
   return streams
     ..sort(
-      (MediaStream a, MediaStream b) =>
-          qualityWeight(b.quality).compareTo(qualityWeight(a.quality)),
+      (MediaStream a, MediaStream b) => qualityWeight(b.quality).compareTo(qualityWeight(a.quality)),
     );
 }

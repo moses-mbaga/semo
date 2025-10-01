@@ -2,7 +2,6 @@ import "package:dio/dio.dart";
 import "package:flutter/foundation.dart";
 import "package:logger/logger.dart";
 import "package:pretty_dio_logger/pretty_dio_logger.dart";
-import "package:semo/services/secrets_service.dart";
 
 class StreamingServerBaseUrlExtractor {
   factory StreamingServerBaseUrlExtractor() {
@@ -36,7 +35,6 @@ class StreamingServerBaseUrlExtractor {
   DateTime? _cacheTimestamp;
 
   static final Map<String, String> _manualBaseUrls = <String, String>{
-    "semo_cinepro": SecretsService.cineProBaseUrl,
     "semo_hollymovie": "https://hollymoviehd.cc",
     "semo_mappletv": "https://mappletv.uk",
     "semo_moviesjoy": "https://moviesjoy.is",
