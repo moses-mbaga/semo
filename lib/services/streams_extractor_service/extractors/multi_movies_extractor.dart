@@ -369,7 +369,10 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
       throw Exception("Failed to get base URL for $_providerKey");
     }
 
-    String searchQuery = Uri.encodeComponent(options.title);
+    String normalizedQuery = options.title.normalize();
+    normalizedQuery = normalizedQuery.replaceAll(RegExp(r"[^a-z0-9\s-]"), "");
+
+    String searchQuery = Uri.encodeComponent(normalizedQuery);
     String searchUrl = "$baseUrl/?s=$searchQuery";
 
     final Response<dynamic> response = await _dio.get(searchUrl);
@@ -384,16 +387,15 @@ class MultiMoviesExtractor implements BaseStreamExtractor {
 
     for (final Map<String, String> post in posts) {
       final String lowerPostTitle = "${post["title"]}".normalize();
-      final String lowerSearchTitle = options.title.normalize();
 
       if (options.releaseYear != null) {
-        if (lowerPostTitle.contains(lowerSearchTitle) && "${post["year"]}" == options.releaseYear!) {
+        if (lowerPostTitle.contains(normalizedQuery) && "${post["year"]}" == options.releaseYear!) {
           targetPostUrl = post["link"];
           break;
         }
       }
 
-      if (lowerPostTitle == lowerSearchTitle || lowerPostTitle.contains(lowerSearchTitle)) {
+      if (lowerPostTitle == normalizedQuery || lowerPostTitle.contains(normalizedQuery)) {
         targetPostUrl = post["link"];
         break;
       }
