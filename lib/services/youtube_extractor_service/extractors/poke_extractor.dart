@@ -9,6 +9,7 @@ import "package:semo/models/media_stream.dart";
 import "package:semo/models/stream_audio.dart";
 import "package:semo/services/youtube_extractor_service/extractors/base_youtube_extractor.dart";
 import "package:semo/services/youtube_extractor_service/extractors/utils/youtube_helpers.dart";
+import "package:semo/services/youtube_extractor_service/extractors/utils/stream_probe.dart";
 
 class PokeExtractor extends BaseYoutubeExtractor {
   PokeExtractor() {
@@ -36,6 +37,7 @@ class PokeExtractor extends BaseYoutubeExtractor {
     ),
   );
   final Logger _logger = Logger();
+  final StreamProbe _streamProbe = StreamProbe();
 
   @override
   Future<List<MediaStream>> extractStreams(String youtubeUrl) async {
@@ -92,6 +94,43 @@ class PokeExtractor extends BaseYoutubeExtractor {
         url: audio.url,
         isDefault: false,
       );
+
+      final StreamProbeResult audioProbe = await _streamProbe.probe(
+        audio.url,
+        expectedMimeTypePrefixes: <String>["audio/"],
+      );
+      if (!audioProbe.isSuccessful) {
+        _logger.w(
+          "Poke audio probe failed for video $videoId: ${audioProbe.failureReason ?? "unknown reason"}"
+          " (status=${audioProbe.statusCode}, contentType=${audioProbe.contentType})",
+        );
+        return <MediaStream>[];
+      }
+
+      if (audioProbe.usedFallbackMime) {
+        _logger.i(
+          "Poke audio probe accepted fallback mime for video $videoId (contentType=${audioProbe.contentType})",
+        );
+      }
+
+      final _ParsedVideo primaryVideo = videos.first;
+      final StreamProbeResult videoProbe = await _streamProbe.probe(
+        primaryVideo.url,
+        expectedMimeTypePrefixes: <String>["video/"],
+      );
+      if (!videoProbe.isSuccessful) {
+        _logger.w(
+          "Poke video probe failed for video $videoId: ${videoProbe.failureReason ?? "unknown reason"}"
+          " (status=${videoProbe.statusCode}, contentType=${videoProbe.contentType})",
+        );
+        return <MediaStream>[];
+      }
+
+      if (videoProbe.usedFallbackMime) {
+        _logger.i(
+          "Poke video probe accepted fallback mime for video $videoId (contentType=${videoProbe.contentType})",
+        );
+      }
 
       return videos
           .map(

@@ -10,6 +10,7 @@ import "package:semo/models/stream_audio.dart";
 import "package:semo/services/streams_extractor_service/extractors/utils/common_headers.dart";
 import "package:semo/services/youtube_extractor_service/extractors/base_youtube_extractor.dart";
 import "package:semo/services/youtube_extractor_service/extractors/utils/youtube_helpers.dart";
+import "package:semo/services/youtube_extractor_service/extractors/utils/stream_probe.dart";
 
 class PipedExtractor extends BaseYoutubeExtractor {
   PipedExtractor() {
@@ -43,6 +44,7 @@ class PipedExtractor extends BaseYoutubeExtractor {
       headers: commonHeaders,
     ),
   );
+  final StreamProbe _streamProbe = StreamProbe();
 
   @override
   Future<List<MediaStream>> extractStreams(String youtubeUrl) async {
@@ -81,7 +83,7 @@ class PipedExtractor extends BaseYoutubeExtractor {
         return <MediaStream>[];
       }
 
-      final List<MediaStream> streams = _buildMediaStreams(payload);
+      final List<MediaStream> streams = await _buildMediaStreams(payload, videoId);
       if (streams.isEmpty) {
         _logger.w("No suitable MP4 streams found on ${streamUri.host} for video $videoId");
       }
@@ -94,7 +96,10 @@ class PipedExtractor extends BaseYoutubeExtractor {
     return <MediaStream>[];
   }
 
-  List<MediaStream> _buildMediaStreams(Map<String, dynamic> payload) {
+  Future<List<MediaStream>> _buildMediaStreams(
+    Map<String, dynamic> payload,
+    String videoId,
+  ) async {
     final List<Map<String, Object?>> videoEntries = _extractEntries(payload["videoStreams"]);
     final List<Map<String, Object?>> audioEntries = _extractEntries(payload["audioStreams"]);
 
@@ -112,6 +117,24 @@ class PipedExtractor extends BaseYoutubeExtractor {
       return <MediaStream>[];
     }
 
+    final StreamProbeResult audioProbe = await _streamProbe.probe(
+      audioUrl,
+      expectedMimeTypePrefixes: <String>["audio/"],
+    );
+    if (!audioProbe.isSuccessful) {
+      _logger.w(
+        "Piped audio probe failed for video $videoId: ${audioProbe.failureReason ?? "unknown reason"}"
+        " (status=${audioProbe.statusCode}, contentType=${audioProbe.contentType})",
+      );
+      return <MediaStream>[];
+    }
+
+    if (audioProbe.usedFallbackMime) {
+      _logger.i(
+        "Piped audio probe accepted fallback mime for video $videoId (contentType=${audioProbe.contentType})",
+      );
+    }
+
     final StreamAudio externalAudio = StreamAudio(
       language: "Default",
       url: audioUrl,
@@ -119,6 +142,7 @@ class PipedExtractor extends BaseYoutubeExtractor {
     );
 
     final List<MediaStream> streams = <MediaStream>[];
+    String? firstVideoUrl;
     for (final _ResolutionTarget target in _ResolutionTarget.targets) {
       final Map<String, Object?>? video = _selectBestVideo(videoEntries, target.height);
       if (video == null) {
@@ -130,6 +154,8 @@ class PipedExtractor extends BaseYoutubeExtractor {
         continue;
       }
 
+      firstVideoUrl ??= videoUrl;
+
       streams.add(
         MediaStream(
           type: StreamType.mp4,
@@ -138,6 +164,28 @@ class PipedExtractor extends BaseYoutubeExtractor {
           audios: <StreamAudio>[externalAudio],
           hasDefaultAudio: false,
         ),
+      );
+    }
+
+    if (streams.isEmpty || firstVideoUrl == null) {
+      return <MediaStream>[];
+    }
+
+    final StreamProbeResult videoProbe = await _streamProbe.probe(
+      firstVideoUrl,
+      expectedMimeTypePrefixes: <String>["video/"],
+    );
+    if (!videoProbe.isSuccessful) {
+      _logger.w(
+        "Piped video probe failed for video $videoId: ${videoProbe.failureReason ?? "unknown reason"}"
+        " (status=${videoProbe.statusCode}, contentType=${videoProbe.contentType})",
+      );
+      return <MediaStream>[];
+    }
+
+    if (videoProbe.usedFallbackMime) {
+      _logger.i(
+        "Piped video probe accepted fallback mime for video $videoId (contentType=${videoProbe.contentType})",
       );
     }
 
