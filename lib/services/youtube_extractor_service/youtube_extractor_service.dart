@@ -2,6 +2,7 @@ import "package:logger/logger.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/services/youtube_extractor_service/extractors/base_youtube_extractor.dart";
 import "package:semo/services/youtube_extractor_service/extractors/invidious_extractor.dart";
+import "package:semo/services/youtube_extractor_service/extractors/piped_extractor.dart";
 
 class YoutubeExtractorService {
   factory YoutubeExtractorService() => _instance;
@@ -12,6 +13,7 @@ class YoutubeExtractorService {
 
   final Logger _logger = Logger();
   final List<BaseYoutubeExtractor> _extractors = <BaseYoutubeExtractor>[
+    PipedExtractor(),
     InvidiousExtractor(),
   ];
 
