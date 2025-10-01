@@ -58,14 +58,14 @@ class AutoEmbedExtractor implements BaseStreamExtractor {
       }
 
       final bool isTv = options.season != null && options.episode != null;
-      final String path = "/embed${isTv ? "/tv/${options.tmdbId}/${options.season}/${options.episode}" : "/movie/${options.tmdbId}"}?server=2";
+      final String path = "/embed${isTv ? "/tv/${options.tmdbId}/${options.season}/${options.episode}" : "/movie/${options.tmdbId}"}?server=5";
 
       baseUrl = "https://test.${baseUrl.replaceFirst("https://", "")}";
       final Uri pageUri = Uri.parse(baseUrl).resolve(path);
 
       final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(
         pageUri.toString(),
-        filter: (String url) => url.startsWith("https://proxy.vidsrc.co/?u="),
+        filter: (String url) => !url.startsWith("https://test.autoembed.cc"),
         hasAds: true,
       );
       final String? url = stream?["url"];
