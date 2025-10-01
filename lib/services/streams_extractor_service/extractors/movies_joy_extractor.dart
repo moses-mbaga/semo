@@ -303,6 +303,11 @@ class MoviesJoyExtractor implements BaseStreamExtractor {
         throw Exception("No stream URL found for: $_providerKey");
       }
 
+      if (!headers.containsKey("Origin") || !headers.containsKey("Referer")) {
+        headers["Origin"] = "https://videostr.net";
+        headers["Referer"] = "https://videostr.net/";
+      }
+
       return <MediaStream>[
         MediaStream(
           type: url.toLowerCase().contains("m3u8") || url.toLowerCase().contains("m3u") ? StreamType.hls : (url.toLowerCase().contains("mkv") ? StreamType.mkv : StreamType.mp4),
