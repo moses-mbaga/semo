@@ -99,6 +99,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   final Map<String, StreamAudio> _manualAudioMetadata = <String, StreamAudio>{};
   Object? _pendingStreamFailure;
   Duration? _pendingSeekTarget;
+  int? _pendingSeekDirection;
+  bool _shouldResumeAfterSeek = false;
   DateTime? _lastSeekRetryTime;
   static const Duration _seekRetryInterval = Duration(milliseconds: 500);
   Duration _currentPosition = Duration.zero;
@@ -110,6 +112,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   bool get _isCurrentStreamAdaptive => _streams.isNotEmpty && (_currentStream.type == StreamType.hls || _currentStream.type == StreamType.dash);
   bool get _hasMultipleQualityOptions => _isCurrentStreamAdaptive ? _availableVideoTracks.length > 1 : _streams.length > 1;
   bool get _requiresManualAudio => _manualAudioTracks.isNotEmpty && !_currentStream.hasDefaultAudio;
+  bool get _supportsSeeking => _streams.isNotEmpty && _currentStream.type != StreamType.dash;
 
   @override
   void initState() {
@@ -263,14 +266,25 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     if (_pendingSeekTarget != null) {
       final Duration target = _pendingSeekTarget!;
       final int deltaMs = (position - target).inMilliseconds;
+      final int? direction = _pendingSeekDirection;
+      final bool hasReachedTarget = deltaMs.abs() <= _seekCompletionToleranceMs || (direction == 1 && deltaMs >= 0) || (direction == -1 && deltaMs <= 0);
 
-      if (deltaMs.abs() <= _seekCompletionToleranceMs) {
+      if (hasReachedTarget) {
         _clearPendingSeek();
-      } else if (deltaMs < 0 && !_isBuffering) {
-        final DateTime now = DateTime.now();
-        if (_lastSeekRetryTime == null || now.difference(_lastSeekRetryTime!) >= _seekRetryInterval) {
-          _lastSeekRetryTime = now;
-          unawaited(_player.seek(target));
+      } else if (!_isBuffering) {
+        final bool needsRetry;
+        if (direction == -1) {
+          needsRetry = deltaMs > _seekCompletionToleranceMs;
+        } else {
+          needsRetry = deltaMs < -_seekCompletionToleranceMs;
+        }
+
+        if (needsRetry) {
+          final DateTime now = DateTime.now();
+          if (_lastSeekRetryTime == null || now.difference(_lastSeekRetryTime!) >= _seekRetryInterval) {
+            _lastSeekRetryTime = now;
+            unawaited(_player.seek(target));
+          }
         }
       }
     }
@@ -465,7 +479,22 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
 
   void _clearPendingSeek() {
     _pendingSeekTarget = null;
+    _pendingSeekDirection = null;
     _lastSeekRetryTime = null;
+    final bool shouldResume = _shouldResumeAfterSeek;
+    _shouldResumeAfterSeek = false;
+
+    if (shouldResume) {
+      unawaited(
+        _player.play().catchError((Object error, StackTrace stackTrace) {
+          _logger.w(
+            "Failed to resume after seek",
+            error: error,
+            stackTrace: stackTrace,
+          );
+        }),
+      );
+    }
   }
 
   void _emitProgressUpdate() {
@@ -502,6 +531,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       }
 
       _pendingSeekTarget = targetSeek;
+      _pendingSeekDirection = targetSeek == null || targetSeek == Duration.zero ? null : 1;
       _lastSeekRetryTime = null;
 
       if (mounted) {
@@ -1007,6 +1037,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     if (!_playerInitialized) {
       return;
     }
+    if (!_supportsSeeking) {
+      return;
+    }
     try {
       final Duration currentPosition = _player.state.position;
       final Duration targetPosition = currentPosition + Duration(seconds: _seekDuration);
@@ -1021,6 +1054,10 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     if (!_playerInitialized) {
       return;
     }
+    if (!_supportsSeeking) {
+      return;
+    }
+
     try {
       final Duration currentPosition = _player.state.position;
       final int seekBackSeconds = currentPosition.inSeconds < _seekDuration ? currentPosition.inSeconds : _seekDuration;
@@ -1051,10 +1088,38 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     if (!_playerInitialized) {
       return;
     }
+    if (!_supportsSeeking) {
+      return;
+    }
 
     final Duration clampedTarget = _clampSeekTarget(target);
+    final Duration currentPosition = _player.state.position;
     final bool wasPlaying = _player.state.playing;
+    _shouldResumeAfterSeek = wasPlaying;
+
+    if (wasPlaying) {
+      try {
+        await _player.pause();
+      } on Object catch (error, stackTrace) {
+        _logger.w(
+          "Failed to pause before seek",
+          error: error,
+          stackTrace: stackTrace,
+        );
+      }
+    }
+
+    final int direction;
+    if (clampedTarget > currentPosition) {
+      direction = 1;
+    } else if (clampedTarget < currentPosition) {
+      direction = -1;
+    } else {
+      direction = 0;
+    }
+
     _pendingSeekTarget = clampedTarget;
+    _pendingSeekDirection = direction == 0 ? null : direction;
     _lastSeekRetryTime = null;
 
     if (mounted) {
@@ -1071,9 +1136,6 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     try {
       await _player.seek(clampedTarget);
       _lastSeekRetryTime = DateTime.now();
-      if (wasPlaying) {
-        await _player.play();
-      }
     } catch (e, s) {
       _clearPendingSeek();
       _logger.w("Failed to seek", error: e, stackTrace: s);
@@ -1252,6 +1314,10 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   }
 
   Future<void> _handleDoubleTap(TapDownDetails details) async {
+    if (!_supportsSeeking) {
+      return;
+    }
+
     if (_currentDuration.inSeconds > 0) {
       setState(() => _showControls = true);
       Timer(const Duration(seconds: 3), () {
@@ -1263,6 +1329,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       final Size? widgetSize = context.size;
       final double width = widgetSize?.width ?? MediaQuery.of(context).size.width;
       final bool isLeftTap = details.localPosition.dx < width / 2;
+
       _triggerDoubleTapFeedback(isLeftTap: isLeftTap);
 
       Timer(const Duration(milliseconds: 500), () async {
@@ -1477,12 +1544,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: <Widget>[
                       IconButton(
-                        icon: const FaIcon(
+                        icon: FaIcon(
                           FontAwesomeIcons.rotateLeft,
-                          color: Colors.white,
+                          color: _supportsSeeking && _currentDuration.inSeconds > 0 ? Colors.white : Colors.grey.withValues(alpha: 0.5),
                           size: 25,
                         ),
-                        onPressed: () => _currentDuration.inSeconds > 0 ? seekBack() : null,
+                        onPressed: !_supportsSeeking || _currentDuration.inSeconds <= 0 ? null : () => seekBack(),
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 30),
@@ -1498,12 +1565,12 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                             : const CircularProgressIndicator(),
                       ),
                       IconButton(
-                        icon: const FaIcon(
+                        icon: FaIcon(
                           FontAwesomeIcons.rotateRight,
-                          color: Colors.white,
+                          color: _supportsSeeking && _currentDuration.inSeconds > 0 ? Colors.white : Colors.grey.withValues(alpha: 0.5),
                           size: 25,
                         ),
-                        onPressed: () => _currentDuration.inSeconds > 0 ? seekForward() : null,
+                        onPressed: !_supportsSeeking || _currentDuration.inSeconds <= 0 ? null : () => seekForward(),
                       ),
                     ],
                   ),
@@ -1529,7 +1596,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
                         thumbColor: Theme.of(context).primaryColor,
                         timeLabelTextStyle: Theme.of(context).textTheme.displaySmall,
                         timeLabelPadding: 10,
-                        onSeek: (Duration target) => seek(target),
+                        onSeek: _supportsSeeking ? (Duration target) => seek(target) : null,
                       ),
                     ),
                   ),
