@@ -32,11 +32,11 @@ class StreamsExtractorService {
   final VideoQualityService _videoQualityService = const VideoQualityService();
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
-    if (!Platform.isIOS) StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
+    StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
     StreamingServer(name: "MoviesApi", extractor: MoviesApiExtractor()),
-    if (!Platform.isIOS) StreamingServer(name: "MoviesJoy", extractor: MoviesJoyExtractor()),
+    StreamingServer(name: "MoviesJoy", extractor: MoviesJoyExtractor()),
     StreamingServer(name: "MultiMovies", extractor: MultiMoviesExtractor()),
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
