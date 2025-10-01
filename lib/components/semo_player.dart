@@ -83,6 +83,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   double _lastZoomGestureScale = 1.0;
   Timer? _hideControlsTimer;
   Timer? _progressTimer;
+  Timer? _stallMonitorTimer;
   static const double _eps = 1e-3;
   static const int _seekCompletionToleranceMs = 500;
   final Logger _logger = Logger();
@@ -107,6 +108,8 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   Duration _currentDuration = Duration.zero;
   Duration _currentBuffered = Duration.zero;
   bool _isBuffering = false;
+  DateTime? _playStartedAt;
+  static const Duration _stallTimeout = Duration(seconds: 5);
 
   MediaStream get _currentStream => _streams[_activeStreamIndex];
   bool get _isCurrentStreamAdaptive => _streams.isNotEmpty && (_currentStream.type == StreamType.hls || _currentStream.type == StreamType.dash);
@@ -211,6 +214,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
   void dispose() {
     _hideControlsTimer?.cancel();
     _progressTimer?.cancel();
+    _stallMonitorTimer?.cancel();
     for (final StreamSubscription<dynamic> subscription in _subscriptions) {
       unawaited(subscription.cancel());
     }
@@ -254,14 +258,21 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     });
 
     if (playing) {
+      _playStartedAt = DateTime.now();
+      _startStallMonitor();
       _startHideControlsTimer();
     } else {
       _hideControlsTimer?.cancel();
+      _cancelStallMonitor();
     }
   }
 
   void _handlePositionChanged(Duration position) {
     _currentPosition = position;
+
+    if (position > Duration.zero) {
+      _cancelStallMonitor();
+    }
 
     if (_pendingSeekTarget != null) {
       final Duration target = _pendingSeekTarget!;
@@ -322,6 +333,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         _showControls = true;
       } else if (_isPlaying) {
         _startHideControlsTimer();
+        if (_currentPosition <= Duration.zero) {
+          _startStallMonitor();
+        }
       }
     });
 
@@ -511,6 +525,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
 
     try {
+      _cancelStallMonitor();
       try {
         await _videoController.platform.future;
       } catch (e, s) {
@@ -600,6 +615,9 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
       _setTargetNativeScale(targetScale);
       _startHideControlsTimer();
       _ensureProgressTimer();
+      if (shouldPlay && (_currentPosition <= Duration.zero)) {
+        _startStallMonitor();
+      }
     } catch (e, s) {
       _logger.w("Failed to initialize player", error: e, stackTrace: s);
       await _handleStreamFailure(e);
@@ -660,6 +678,7 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     _isHandlingFailure = true;
     try {
       _clearPendingSeek();
+      _cancelStallMonitor();
       final bool wasPlaying = _isPlaying;
       _availableVideoTracks = <VideoTrack>[];
       _selectedVideoTrack = null;
@@ -712,6 +731,43 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
         await _handleStreamFailure(pendingError);
       }
     }
+  }
+
+  void _startStallMonitor() {
+    if (!_isPlaying || _isBuffering) {
+      return;
+    }
+
+    _stallMonitorTimer?.cancel();
+    _stallMonitorTimer = Timer.periodic(const Duration(seconds: 1), (_) {
+      if (!_isPlaying || _isBuffering) {
+        _cancelStallMonitor();
+        return;
+      }
+
+      if (_currentPosition > Duration.zero) {
+        _cancelStallMonitor();
+        return;
+      }
+
+      final DateTime? startedAt = _playStartedAt;
+      if (startedAt == null) {
+        return;
+      }
+
+      final Duration elapsed = DateTime.now().difference(startedAt);
+      if (elapsed >= _stallTimeout) {
+        _cancelStallMonitor();
+        _logger.w("Playback stalled after ${elapsed.inMilliseconds}ms; attempting fallback stream");
+        unawaited(_handleStreamFailure(Exception("Playback stalled")));
+      }
+    });
+  }
+
+  void _cancelStallMonitor() {
+    _stallMonitorTimer?.cancel();
+    _stallMonitorTimer = null;
+    _playStartedAt = null;
   }
 
   Future<void> _prepareForStreamSwitch({required bool wasPlaying}) async {
