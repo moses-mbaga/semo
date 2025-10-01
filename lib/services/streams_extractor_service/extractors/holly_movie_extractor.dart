@@ -43,35 +43,59 @@ class HollyMovieExtractor implements BaseStreamExtractor {
   List<MediaType> get acceptedMediaTypes => <MediaType>[MediaType.movies, MediaType.tvShows];
 
   @override
-  bool get needsExternalLink => false;
+  bool get needsExternalLink => true;
 
   @override
-  Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async => null;
+  Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async {
+    String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
+    if (baseUrl == null || baseUrl.isEmpty) {
+      throw Exception("Failed to get base URL for $_providerKey");
+    }
+
+    final bool isTv = options.season != null && options.episode != null;
+    String formattedTitle = options.title.removeSpecialChars().replaceAll(" ", "-").normalize();
+    String path = "/$formattedTitle";
+
+    if (isTv) {
+      path = "/episode$path-season-${options.season}-episode-${options.episode}/";
+    } else {
+      path += "-${options.releaseYear}/";
+    }
+
+    final Uri pageUri = Uri.parse(baseUrl).resolve(path);
+
+    final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(
+      pageUri.toString(),
+      includePatterns: <String>["flashstream.cc"],
+      filter: (String url) => url.startsWith("https://flashstream.cc/embed"),
+      acceptAnyOnFilterMatch: true,
+    );
+    final String? url = stream?["url"];
+    final Map<String, String> headers = stream?["headers"] ?? <String, String>{};
+
+    if (url == null || url.isEmpty) {
+      throw Exception("No exteral link found for: $_providerKey");
+    }
+
+    return <String, Object?>{
+      "url": url,
+      "headers": headers,
+    };
+  }
 
   @override
   Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
-      String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
-      if (baseUrl == null || baseUrl.isEmpty) {
-        throw Exception("Failed to get base URL for $_providerKey");
+      if (externalLink == null || externalLink.isEmpty) {
+        throw Exception("External link is required for $_providerKey");
       }
 
-      final bool isTv = options.season != null && options.episode != null;
-      String formattedTitle = options.title.removeSpecialChars().replaceAll(" ", "-").normalize();
-      String path = "/$formattedTitle";
-
-      if (isTv) {
-        path = "/episode$path-season-${options.season}-episode-${options.episode}/";
-      } else {
-        path += "-${options.releaseYear}/";
-      }
-
-      final Uri pageUri = Uri.parse(baseUrl).resolve(path);
+      final Uri pageUri = Uri.parse(externalLink);
 
       final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(
         pageUri.toString(),
-        includePatterns: <String>["pkaystream.cc"],
-        filter: (String url) => url.startsWith("https://pkaystream.cc/streamsvr"),
+        includePatterns: <String>["flashstream.cc"],
+        filter: (String url) => url.startsWith("https://flashstream.cc/streamsvr"),
         acceptAnyOnFilterMatch: true,
       );
       final String? url = stream?["url"];
