@@ -180,17 +180,55 @@ class Semo extends StatelessWidget {
         ),
       );
 
+  TextStyle? _scaleTextStyle(TextStyle? style, double scale) {
+    if (style == null) {
+      return null;
+    }
+
+    if (scale == 1.0) {
+      return style;
+    }
+
+    final double? originalSize = style.fontSize;
+    if (originalSize == null) {
+      return style;
+    }
+
+    return style.copyWith(fontSize: originalSize * scale);
+  }
+
+  TextTheme _scaleTextTheme(TextTheme textTheme, double scale) {
+    if (scale == 1.0) {
+      return textTheme;
+    }
+
+    return textTheme.copyWith(
+      displayLarge: _scaleTextStyle(textTheme.displayLarge, scale),
+      displayMedium: _scaleTextStyle(textTheme.displayMedium, scale),
+      displaySmall: _scaleTextStyle(textTheme.displaySmall, scale),
+      headlineLarge: _scaleTextStyle(textTheme.headlineLarge, scale),
+      headlineMedium: _scaleTextStyle(textTheme.headlineMedium, scale),
+      headlineSmall: _scaleTextStyle(textTheme.headlineSmall, scale),
+      titleLarge: _scaleTextStyle(textTheme.titleLarge, scale),
+      titleMedium: _scaleTextStyle(textTheme.titleMedium, scale),
+      titleSmall: _scaleTextStyle(textTheme.titleSmall, scale),
+      bodyLarge: _scaleTextStyle(textTheme.bodyLarge, scale),
+      bodyMedium: _scaleTextStyle(textTheme.bodyMedium, scale),
+      bodySmall: _scaleTextStyle(textTheme.bodySmall, scale),
+      labelLarge: _scaleTextStyle(textTheme.labelLarge, scale),
+      labelMedium: _scaleTextStyle(textTheme.labelMedium, scale),
+      labelSmall: _scaleTextStyle(textTheme.labelSmall, scale),
+    );
+  }
+
   ThemeData _applyFontScale(ThemeData baseTheme, double scale) {
-    TextTheme scaledTextTheme = baseTheme.textTheme.apply(fontSizeFactor: scale);
-    AppBarTheme appBarTheme = baseTheme.appBarTheme;
-    TextStyle? titleStyle = appBarTheme.titleTextStyle;
+    final TextTheme scaledTextTheme = _scaleTextTheme(baseTheme.textTheme, scale);
+    final AppBarThemeData appBarTheme = baseTheme.appBarTheme;
 
     return baseTheme.copyWith(
       textTheme: scaledTextTheme,
       appBarTheme: appBarTheme.copyWith(
-        titleTextStyle: titleStyle?.copyWith(
-          fontSize: (titleStyle.fontSize ?? 24) * scale,
-        ),
+        titleTextStyle: _scaleTextStyle(appBarTheme.titleTextStyle, scale),
       ),
     );
   }
