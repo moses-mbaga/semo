@@ -306,14 +306,23 @@ All documentation is organized in the sidebar by type and date:
         current_branch = result.stdout.strip()
 
         if current_branch:
-            # Push to the current branch
+            # Keep local wiki clone in sync before pushing
+            subprocess.run(["git", "pull", "--rebase", "origin", current_branch], check=True)
             subprocess.run(["git", "push", "origin", current_branch], check=True)
         else:
             # Fallback: try master first, then main
-            try:
-                subprocess.run(["git", "push", "origin", "master"], check=True)
-            except subprocess.CalledProcessError:
-                subprocess.run(["git", "push", "origin", "main"], check=True)
+            last_error = None
+            for branch in ("master", "main"):
+                try:
+                    subprocess.run(["git", "pull", "--rebase", "origin", branch], check=True)
+                    subprocess.run(["git", "push", "origin", branch], check=True)
+                    break
+                except subprocess.CalledProcessError as error:
+                    last_error = error
+            else:
+                if last_error is not None:
+                    raise last_error
+                raise RuntimeError("Failed to push wiki updates: no valid branch found.")
 
     def handle_success(self, commit_hash, changelog_file, code_review_file):
         """Handle successful build documentation"""

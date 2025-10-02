@@ -106,6 +106,7 @@ jobs:
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Update Wiki (Success)
+        id: update_wiki_success
         if: ${{ inputs.build_result != 'failure' }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -124,7 +125,7 @@ jobs:
 
       - name: Generate error analysis
         id: generate_error_analysis
-        if: ${{ inputs.build_result == 'failure' }}
+        if: ${{ inputs.build_result == 'failure' || failure() }}
         env:
           REPO_NAME: ${{ github.repository }}
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
@@ -143,7 +144,7 @@ jobs:
           } 2>&1 | tee -a $GITHUB_WORKSPACE/github_action_logs/all.log
 
       - name: Update Wiki (Failure)
-        if: ${{ inputs.build_result == 'failure' }}
+        if: ${{ inputs.build_result == 'failure' || failure() }}
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
