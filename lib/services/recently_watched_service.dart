@@ -11,8 +11,8 @@ class RecentlyWatchedService {
 
   static final RecentlyWatchedService _instance = RecentlyWatchedService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
   final Logger _logger = Logger();
 
   DocumentReference<Map<String, dynamic>> _getDocReference() {
@@ -21,9 +21,7 @@ class RecentlyWatchedService {
         throw Exception("User isn't authenticated");
       }
 
-      return _firestore
-          .collection(FirestoreCollection.recentlyWatched)
-          .doc(_auth.currentUser?.uid);
+      return _firestore.collection(FirestoreCollection.recentlyWatched).doc(_auth.currentUser?.uid);
     } catch (e, s) {
       _logger.e("Error getting recently watched document reference", error: e, stackTrace: s);
     }
@@ -174,7 +172,7 @@ class RecentlyWatchedService {
       tvShows["$tvShowId"]!["$seasonId"] = watchedEpisodes;
       tvShows["$tvShowId"] = <String, dynamic>{
         "visibleInMenu": true,
-        ...tvShows["$tvShowId"]!
+        ...tvShows["$tvShowId"]!,
       };
 
       recentlyWatched["tv_shows"] = tvShows;
@@ -220,7 +218,7 @@ class RecentlyWatchedService {
         // Keep the show visible since it still has content
         tvShows["$tvShowId"] = <String, dynamic>{
           "visibleInMenu": true,
-          ...tvShows["$tvShowId"]!
+          ...tvShows["$tvShowId"]!,
         };
       }
 
@@ -241,11 +239,12 @@ class RecentlyWatchedService {
       final Map<String, Map<String, dynamic>> movies = _mapDynamicDynamicToMapStringDynamic((recentlyWatched["movies"] ?? <dynamic, dynamic>{}) as Map<dynamic, dynamic>);
 
       // Sort by timestamp (most recent first)
-      final List<MapEntry<String, Map<String, dynamic>>> sortedEntries = movies.entries.toList()..sort((MapEntry<String, Map<String, dynamic>> a, MapEntry<String, Map<String, dynamic>> b) {
-        final int timestampA = a.value["timestamp"] ?? 0;
-        final int timestampB = b.value["timestamp"] ?? 0;
-        return timestampB.compareTo(timestampA);
-      });
+      final List<MapEntry<String, Map<String, dynamic>>> sortedEntries = movies.entries.toList()
+        ..sort((MapEntry<String, Map<String, dynamic>> a, MapEntry<String, Map<String, dynamic>> b) {
+          final int timestampA = a.value["timestamp"] ?? 0;
+          final int timestampB = b.value["timestamp"] ?? 0;
+          return timestampB.compareTo(timestampA);
+        });
 
       return sortedEntries.map((MapEntry<String, Map<String, dynamic>> entry) => int.parse(entry.key)).toList();
     } catch (e, s) {
@@ -277,9 +276,7 @@ class RecentlyWatchedService {
       final Map<String, Map<String, dynamic>> tvShows = _mapDynamicDynamicToMapStringDynamic((recentlyWatched["tv_shows"] ?? <dynamic, dynamic>{}) as Map<dynamic, dynamic>);
 
       // Filter only visible shows and sort by timestamp
-      final List<MapEntry<String, Map<String, dynamic>>> visibleShows = tvShows.entries
-          .where((MapEntry<String, Map<String, dynamic>> entry) => entry.value["visibleInMenu"] == true)
-          .toList();
+      final List<MapEntry<String, Map<String, dynamic>>> visibleShows = tvShows.entries.where((MapEntry<String, Map<String, dynamic>> entry) => entry.value["visibleInMenu"] == true).toList();
 
       visibleShows.sort((MapEntry<String, Map<String, dynamic>> a, MapEntry<String, Map<String, dynamic>> b) {
         // Get the latest timestamp from any episode in the show

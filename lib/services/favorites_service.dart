@@ -9,8 +9,8 @@ class FavoritesService {
 
   static final FavoritesService _instance = FavoritesService._internal();
 
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  final FirebaseAuth _auth = FirebaseAuth.instance;
+  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  FirebaseAuth get _auth => FirebaseAuth.instance;
   final Logger _logger = Logger();
 
   DocumentReference<Map<String, dynamic>> _getDocReference() {
@@ -19,9 +19,7 @@ class FavoritesService {
         throw Exception("User isn't authenticated");
       }
 
-      return _firestore
-          .collection(FirestoreCollection.favorites)
-          .doc(_auth.currentUser?.uid);
+      return _firestore.collection(FirestoreCollection.favorites).doc(_auth.currentUser?.uid);
     } catch (e, s) {
       _logger.e("Error getting favorites document reference", error: e, stackTrace: s);
     }
