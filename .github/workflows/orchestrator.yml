@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - "**"
+  pull_request:
+    types:
+      - closed
   workflow_dispatch:
 
 permissions:
@@ -38,7 +41,10 @@ jobs:
 
   run-build-and-test:
     name: Build and test
-    if: ${{ needs.detect.outputs.build == 'true' }}
+    if: ${{
+      needs.detect.outputs.build == 'true' &&
+      !(github.event_name == 'pull_request' && github.event.pull_request.merged == true)
+      }}
     needs: detect
     uses: ./.github/workflows/build-and-test.yml
     secrets: inherit
@@ -48,7 +54,10 @@ jobs:
     needs:
       - detect
       - run-build-and-test
-    if: ${{ github.ref == 'refs/heads/main' && always() }}
+    if: ${{ always() && (
+      (github.event_name == 'push' && github.ref == 'refs/heads/main') ||
+      (github.event_name == 'pull_request' && github.event.pull_request.merged == true && github.event.pull_request.base.ref == 'main')
+      ) }}
     uses: ./.github/workflows/ai-analysis.yml
     with:
       build_result: ${{ needs.run-build-and-test.result }}
