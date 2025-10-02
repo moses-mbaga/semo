@@ -498,6 +498,16 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     final bool shouldResume = _shouldResumeAfterSeek;
     _shouldResumeAfterSeek = false;
 
+    if (_isBuffering) {
+      if (mounted) {
+        setState(() {
+          _isBuffering = false;
+        });
+      } else {
+        _isBuffering = false;
+      }
+    }
+
     if (shouldResume) {
       unawaited(
         _player.play().catchError((Object error, StackTrace stackTrace) {
