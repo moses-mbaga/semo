@@ -27,6 +27,7 @@ class FragmentsScreen extends BaseScreen {
 }
 
 class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with TickerProviderStateMixin {
+  static const double _drawerBreakpoint = 900;
   int _selectedPageIndex = 0;
   List<FragmentScreen> _fragmentScreens = <FragmentScreen>[];
   late TabController _tabController;
@@ -86,70 +87,23 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
         ),
       );
 
-  @override
-  String get screenName => "Fragments";
-
-  @override
-  Future<void> initializeScreen() async {
-    _selectedPageIndex = widget.initialPageIndex;
-    _tabController = TabController(
-      length: 2,
-      initialIndex: widget.initialFavoritesTabIndex,
-      vsync: this,
-    );
-    _initFragments();
-  }
-
-  @override
-  Widget buildContent(BuildContext context) {
-    if (_fragmentScreens.isEmpty) {
-      return const Scaffold();
-    }
-
-    return Scaffold(
-      appBar: AppBar(
+  Widget _buildBottomNavigationBar() => NavigationBar(
         backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        title: Text(_fragmentScreens[_selectedPageIndex].title),
-        leading: Builder(
-          builder: (BuildContext context) => IconButton(
-            icon: const Icon(Icons.menu),
-            onPressed: () => Scaffold.of(context).openDrawer(),
-          ),
-        ),
-        bottom: _selectedPageIndex == 2
-            ? TabBar(
-                controller: _tabController,
-                tabs: const <Tab>[
-                  Tab(
-                    icon: Icon(Icons.movie),
-                    text: "Movies",
-                  ),
-                  Tab(
-                    icon: Icon(Icons.video_library),
-                    text: "TV Shows",
-                  ),
-                ],
-              )
-            : null,
-        actions: <Widget>[
-          (isConnectedToInternet && _selectedPageIndex <= 1)
-              ? IconButton(
-                  icon: const Icon(
-                    Icons.search,
-                    color: Colors.white,
-                  ),
-                  onPressed: () {
-                    NavigationHelper.navigate(
-                      context,
-                      SearchScreen(mediaType: _fragmentScreens[_selectedPageIndex].mediaType),
-                    );
-                  },
-                )
-              : Container(),
+        indicatorColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
+        selectedIndex: _selectedPageIndex,
+        onDestinationSelected: (int index) {
+          setState(() => _selectedPageIndex = index);
+        },
+        destinations: <NavigationDestination>[
+          for (final FragmentScreen fragment in _fragmentScreens)
+            NavigationDestination(
+              icon: Icon(fragment.icon),
+              label: fragment.title,
+            ),
         ],
-      ),
-      body: _fragmentScreens[_selectedPageIndex].widget,
-      drawer: SafeArea(
+      );
+
+  Widget _buildDrawer() => SafeArea(
         top: true,
         left: true,
         right: true,
@@ -159,7 +113,7 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
           child: ListView(
             padding: EdgeInsets.zero,
             children: <Widget>[
-              Container(
+              SizedBox(
                 height: 200,
                 child: Center(
                   child: Assets.images.appIcon.image(
@@ -182,7 +136,82 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
             ],
           ),
         ),
-      ),
+      );
+
+  @override
+  String get screenName => "Fragments";
+
+  @override
+  Future<void> initializeScreen() async {
+    _selectedPageIndex = widget.initialPageIndex;
+    _tabController = TabController(
+      length: 2,
+      initialIndex: widget.initialFavoritesTabIndex,
+      vsync: this,
+    );
+    _initFragments();
+  }
+
+  @override
+  Widget buildContent(BuildContext context) {
+    if (_fragmentScreens.isEmpty) {
+      return const Scaffold();
+    }
+
+    return LayoutBuilder(
+      builder: (BuildContext context, BoxConstraints constraints) {
+        final bool useDrawer = constraints.maxWidth >= _drawerBreakpoint;
+
+        return Scaffold(
+          appBar: AppBar(
+            automaticallyImplyLeading: useDrawer,
+            backgroundColor: Theme.of(context).scaffoldBackgroundColor,
+            title: Text(_fragmentScreens[_selectedPageIndex].title),
+            leading: useDrawer
+                ? Builder(
+                    builder: (BuildContext context) => IconButton(
+                      icon: const Icon(Icons.menu),
+                      onPressed: () => Scaffold.of(context).openDrawer(),
+                    ),
+                  )
+                : null,
+            bottom: _selectedPageIndex == 2
+                ? TabBar(
+                    controller: _tabController,
+                    tabs: const <Tab>[
+                      Tab(
+                        icon: Icon(Icons.movie),
+                        text: "Movies",
+                      ),
+                      Tab(
+                        icon: Icon(Icons.video_library),
+                        text: "TV Shows",
+                      ),
+                    ],
+                  )
+                : null,
+            actions: <Widget>[
+              (isConnectedToInternet && _selectedPageIndex <= 1)
+                  ? IconButton(
+                      icon: const Icon(
+                        Icons.search,
+                        color: Colors.white,
+                      ),
+                      onPressed: () {
+                        NavigationHelper.navigate(
+                          context,
+                          SearchScreen(mediaType: _fragmentScreens[_selectedPageIndex].mediaType),
+                        );
+                      },
+                    )
+                  : Container(),
+            ],
+          ),
+          body: _fragmentScreens[_selectedPageIndex].widget,
+          drawer: useDrawer ? _buildDrawer() : null,
+          bottomNavigationBar: useDrawer ? null : _buildBottomNavigationBar(),
+        );
+      },
     );
   }
 }
