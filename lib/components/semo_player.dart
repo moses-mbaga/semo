@@ -1,4 +1,5 @@
 import "dart:async";
+import "dart:math";
 
 import "package:audio_video_progress_bar/audio_video_progress_bar.dart";
 import "package:dio/dio.dart";
@@ -676,7 +677,14 @@ class _SemoPlayerState extends State<SemoPlayer> with TickerProviderStateMixin {
     }
 
     final double screenAR = screenSize.width / screenSize.height;
-    return screenAR / videoAR;
+    final double widthScale = screenAR / videoAR;
+    final double heightScale = videoAR / screenAR;
+
+    if (!widthScale.isFinite || !heightScale.isFinite) {
+      return 1.0;
+    }
+
+    return max(1.0, max(widthScale, heightScale));
   }
 
   Future<void> _handleStreamFailure(Object? error) async {
