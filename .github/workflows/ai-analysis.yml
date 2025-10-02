@@ -38,10 +38,18 @@ jobs:
 
       - name: Download build logs artifact
         if: ${{ inputs.build_result != 'skipped' }}
+        id: download_logs
+        continue-on-error: true
         uses: actions/download-artifact@v4
         with:
           name: build-logs
           path: github_action_logs/
+
+      - name: Create placeholder logs when missing
+        if: ${{ inputs.build_result != 'skipped' && steps.download_logs.outcome != 'success' }}
+        run: |
+          mkdir -p github_action_logs
+          echo "Logs couldn't be retrieved" > github_action_logs/all.log
 
       - name: Set up Python venv
         run: |
