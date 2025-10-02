@@ -10,7 +10,7 @@
   - `enums/`,
   - `utils/`,
   - `gen/` (generated assets),
-  - `firebase_options.dart`.
+  - `firebase_options.dart`. 
 - `assets/`: Images and lottie files declared in `pubspec.yaml`.
 - `docs/`: Markdown documentation and guides.
 - Platform folders: `android/`, `ios/`.
