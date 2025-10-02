@@ -93,17 +93,18 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
       );
 
   Widget _buildBottomNavigationBar() => NavigationBar(
-        backgroundColor: Theme.of(context).scaffoldBackgroundColor,
-        indicatorColor: Theme.of(context).primaryColor.withValues(alpha: 0.3),
         selectedIndex: _selectedPageIndex,
         onDestinationSelected: (int index) {
           setState(() => _selectedPageIndex = index);
         },
         destinations: <NavigationDestination>[
-          for (final FragmentScreen fragment in _fragmentScreens)
+          for (int i = 0; i < _fragmentScreens.length; i++)
             NavigationDestination(
-              icon: Icon(fragment.icon),
-              label: fragment.title,
+              icon: Icon(
+                _fragmentScreens[i].icon,
+                color: i == _selectedPageIndex ? Theme.of(context).primaryColor : Colors.white54.withValues(alpha: 0.5),
+              ),
+              label: _fragmentScreens[i].title,
             ),
         ],
       );

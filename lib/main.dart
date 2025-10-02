@@ -79,11 +79,11 @@ Future<void> _initializeRemoteConfig() async {
 class Semo extends StatelessWidget {
   const Semo({super.key});
 
-  static const Color _primary = Color(0xFFAB261D);
-  static const Color _background = Color(0xFF120201);
-  static const Color _surface = Color(0xFF250604);
-  static const Color _onPrimary = Colors.white;
-  static const Color _onSurface = Colors.white54;
+  final Color _primary = const Color(0xFFAB261D);
+  final Color _background = const Color(0xFF120201);
+  final Color _surface = const Color(0xFF250604);
+  final Color _onPrimary = Colors.white;
+  final Color _onSurface = Colors.white54;
 
   ThemeData _buildTheme() => ThemeData(
         useMaterial3: true,
@@ -106,83 +106,91 @@ class Semo extends StatelessWidget {
           scrolledUnderElevation: 0,
           backgroundColor: _background,
           titleTextStyle: GoogleFonts.freckleFace(
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
               color: _onPrimary,
             ),
           ),
-          iconTheme: const IconThemeData(color: _onPrimary),
+          iconTheme: IconThemeData(color: _onPrimary),
           centerTitle: false,
+        ),
+        navigationBarTheme: NavigationBarThemeData(
+          backgroundColor: _background,
+          indicatorColor: _primary.withValues(alpha: 0.3),
+          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
+          labelTextStyle: WidgetStatePropertyAll<TextStyle>(
+            TextStyle(color: _primary),
+          ),
         ),
         textTheme: TextTheme(
           titleLarge: GoogleFonts.freckleFace(
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
               fontSize: 38,
               fontWeight: FontWeight.w900,
               color: _onPrimary,
             ),
           ),
           titleMedium: GoogleFonts.freckleFace(
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
               fontSize: 32,
               fontWeight: FontWeight.w900,
               color: _onPrimary,
             ),
           ),
           titleSmall: GoogleFonts.freckleFace(
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
               fontSize: 24,
               fontWeight: FontWeight.w900,
               color: _onPrimary,
             ),
           ),
           displayLarge: GoogleFonts.lexend(
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
               fontSize: 18,
               color: _onPrimary,
             ),
           ),
           displayMedium: GoogleFonts.lexend(
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
               fontSize: 15,
               color: _onPrimary,
             ),
           ),
           displaySmall: GoogleFonts.lexend(
-            textStyle: const TextStyle(
+            textStyle: TextStyle(
               fontSize: 14,
               color: _onPrimary,
             ),
           ),
         ),
-        progressIndicatorTheme: const ProgressIndicatorThemeData(
+        progressIndicatorTheme: ProgressIndicatorThemeData(
           color: _primary,
         ),
-        dialogTheme: const DialogThemeData(
+        dialogTheme: DialogThemeData(
           backgroundColor: _surface,
         ),
-        tabBarTheme: const TabBarThemeData(
+        tabBarTheme: TabBarThemeData(
           indicatorColor: _primary,
           labelColor: _primary,
           dividerColor: _surface,
           unselectedLabelColor: _onSurface,
         ),
-        menuTheme: const MenuThemeData(
+        menuTheme: MenuThemeData(
           style: MenuStyle(
             backgroundColor: WidgetStatePropertyAll<Color>(_surface),
           ),
         ),
-        bottomSheetTheme: const BottomSheetThemeData(
+        bottomSheetTheme: BottomSheetThemeData(
           showDragHandle: true,
           backgroundColor: _surface,
-          shape: RoundedRectangleBorder(
+          shape: const RoundedRectangleBorder(
             borderRadius: BorderRadius.vertical(
               top: Radius.circular(25),
             ),
           ),
         ),
-        snackBarTheme: const SnackBarThemeData(
+        snackBarTheme: SnackBarThemeData(
           behavior: SnackBarBehavior.floating,
           backgroundColor: _surface,
         ),
