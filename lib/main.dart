@@ -115,13 +115,16 @@ class Semo extends StatelessWidget {
           iconTheme: IconThemeData(color: _onPrimary),
           centerTitle: false,
         ),
-        navigationBarTheme: NavigationBarThemeData(
-          backgroundColor: _background,
-          indicatorColor: _primary.withValues(alpha: 0.3),
-          labelBehavior: NavigationDestinationLabelBehavior.onlyShowSelected,
-          labelTextStyle: WidgetStatePropertyAll<TextStyle>(
-            TextStyle(color: _primary),
-          ),
+        bottomAppBarTheme: BottomAppBarThemeData(
+          color: _surface,
+          elevation: 0,
+          height: 72,
+        ),
+        floatingActionButtonTheme: FloatingActionButtonThemeData(
+          backgroundColor: _primary,
+          foregroundColor: _onPrimary,
+          elevation: 0,
+          shape: const CircleBorder(),
         ),
         textTheme: TextTheme(
           titleLarge: GoogleFonts.freckleFace(
