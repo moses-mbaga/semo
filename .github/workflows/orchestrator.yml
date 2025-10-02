@@ -48,7 +48,7 @@ jobs:
     needs:
       - detect
       - run-build-and-test
-    if: ${{ always() && needs.detect.outputs.build == 'true' && github.ref == 'refs/heads/main' }}
+    if: ${{ github.ref == 'refs/heads/main' && always() }}
     uses: ./.github/workflows/ai-analysis.yml
     with:
       build_result: ${{ needs.run-build-and-test.result }}
