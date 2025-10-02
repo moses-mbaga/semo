@@ -1,6 +1,6 @@
 name: semo
 description: "Semo is designed to offer a seamless movie and TV show streaming experience."
-version: 2.4.0+7
+version: 2.4.5+8
 
 environment:
   sdk: ">=3.4.0 <4.0.0"
