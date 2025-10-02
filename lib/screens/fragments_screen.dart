@@ -92,21 +92,50 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
         ),
       );
 
-  Widget _buildBottomNavigationBar() => NavigationBar(
-        selectedIndex: _selectedPageIndex,
-        onDestinationSelected: (int index) {
+  Widget _buildBottomAppBarItem(int index) {
+    final FragmentScreen fragment = _fragmentScreens[index];
+    final bool isSelected = _selectedPageIndex == index;
+    final Color activeColor = Theme.of(context).primaryColor;
+    final Color inactiveColor = Colors.white54.withValues(alpha: 0.5);
+
+    return Material(
+      color: Colors.transparent,
+      child: IconButton(
+        icon: AnimatedContainer(
+          duration: const Duration(milliseconds: 250),
+          child: Icon(
+            fragment.icon,
+            size: isSelected ? 30 : 24,
+            color: isSelected ? activeColor : inactiveColor,
+          ),
+        ),
+        onPressed: () {
           setState(() => _selectedPageIndex = index);
         },
-        destinations: <NavigationDestination>[
-          for (int i = 0; i < _fragmentScreens.length; i++)
-            NavigationDestination(
-              icon: Icon(
-                _fragmentScreens[i].icon,
-                color: i == _selectedPageIndex ? Theme.of(context).primaryColor : Colors.white54.withValues(alpha: 0.5),
+      ),
+    );
+  }
+
+  Widget _buildBottomAppBar() => BottomAppBar(
+        shape: const CircularNotchedRectangle(),
+        notchMargin: 8,
+        clipBehavior: Clip.antiAlias,
+        child: SizedBox(
+          height: kBottomNavigationBarHeight,
+          child: Row(
+            children: <Widget>[
+              Expanded(
+                child: Row(
+                  mainAxisSize: MainAxisSize.max,
+                  mainAxisAlignment: MainAxisAlignment.spaceAround,
+                  children: <Widget>[
+                    for (int i = 0; i < _fragmentScreens.length; i++) _buildBottomAppBarItem(i),
+                  ],
+                ),
               ),
-              label: _fragmentScreens[i].title,
-            ),
-        ],
+            ],
+          ),
+        ),
       );
 
   Widget _buildDrawer() => SafeArea(
@@ -197,25 +226,37 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
                   )
                 : null,
             actions: <Widget>[
-              (isConnectedToInternet && _selectedPageIndex <= 1)
-                  ? IconButton(
-                      icon: const Icon(
-                        Icons.search,
-                        color: Colors.white,
-                      ),
-                      onPressed: () {
-                        NavigationHelper.navigate(
-                          context,
-                          SearchScreen(mediaType: _fragmentScreens[_selectedPageIndex].mediaType),
-                        );
-                      },
-                    )
-                  : Container(),
+              if (useDrawer && isConnectedToInternet && _selectedPageIndex <= 1)
+                IconButton(
+                  icon: const Icon(
+                    Icons.search,
+                    color: Colors.white,
+                  ),
+                  onPressed: () {
+                    NavigationHelper.navigate(
+                      context,
+                      SearchScreen(mediaType: _fragmentScreens[_selectedPageIndex].mediaType),
+                    );
+                  },
+                ),
             ],
           ),
           body: _fragmentScreens[_selectedPageIndex].widget,
           drawer: useDrawer ? _buildDrawer() : null,
-          bottomNavigationBar: useDrawer ? null : _buildBottomNavigationBar(),
+          bottomNavigationBar: useDrawer ? null : _buildBottomAppBar(),
+          floatingActionButtonLocation: FloatingActionButtonLocation.centerDocked,
+          floatingActionButton: (!useDrawer && isConnectedToInternet && _selectedPageIndex <= 1)
+              ? FloatingActionButton(
+                  onPressed: () {
+                    NavigationHelper.navigate(
+                      context,
+                      SearchScreen(mediaType: _fragmentScreens[_selectedPageIndex].mediaType),
+                    );
+                  },
+                  shape: const CircleBorder(),
+                  child: const Icon(Icons.search),
+                )
+              : null,
         );
       },
     );
