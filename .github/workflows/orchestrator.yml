@@ -3,7 +3,7 @@ name: Orchestrator
 on:
   push:
     branches:
-      - main
+      - "**"
   workflow_dispatch:
 
 permissions:
@@ -48,7 +48,7 @@ jobs:
     needs:
       - detect
       - run-build-and-test
-    if: ${{ always() && needs.detect.outputs.build == 'true' }}
+    if: ${{ always() && needs.detect.outputs.build == 'true' && github.ref == 'refs/heads/main' }}
     uses: ./.github/workflows/ai-analysis.yml
     with:
       build_result: ${{ needs.run-build-and-test.result }}
