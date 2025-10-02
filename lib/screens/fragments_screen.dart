@@ -48,16 +48,21 @@ class _FragmentsScreenState extends BaseScreenState<FragmentsScreen> with Ticker
           mediaType: MediaType.tvShows,
         ),
         FragmentScreen(
-            icon: Icons.favorite,
-            title: "Favorites",
-            widget: TabBarView(
-              controller: _tabController,
-              children: const <Widget>[
-                FavoritesScreen(mediaType: MediaType.movies),
-                FavoritesScreen(mediaType: MediaType.tvShows),
-              ],
-            )),
-        const FragmentScreen(icon: Icons.settings, title: "Settings", widget: SettingsScreen()),
+          icon: Icons.favorite,
+          title: "Favorites",
+          widget: TabBarView(
+            controller: _tabController,
+            children: const <Widget>[
+              FavoritesScreen(mediaType: MediaType.movies),
+              FavoritesScreen(mediaType: MediaType.tvShows),
+            ],
+          ),
+        ),
+        const FragmentScreen(
+          icon: Icons.settings,
+          title: "Settings",
+          widget: SettingsScreen(),
+        ),
       ];
     });
   }
