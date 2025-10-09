@@ -1,63 +1,62 @@
-**Subtitle Service**
+**Subtitles Service**
 
 - **Location:** `lib/services/subtitles_service.dart`
-- **Backend:** OpenSubtitles search + ZIP download; extracts `.srt` files.
-- **Storage:** App temporary directory via `path_provider`.
+- **Backend:** OpenSubtitles search API returning zipped `.srt` downloads.
 - **Pattern:** Singleton (`SubtitlesService()` returns one shared instance).
-- **Logging:** `PrettyDioLogger` added for JSON requests; removed for binary ZIP downloads.
+- **Logging:** `PrettyDioLogger` added for JSON requests in debug builds; removed for binary ZIP downloads.
 
 **API**
 
-- `Future<List<File>> getSubtitles(int tmdbId, {int? seasonNumber, int? episodeNumber, String? locale = "EN"})`
-  - Queries OpenSubtitles for subtitles by ID (and optional season/episode) and downloads/expands ZIPs.
-  - Returns a list of `.srt` files saved in a cache directory. On error, returns `[]`.
+- `Future<List<StreamSubtitles>> getSubtitles({ required String imdbId, int? seasonNumber, int? episodeNumber })`
+  - Accepts the IMDb ID (with or without the `tt` prefix). Optional season/episode narrow the search to TV episodes.
+  - Normalises and validates the IMDb ID, then queries the appropriate OpenSubtitles endpoint via `Urls`.
+  - Filters results to `.srt` format and to an allowlist of languages (`EN`, `FI`, `ES`, `FR`, `DE`, `PT`, `IT`, `RU`, `AR`, `TR`, `HI`, `ZH`, `JA`, `KO`).
+  - Sorts by the provider `Score` descending and returns each match as `StreamSubtitles` with `type = SubtitlesType.zip` and the original ZIP download URL.
+  - Returns an empty list when nothing matches or an error occurs.
 
-- `Future<void> deleteAllSubtitles()`
-  - Deletes the entire temporary subtitles directory tree used by the service.
+- `String srtToVtt(String srt)`
+  - Converts `.srt` content into WebVTT by adjusting timestamps and stripping numeric counters.
+  - Used by `ZipToVttService` to expose WebVTT text to the player.
 
-**Caching & File Layout**
+**Workflow**
 
-- Movies: `${tmp}/{locale}/` (e.g., `…/EN/`).
-- Episodes: `${tmp}/{tmdbId}/{locale}/{seasonNumber}/{episodeNumber}/`.
-- Before network calls, the service scans the destination directory; if `.srt` files exist, it returns them immediately.
-
-**Request Details**
-
-- Search request: `GET Urls.getOpenSubtitlesMovieSearch` or `Urls.getOpenSubtitlesEpisodeSearch` depending on parameters.
-- Download: Uses each result `ZipDownloadLink` directly and keeps only `.srt` entries.
+1. Determine the IMDb ID for the current media (use `TMDBService.getImdbId` when necessary).
+2. Call `SubtitlesService().getSubtitles(...)` to obtain available subtitle downloads.
+3. When a user selects one, pass the `StreamSubtitles.url` to `ZipToVttService().extract` to download and convert the ZIP into WebVTT text for playback.
 
 **Prerequisites**
 
-- Network connectivity to OpenSubtitles endpoints defined in `Urls`.
+- Network connectivity to OpenSubtitles endpoints defined in `lib/utils/urls.dart`.
+- A valid IMDb identifier for the media item.
 
 **Common Usage**
 
-- Load movie subtitles in BLoC handler:
-  - `final files = await SubtitlesService().getSubtitles(movieId, locale: "EN");`
+- **Load movie subtitles in BLoC handler:**
+  - `final subs = await SubtitlesService().getSubtitles(imdbId: imdbId);`
   - Example: `lib/bloc/handlers/subtitles_handler.dart` (`onLoadMovieSubtitles`).
 
-- Load episode subtitles in BLoC handler:
-  - `final files = await SubtitlesService().getSubtitles(tvId, seasonNumber: s, episodeNumber: e, locale: "EN");`
+- **Load episode subtitles in BLoC handler:**
+  - `final subs = await SubtitlesService().getSubtitles(imdbId: imdbId, seasonNumber: s, episodeNumber: e);`
   - Example: `lib/bloc/handlers/subtitles_handler.dart` (`onLoadEpisodeSubtitles`).
 
-- Clear cached subtitles (Settings):
-  - `await SubtitlesService().deleteAllSubtitles();`
-  - Example: `lib/screens/settings_screen.dart`.
+- **Convert selected subtitle for playback:**
+  - `final vtt = await ZipToVttService().extract(selectedSubtitles.url);`
+  - Example consumption: `lib/components/semo_player.dart`.
 
 **Behavior & Error Handling**
 
 - Returns an empty list on errors; logs warnings/errors via `logger`.
-- Skips non-`.srt` archive entries.
-- Temporarily removes the HTTP logger before binary downloads to avoid logging ZIP payloads.
+- Automatically trims `tt` prefixes and ignores invalid/empty IDs.
+- Filters non-`.srt` formats to avoid unsupported subtitle types.
 
 **Notes**
 
-- Locale is a simple string passed to OpenSubtitles (e.g., `EN`, `ES`). Ensure it matches provider expectations.
-- Consider calling from a background isolate if expanding many ZIPs, though current usage is lightweight.
-- Web builds should avoid referencing this service due to `dart:io` usage.
+- Locale filtering keeps the UI manageable; adjust the allowlist if broader language support is required.
+- Web builds should avoid referencing this service due to reliance on `dart:io` in downstream ZIP handling.
+- Caching is handled by callers; the service performs no local storage.
 
 **Quick Reference**
 
-- Methods: `getSubtitles(...)`, `deleteAllSubtitles()`
-- Uses: `Urls.getOpenSubtitlesMovieSearch`, `Urls.getOpenSubtitlesEpisodeSearch`
-- Cache: temp dir per locale or per tmdbId/season/episode
+- Methods: `getSubtitles(...)`, `srtToVtt(...)`
+- Models: `StreamSubtitles` (`lib/models/stream_subtitles.dart`), `SubtitlesType` enum.
+- Helpers: `ZipToVttService` for download + conversion.

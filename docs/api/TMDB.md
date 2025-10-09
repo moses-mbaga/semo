@@ -15,7 +15,7 @@ Movies
   - Fetches now playing movies (fixed `page = 1`). Returns `SearchResults` or `null` on error.
 
 - `Future<SearchResults?> getTrendingMovies(int page)`
-  - Weekly trending movies. Paginates with `page` (1‑based). May return `null` on error.
+  - Weekly trending movies. Paginates with `page` (1-based). May return `null` on error.
 
 - `Future<SearchResults?> getPopularMovies(int page)`
   - Popular movies, paginated. May return `null` on error.
@@ -65,15 +65,18 @@ TV Shows
   - Extracts seasons from show details, filters out specials (`season.number <= 0`) and seasons with `airDate == null`. Returns `[]` on error.
 
 - `Future<List<Episode>> getEpisodes(int showId, int seasonNumber)`
-  - Episodes for a given show/season, filtered to those with non‑null `airDate`. Returns `[]` on error.
+  - Episodes for a given show/season, filtered to those with non-null `airDate`. Returns `[]` on error.
 
 Common
+
+- `Future<String?> getImdbId(MediaType mediaType, int id)`
+  - Fetches external IDs for a movie or TV show and extracts the IMDb ID (`tt...`). Returns `null` if unavailable.
 
 - `Future<SearchResults?> searchFromUrl(MediaType mediaType, String url, int page, Map<String, String>? parameters)`
   - Convenience wrapper over the internal search to hit arbitrary TMDB list endpoints with pagination and optional params.
 
 - `Future<String?> getGenreBackdrop(MediaType mediaType, Genre genre)`
-  - Returns a backdrop path for the provided `genre`. Uses `genre.backdropPath` when available; otherwise performs a one‑page discover request for the genre and returns a random item's backdrop. Returns `null` on error or when none found.
+  - Returns a backdrop path for the provided `genre`. Uses `genre.backdropPath` when available; otherwise performs a one-page discover request for the genre and returns a random item's backdrop. Returns `null` on error or when none found.
 
 - `Future<SearchResults?> getRecommendations(MediaType mediaType, int id, int page)`
   - Recommendations for a movie/TV show by ID, paginated. Returns `SearchResults?`.
@@ -82,7 +85,7 @@ Common
   - Similar movies/TV shows by ID, paginated. Returns `SearchResults?`.
 
 - `Future<String?> getTrailerUrl(MediaType mediaType, int mediaId)`
-  - Fetches videos and selects the highest‑resolution, official YouTube trailer. Returns a full YouTube watch URL string or `null` if none.
+  - Fetches videos and selects the highest-resolution, official YouTube trailer. Returns a full YouTube watch URL string or `null` if none.
 
 - `Future<List<Person>> getCast(MediaType mediaType, int mediaId)`
   - Cast credits for a title. Filters results to `department == "Acting"`. Returns `[]` on error.
@@ -98,7 +101,7 @@ Common
 
 **Behavior & Error Handling**
 
-- Returns `null` for object/collection wrappers (`SearchResults`, `Movie`, `TvShow`) on failures; list‑returning methods yield `[]`.
+- Returns `null` for object/collection wrappers (`SearchResults`, `Movie`, `TvShow`) on failures; list-returning methods yield `[]`.
 - Logs errors with `logger` and continues without throwing to callers in most paths.
 - Adds `PrettyDioLogger` interceptor only once (in debug builds). Authorization header is attached at client creation.
 - All requests use 10s connect/receive timeouts.
@@ -123,6 +126,9 @@ Common
 - Trailer URL (YouTube):
   - `final trailer = await tmdb.getTrailerUrl(MediaType.movies, 27205);`
 
+- Resolve IMDb ID for subtitles/streams:
+  - `final imdbId = await tmdb.getImdbId(MediaType.movies, 27205);`
+
 **Notes**
 
 - `SearchResults` encapsulates paging data and either `movies` or `tvShows` based on `MediaType`.
@@ -134,4 +140,3 @@ Common
 - File: `lib/services/tmdb_service.dart`
 - Auth: `SecretsService.tmdbAccessToken` → `Authorization: Bearer …`
 - URLs: see `lib/utils/urls.dart`
-

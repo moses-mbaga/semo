@@ -7,26 +7,24 @@
 
 **Keys & Defaults**
 
-- `server` (String): selected streaming server name. Default: `"Random"`.
-- `seek_duration` (int, seconds): skip forward/back duration. Default: `15`.
-- `subtitle_style` (JSON String): serialized `SubtitleStyle`. Defaults via `SubtitleStyle.fromJson({})`:
-  - `font_size`: `18.0`, `color`: `"Black"`, `has_border`: `true`.
-  - `border_width`: `5.0`, `border_style`: `"stroke"`, `border_color`: `"White"`.
+- `server` (`String`): selected streaming server name. Default: `"Random"`.
+- `seek_duration` (`int`, seconds): skip forward/back duration. Default: `15`.
 
 **API**
 
 - `static Future<void> init()`
+  - Initializes the shared preferences instance and validates the saved streaming server.
+- `static Future<void> ensureActiveStreamingServerValidity()`
+  - Helper invoked from `init()` that resets the saved server to `Random` if it no longer exists.
 - `Future<bool?> setStreamingServer(StreamingServer server)`
 - `Future<bool?> setSeekDuration(int seconds)`
-- `Future<bool?> setSubtitlesStyle(SubtitleStyle style)`
 - `String getStreamingServer()`
 - `int getSeekDuration()`
-- `SubtitleStyle getSubtitlesStyle()`
 - `Future<bool?> clear()`
 
 Notes:
-- Setters return `Future<bool?>` from `SharedPreferences`; may be `null` if `init()` wasn’t called.
-- Getters safely fall back to sane defaults if unset or if decoding fails.
+- Setters return `Future<bool?>` from `SharedPreferences`; this is `null` if `init()` wasn’t called.
+- Getters fall back to defaults if values are missing or storage failed to initialize.
 
 **Initialization**
 
@@ -43,21 +41,15 @@ Notes:
 
 - **Update server preference (Settings):**
   - `await AppPreferencesService().setStreamingServer(server);`
-  - Example: `lib/screens/settings_screen.dart` (bottom sheet selector).
+  - Example: `lib/screens/settings_screen.dart` (server selector bottom sheet).
 
 - **Read seek duration (Player controls):**
   - `final seconds = AppPreferencesService().getSeekDuration();`
-  - Example: `lib/components/semo_player.dart` uses it for double‑tap/seek buttons.
+  - Example: `lib/components/semo_player.dart` uses it for double-tap/seek buttons.
 
 - **Update seek duration (Settings):**
   - `await AppPreferencesService().setSeekDuration(30);`
   - Example: `lib/screens/settings_screen.dart` (seek duration selector).
-
-- **Read/Write subtitle style:**
-  - Read: `final style = AppPreferencesService().getSubtitlesStyle();`
-  - Write: `await AppPreferencesService().setSubtitlesStyle(style.copyWith(...));`
-  - Example read/transform: `lib/components/semo_player.dart` maps to UI `SubtitleStyle`.
-  - Example editor: `lib/screens/subtitles_preferences_screen.dart` updates and persists on change.
 
 - **Clear all preferences:**
   - `await AppPreferencesService().clear();`
@@ -65,12 +57,11 @@ Notes:
 
 **Model References**
 
-- `StreamingServer`: `lib/models/streaming_server.dart` (stores `name`, used for persistence).
-- `SubtitleStyle`: `lib/models/subtitle_style.dart` (JSON shape, defaults, color options).
+- `StreamingServer`: `lib/models/streaming_server.dart` (stores the `name`, used for persistence).
 
 **Error Handling & Robustness**
 
-- Subtitle style JSON decoding is wrapped; on error it logs and returns defaults.
+- `ensureActiveStreamingServerValidity` prevents the app from storing a server that has been removed from the extractor list.
 - Treat setter returns of `null` as “not persisted” (likely `init()` missing).
 - For reactive UIs, read once at screen init and update after setter completes.
 
