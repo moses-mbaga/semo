@@ -8,6 +8,7 @@ import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/enums/media_type.dart";
+import "package:semo/services/streams_extractor_service/extractors/anime_world_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/auto_embed_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/holly_movie_extractor.dart";
@@ -32,6 +33,7 @@ class StreamsExtractorService {
   final VideoQualityService _videoQualityService = const VideoQualityService();
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
+    StreamingServer(name: "AnimeWorld", extractor: AnimeWorldExtractor()),
     StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
