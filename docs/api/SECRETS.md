@@ -1,17 +1,16 @@
 **Secrets Service**
 
 - **Location:** `lib/services/secrets_service.dart`
-- **Source:** Reads from `.env` using `envied` (code‑gen into `secrets_service.g.dart`).
+- **Source:** Reads from `.env` using `envied` (code-gen into `secrets_service.g.dart`).
 - **Pattern:** Static accessors; no instance required.
 - **Build step:** `dart run build_runner build --delete-conflicting-outputs` (re)generates `lib/services/secrets_service.g.dart` after `.env` changes.
-- **Obfuscation:** Fields are generated with `obfuscate: true` to avoid plain‑text in source. This mitigates casual scraping but is not a security boundary.
+- **Obfuscation:** Fields are generated with `obfuscate: true` to avoid plain-text in source. This mitigates casual scraping but is not a security boundary.
 
 **Environment Variables**
 
-- `TMDB_ACCESS_TOKEN` (String): TMDB v4 API Bearer token.
-- `CINEPRO_BASE_URL` (String): Base URL for the CinePro streaming server.
+- `TMDB_ACCESS_TOKEN` (`String`): TMDB v4 API Bearer token.
 
- Declare these in `.env` (use `.env.example` as a template) and run the build step to embed/obfuscate values.
+Declare this key in `.env` (use `.env.example` as a template) and run the build step to embed/obfuscate the value.
 
 **API**
 
@@ -19,18 +18,10 @@
   - Bearer token used by TMDB requests.
   - Consumed by: `lib/services/tmdb_service.dart` (Authorization header).
 
-- `static String cineProBaseUrl`
-  - Base URL used for CinePro streaming server requests.
-**Common Usage**
-
-- TMDB requests auth header:
-  - `HttpHeaders.authorizationHeader: "Bearer ${SecretsService.tmdbAccessToken}"`
-
 **Setup & Workflow**
 
 - Add secrets to `.env` (never commit real values):
   - `TMDB_ACCESS_TOKEN=...`
-  - `CINEPRO_BASE_URL=...`
 - Generate code: `dart run build_runner build --delete-conflicting-outputs`.
 - Verify build: `dart analyze` and run the app.
 
@@ -44,5 +35,5 @@
 
 - File: `lib/services/secrets_service.dart`
 - Generated: `lib/services/secrets_service.g.dart`
-- Env: `.env` with `TMDB_ACCESS_TOKEN`, `CINEPRO_BASE_URL`
+- Env: `.env` with `TMDB_ACCESS_TOKEN`
 - Build: `dart run build_runner build --delete-conflicting-outputs`

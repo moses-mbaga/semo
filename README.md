@@ -2,19 +2,19 @@
 
 ![Semo Screenshots](https://raw.githubusercontent.com/moses-mbaga/semo/refs/heads/main/banner.png)
 
-Semo is designed to offer a seamless movie and TV show streaming experience. With support for multiple streaming servers, synced watch progress, and fully customizable subtitles, Semo aims to be your go-to streaming app for enjoying your favorite content.
+Semo is designed to offer a seamless movie and TV show streaming experience. With support for multiple streaming servers, synced watch progress, YouTube trailer playback, and fully customizable subtitles, Semo aims to be your go-to streaming app for enjoying your favorite content.
 
 ## Features
 
 🗂 Comprehensive Library
 
 - Access almost all movies and TV shows.
-- Explore a vast library to find something for everyone.
+- Explore a vast library to find something for everyone using TMDB data.
 
 🎥 Stream Playback
 
-- Play movies and TV shows directly using high-quality HLS streams.
-- Multiple streaming servers to ensure uninterrupted viewing.
+- Play movies and TV shows directly using high-quality HLS or file streams.
+- Multiple streaming servers with automatic fallbacks and quality labelling for direct-file sources.
 
 ⏳ Synced Watch Progress
 
@@ -23,8 +23,13 @@ Semo is designed to offer a seamless movie and TV show streaming experience. Wit
 
 🔠 Customizable Subtitles
 
-- Support for .srt subtitle files.
-- Fully customizable options
+- Support for .srt subtitle files (converted on the fly to WebVTT for playback).
+- Filter subtitles by language and cache downloads for offline reuse.
+
+▶️ Trailers & Extras
+
+- Play official trailers via resilient multi-backend YouTube extraction.
+- Sniff additional media links directly from provider pages when needed.
 
 ## Download ![GitHub Downloads (all assets, all releases)](https://img.shields.io/github/downloads/moses-mbaga/semo/total?link=https%3A%2F%2Fgithub.com%2Fmoses-mbaga%2Fsemo%2Freleases)
 
@@ -42,18 +47,22 @@ Download IPA
 
 ## Documentation
 
-- [Architecture](https://github.com/moses-mbaga/semo/blob/main/docs/ARCHITECTURE.md)
-- API:
-  - [TMDB Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/TMDB.md)
-  - [Stream Extractor Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/STREAM_EXTRACTOR.md)
-  - [Subtitle Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/SUBTITLES.md)
-  - [App Preferences Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/APP_PREFERENCES.md)
-  - [Auth Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/AUTH.md)
-  - [Favorites Services](https://github.com/moses-mbaga/semo/blob/main/docs/api/FAVORITES.md)
-  - [Recently Watched Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/RECENTLY_WATCHED.md)
-  - [Recent Searches Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/RECENT_SEARCHES.md)
-  - [Secrets Service](https://github.com/moses-mbaga/semo/blob/main/docs/api/SECRETS.md)
-- [TODOs](https://github.com/moses-mbaga/semo/blob/main/docs/TODO.md)
+- [Architecture](docs/ARCHITECTURE.md)
+- API services:
+  - [TMDB Service](docs/api/TMDB.md)
+  - [Stream Extractor Service](docs/api/STREAMS_EXTRACTOR.md)
+  - [YouTube Extractor Service](docs/api/YOUTUBE_EXTRACTOR.md)
+  - [Page Network Requests Service](docs/api/PAGE_NETWORK_REQUESTS.md)
+  - [Video Quality Service](docs/api/VIDEO_QUALITY.md)
+  - [Subtitle Service](docs/api/SUBTITLES.md)
+  - [ZIP to VTT Service](docs/api/ZIP_TO_VTT.md)
+  - [App Preferences Service](docs/api/APP_PREFERENCES.md)
+  - [Auth Service](docs/api/AUTH.md)
+  - [Favorites Service](docs/api/FAVORITES.md)
+  - [Recently Watched Service](docs/api/RECENTLY_WATCHED.md)
+  - [Recent Searches Service](docs/api/RECENT_SEARCHES.md)
+  - [Secrets Service](docs/api/SECRETS.md)
+- [TODOs](docs/TODO.md)
 
 ## Installation
 
@@ -75,14 +84,14 @@ cd semo
 flutter pub get
 ```
 
-- Under the parent directory, create a ```.env``` file, which will contains required to run the app. An example can be found in ```.env.example```.
+- Under the parent directory, create a ```.env``` file, which will contain the secrets required to run the app. An example can be found in ```.env.example```.
 
 - Auto generate asset and env helpers using build_runner:
 ```bash
 dart run build_runner build --delete-conflicting-outputs
 ```
 
-- Add Firebase to the app using FlutterFire CLI. You can follow insructions from the [official documentation](https://firebase.google.com/docs/flutter/setup)
+- Add Firebase to the app using FlutterFire CLI. You can follow instructions from the [official documentation](https://firebase.google.com/docs/flutter/setup)
 
 - Run the app:
 ```bash
