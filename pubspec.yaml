@@ -25,6 +25,7 @@ dependencies:
   flutter_bloc: ^9.1.1
   flutter_cache_manager: ^3.4.1
   flutter_inappwebview: ^6.1.5
+  flutter_local_notifications: ^17.2.3
   flutter_settings_ui: ^3.0.1
   font_awesome_flutter: ^10.10.0
   google_fonts: ^6.3.1
@@ -34,9 +35,11 @@ dependencies:
   internet_connection_checker_plus: ^2.7.2
   logger: ^2.6.1
   lottie: ^3.3.2
+  mime: ^1.0.5
   package_info_plus: ^8.3.1
   path: ^1.9.1
   path_provider: ^2.1.5
+  permission_handler: ^11.3.1
   pretty_dio_logger: ^1.4.0
   animated_read_more_text: ^0.0.6
   shared_preferences: ^2.5.3
@@ -47,6 +50,8 @@ dependencies:
   media_kit: ^1.1.11
   media_kit_video: ^1.2.5
   media_kit_libs_video: ^1.0.5
+  background_fetch: ^1.1.5
+  device_info_plus: ^11.1.0
 
 dev_dependencies:
   flutter_test:
