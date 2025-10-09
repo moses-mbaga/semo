@@ -22,8 +22,15 @@ class ZipToVttService {
     ),
   );
   final SubtitlesService _subtitlesService = SubtitlesService();
+  static const Duration _cacheTtl = Duration(hours: 24);
+  final Map<String, _CacheEntry> _cache = <String, _CacheEntry>{};
 
   Future<String?> extract(String zipUrl) async {
+    final _CacheEntry? cached = _cache[zipUrl];
+    if (cached != null && !_isExpired(cached.timestamp)) {
+      return cached.value;
+    }
+
     try {
       final Uint8List zipBytes = await _getZipBytes(zipUrl);
       final Archive archive = ZipDecoder().decodeBytes(zipBytes, verify: true);
@@ -42,15 +49,23 @@ class ZipToVttService {
 
       final String text = _decodeText(chosen);
       if (path.extension(chosen.name) == ".vtt") {
+        _cache[zipUrl] = _CacheEntry(value: text, timestamp: DateTime.now());
         return text;
       }
 
-      return _subtitlesService.srtToVtt(text);
+      final String converted = _subtitlesService.srtToVtt(text);
+      _cache[zipUrl] = _CacheEntry(value: converted, timestamp: DateTime.now());
+      return converted;
     } catch (e, s) {
       _logger.w("Failed to extract WebVTT from ZIP", error: e, stackTrace: s);
     }
 
+    _cache.remove(zipUrl);
     return null;
+  }
+
+  bool _isExpired(DateTime timestamp) {
+    return DateTime.now().difference(timestamp) > _cacheTtl;
   }
 
   Future<Uint8List> _getZipBytes(String zipUrl) async {
@@ -112,4 +127,11 @@ class ZipToVttService {
 
     throw Exception("Unsupported archive entry encoding");
   }
+}
+
+class _CacheEntry {
+  _CacheEntry({required this.value, required this.timestamp});
+
+  final String value;
+  final DateTime timestamp;
 }
