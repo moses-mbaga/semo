@@ -21,6 +21,7 @@ import "package:semo/services/streams_extractor_service/extractors/vid_fast_extr
 import "package:semo/services/streams_extractor_service/extractors/vid_link_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
 import "package:semo/services/streams_extractor_service/extractors/vid_rock_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/xprime_extractor.dart";
 import "package:semo/services/video_quality_service.dart";
 
 class StreamsExtractorService {
@@ -43,6 +44,7 @@ class StreamsExtractorService {
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
     StreamingServer(name: "VidRock", extractor: VidRockExtractor()),
+    StreamingServer(name: "Xprime", extractor: XprimeExtractor()),
 
     // Broken
     // if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()), // As of 19.09.2025, blocked by Cloudflare

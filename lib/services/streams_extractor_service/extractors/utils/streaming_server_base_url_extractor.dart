@@ -43,6 +43,7 @@ class StreamingServerBaseUrlExtractor {
     "semo_vidfast": "https://vidfast.pro",
     "semo_vidlink": "https://vidlink.pro",
     "semo_vidrock": "https://vidrock.net",
+    "semo_xprime": "https://xprime.tv",
   };
 
   final Logger _logger = Logger();
