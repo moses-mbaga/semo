@@ -35,10 +35,16 @@ class XprimeExtractor implements BaseStreamExtractor {
       }
 
       final bool isTv = options.season != null && options.episode != null;
-      final String path = isTv ? "/watch/${options.tmdbId}/${options.season}/${options.episode}" : "/watch/${options.tmdbId}";
-      final Uri pageUri = Uri.parse(baseUrl).resolve(path);
+      final Uri pageUri = Uri.parse(baseUrl).resolve(
+        isTv ? "/watch/${options.tmdbId}/${options.season}/${options.episode}" : "/watch/${options.tmdbId}",
+      );
 
-      final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(pageUri.toString(), includePatterns: <String>["oca-worker.kendrickl-3amar.workers.dev"], filter: (String url) => url.startsWith("https://oca-worker.kendrickl-3amar.workers.dev/?v="), acceptAnyOnFilterMatch: true);
+      final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(
+        pageUri.toString(),
+        includePatterns: <String>["oca-worker.kendrickl-3amar.workers.dev"],
+        filter: (String url) => url.startsWith("https://oca-worker.kendrickl-3amar.workers.dev/?v="),
+        acceptAnyOnFilterMatch: true,
+      );
 
       final String? url = stream?["url"];
       final Map<String, String> headers = stream?["headers"] ?? <String, String>{};
