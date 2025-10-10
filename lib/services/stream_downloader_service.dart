@@ -45,10 +45,8 @@ class StreamDownloaderService {
 
   final Logger _logger = Logger();
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
-  final StreamController<DownloadProgress> _progressController =
-      StreamController<DownloadProgress>.broadcast();
-  final StreamController<List<DownloadItem>> _itemsController =
-      StreamController<List<DownloadItem>>.broadcast();
+  final StreamController<DownloadProgress> _progressController = StreamController<DownloadProgress>.broadcast();
+  final StreamController<List<DownloadItem>> _itemsController = StreamController<List<DownloadItem>>.broadcast();
 
   final Map<String, DownloadItem> _downloads = <String, DownloadItem>{};
   final Map<String, DownloadProgress> _progress = <String, DownloadProgress>{};
@@ -280,17 +278,9 @@ class StreamDownloaderService {
       }
     } catch (error, stackTrace) {
       final DownloadItem? currentItem = _downloads[item.id];
-      final bool isCancelledError =
-          error is DioException && CancelToken.isCancel(error);
-      final bool isCancelledType =
-          error is DioException && error.type == DioExceptionType.cancel;
-      final bool intentionalInterruption =
-          isCancelledError ||
-          isCancelledType ||
-          currentItem == null ||
-          currentItem.status == DownloadStatus.paused ||
-          currentItem.status == DownloadStatus.cancelled ||
-          _pausedDownloads.contains(item.id);
+      final bool isCancelledError = error is DioException && CancelToken.isCancel(error);
+      final bool isCancelledType = error is DioException && error.type == DioExceptionType.cancel;
+      final bool intentionalInterruption = isCancelledError || isCancelledType || currentItem == null || currentItem.status == DownloadStatus.paused || currentItem.status == DownloadStatus.cancelled || _pausedDownloads.contains(item.id);
 
       if (intentionalInterruption) {
         _logger.i(
@@ -326,9 +316,7 @@ class StreamDownloaderService {
     final CancelToken cancelToken = CancelToken();
     _cancelTokens[item.id] = cancelToken;
 
-    final List<String> segments = item.segmentUrls.isNotEmpty
-        ? item.segmentUrls
-        : await _loadPlaylistSegments(item.url, item.metadata);
+    final List<String> segments = item.segmentUrls.isNotEmpty ? item.segmentUrls : await _loadPlaylistSegments(item.url, item.metadata);
     final Directory tempDirectory = await _temporaryDirectory(item.id);
 
     final List<String> updatedSegments = List<String>.from(segments);
@@ -635,42 +623,39 @@ class StreamDownloaderService {
     final List<String> lines = body.split(RegExp(r"\r?\n"));
     final bool isMaster = lines.any((String line) => line.startsWith("#EXT-X-STREAM-INF"));
 
-      if (isMaster) {
-        final Map<int, String> variants = <int, String>{};
-        for (int i = 0; i < lines.length; i++) {
-          final String line = lines[i];
-          if (line.startsWith("#EXT-X-STREAM-INF")) {
-            final String bandwidthValue = line
-                .split(",")
-                .map((String entry) => entry.trim())
-                .firstWhere(
-                  (String entry) => entry.startsWith("BANDWIDTH"),
-                  orElse: () => "",
-                );
-            final int bandwidth = int.tryParse(bandwidthValue.split("=").last) ?? 0;
-            if (i + 1 < lines.length) {
-              variants[bandwidth] = lines[i + 1];
-            }
+    if (isMaster) {
+      final Map<int, String> variants = <int, String>{};
+      for (int i = 0; i < lines.length; i++) {
+        final String line = lines[i];
+        if (line.startsWith("#EXT-X-STREAM-INF")) {
+          final String bandwidthValue = line.split(",").map((String entry) => entry.trim()).firstWhere(
+                (String entry) => entry.startsWith("BANDWIDTH"),
+                orElse: () => "",
+              );
+          final int bandwidth = int.tryParse(bandwidthValue.split("=").last) ?? 0;
+          if (i + 1 < lines.length) {
+            variants[bandwidth] = lines[i + 1];
           }
         }
-
-        final List<int> sortedBandwidths = variants.keys.toList()..sort();
-        final int selectedBandwidth = sortedBandwidths.isNotEmpty ? sortedBandwidths.last : 0;
-        final String? playlistPath = variants[selectedBandwidth];
-        if (playlistPath == null) {
-          throw Exception("Unable to resolve variant playlist");
-        }
-        final Uri resolved = Uri.parse(url).resolve(playlistPath.trim());
-        final DownloadMetadata variantMetadata = DownloadMetadata(
-          contentLength: metadata.contentLength,
-          contentType: metadata.contentType,
-          acceptRanges: metadata.acceptRanges,
-          eTag: metadata.eTag,
-          lastModified: metadata.lastModified,
-          qualityLabel: selectedBandwidth.toString(),
-        );
-        return _loadPlaylistSegments(resolved.toString(), variantMetadata);
       }
+
+      final List<int> sortedBandwidths = variants.keys.toList()..sort();
+      final int selectedBandwidth = sortedBandwidths.isNotEmpty ? sortedBandwidths.last : 0;
+      final String? playlistPath = variants[selectedBandwidth];
+      if (playlistPath == null) {
+        throw Exception("Unable to resolve variant playlist");
+      }
+      final Uri resolved = Uri.parse(url).resolve(playlistPath.trim());
+      final DownloadMetadata variantMetadata = DownloadMetadata(
+        contentLength: metadata.contentLength,
+        contentType: metadata.contentType,
+        acceptRanges: metadata.acceptRanges,
+        eTag: metadata.eTag,
+        lastModified: metadata.lastModified,
+        qualityLabel: selectedBandwidth.toString(),
+      );
+      return _loadPlaylistSegments(resolved.toString(), variantMetadata);
+    }
 
     final List<String> segments = <String>[];
     for (final String line in lines) {
@@ -900,17 +885,12 @@ class StreamDownloaderService {
       return;
     }
 
-    final List<Map<String, dynamic>> items = _downloads.values
-        .map((DownloadItem item) => item.toJson())
-        .toList()
+    final List<Map<String, dynamic>> items = _downloads.values.map((DownloadItem item) => item.toJson()).toList()
       ..sort(
-        (Map<String, dynamic> a, Map<String, dynamic> b) =>
-            DateTime.parse(b["createdAt"] as String)
-                .compareTo(DateTime.parse(a["createdAt"] as String)),
+        (Map<String, dynamic> a, Map<String, dynamic> b) => DateTime.parse(b["createdAt"] as String).compareTo(DateTime.parse(a["createdAt"] as String)),
       );
 
-    final List<Map<String, dynamic>> progress =
-        _progress.values.map((DownloadProgress element) => element.toJson()).toList();
+    final List<Map<String, dynamic>> progress = _progress.values.map((DownloadProgress element) => element.toJson()).toList();
 
     await _preferences!.setString(_storageKey, jsonEncode(items));
     await _preferences!.setString(_progressKey, jsonEncode(progress));
@@ -1003,7 +983,7 @@ class StreamDownloaderService {
     if (mimeType == null) {
       return ".mp4";
     }
-    final String extension = extensionFromMime(mimeType) ?? "";
+    final String extension = extensionFromMime(mimeType);
     if (extension.isEmpty) {
       return ".mp4";
     }
