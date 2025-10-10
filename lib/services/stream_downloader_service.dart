@@ -1003,14 +1003,12 @@ class StreamDownloaderService {
     if (mimeType == null) {
       return ".mp4";
     }
-    final String? extension = extensionFromMime(mimeType);
-    if (extension == null || extension.isEmpty) {
+    final String extension = extensionFromMime(mimeType) ?? "";
+    if (extension.isEmpty) {
       return ".mp4";
     }
     return ".${extension.toLowerCase()}";
   }
-
-  int get _activeDownloads => _activeDownloadCount;
 }
 
 class _ChunkResult {
