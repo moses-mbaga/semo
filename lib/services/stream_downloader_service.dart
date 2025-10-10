@@ -278,14 +278,39 @@ class StreamDownloaderService {
         await _showFinalNotification(_progress[item.id]!);
       }
     } catch (error, stackTrace) {
+      final DownloadItem? currentItem = _downloads[item.id];
+      final bool intentionalInterruption =
+          CancelToken.isCancel(error) ||
+          (error is DioException && error.type == DioExceptionType.cancel) ||
+          currentItem == null ||
+          currentItem.status == DownloadStatus.paused ||
+          currentItem.status == DownloadStatus.cancelled ||
+          _pausedDownloads.contains(item.id);
+
+      if (intentionalInterruption) {
+        _logger.i(
+          "Download interrupted",
+          error: error,
+          stackTrace: stackTrace,
+        );
+        return;
+      }
+
       _logger.e("Failed download", error: error, stackTrace: stackTrace);
       _downloads[item.id] = item.copyWith(status: DownloadStatus.error);
-      _progress[item.id] = _progress[item.id]!.copyWith(
-        status: DownloadStatus.error,
-        errorMessage: error.toString(),
-      );
-      _queue.add(item.id);
-      await _showFinalNotification(_progress[item.id]!);
+      final DownloadProgress? currentProgress = _progress[item.id];
+      if (currentProgress != null) {
+        _progress[item.id] = currentProgress.copyWith(
+          status: DownloadStatus.error,
+          errorMessage: error.toString(),
+        );
+      }
+      if (!_queue.contains(item.id)) {
+        _queue.add(item.id);
+      }
+      if (_progress[item.id] != null) {
+        await _showFinalNotification(_progress[item.id]!);
+      }
     } finally {
       await _persistState();
       _emitState(force: true);
