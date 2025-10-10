@@ -13,13 +13,12 @@ import "package:mime/mime.dart";
 import "package:path/path.dart" as path;
 import "package:path_provider/path_provider.dart";
 import "package:permission_handler/permission_handler.dart";
+import "package:semo/enums/download_status.dart";
+import "package:semo/enums/download_type.dart";
+import "package:semo/models/download_item.dart";
+import "package:semo/models/download_metadata.dart";
+import "package:semo/models/download_progress.dart";
 import "package:shared_preferences/shared_preferences.dart";
-
-import "../enums/download_status.dart";
-import "../enums/download_type.dart";
-import "../models/download_item.dart";
-import "../models/download_metadata.dart";
-import "../models/download_progress.dart";
 
 class StreamDownloaderService {
   factory StreamDownloaderService() => _instance;
@@ -40,16 +39,16 @@ class StreamDownloaderService {
       receiveTimeout: const Duration(minutes: 1),
       sendTimeout: const Duration(minutes: 1),
       followRedirects: true,
-      validateStatus: (int? status) {
-        return status != null && status < 500;
-      },
+      validateStatus: (int? status) => status != null && status < 500,
     ),
   );
 
   final Logger _logger = Logger();
   final FlutterLocalNotificationsPlugin _notifications = FlutterLocalNotificationsPlugin();
-  final StreamController<DownloadProgress> _progressController = StreamController.broadcast();
-  final StreamController<List<DownloadItem>> _itemsController = StreamController.broadcast();
+  final StreamController<DownloadProgress> _progressController =
+      StreamController<DownloadProgress>.broadcast();
+  final StreamController<List<DownloadItem>> _itemsController =
+      StreamController<List<DownloadItem>>.broadcast();
 
   final Map<String, DownloadItem> _downloads = <String, DownloadItem>{};
   final Map<String, DownloadProgress> _progress = <String, DownloadProgress>{};
@@ -62,6 +61,7 @@ class StreamDownloaderService {
   SharedPreferences? _preferences;
   bool _initialized = false;
   bool _processingQueue = false;
+  int _activeDownloadCount = 0;
   DateTime _lastProgressEmit = DateTime.fromMillisecondsSinceEpoch(0);
 
   Stream<DownloadProgress> get progressStream => _progressController.stream;
@@ -215,7 +215,8 @@ class StreamDownloaderService {
     await BackgroundFetch.scheduleTask(
       TaskConfig(
         taskId: "stream_downloader_refresh",
-        minimumFetchInterval: 15,
+        delay: 15 * 60 * 1000,
+        periodic: true,
         requiresBatteryNotLow: false,
         requiresCharging: false,
         startOnBoot: true,
@@ -233,7 +234,7 @@ class StreamDownloaderService {
 
     try {
       while (_queue.isNotEmpty) {
-        if (_activeDownloads >= _maxConcurrentDownloads) {
+        if (_activeDownloadCount >= _maxConcurrentDownloads) {
           await Future<void>.delayed(const Duration(milliseconds: 250));
           continue;
         }
@@ -252,9 +253,9 @@ class StreamDownloaderService {
           continue;
         }
 
-        _activeDownloads++;
+        _activeDownloadCount++;
         unawaited(_startDownload(item).whenComplete(() {
-          _activeDownloads--;
+          _activeDownloadCount = math.max(0, _activeDownloadCount - 1);
         }));
       }
     } finally {
@@ -279,9 +280,13 @@ class StreamDownloaderService {
       }
     } catch (error, stackTrace) {
       final DownloadItem? currentItem = _downloads[item.id];
+      final bool isCancelledError =
+          error is DioException && CancelToken.isCancel(error);
+      final bool isCancelledType =
+          error is DioException && error.type == DioExceptionType.cancel;
       final bool intentionalInterruption =
-          CancelToken.isCancel(error) ||
-          (error is DioException && error.type == DioExceptionType.cancel) ||
+          isCancelledError ||
+          isCancelledType ||
           currentItem == null ||
           currentItem.status == DownloadStatus.paused ||
           currentItem.status == DownloadStatus.cancelled ||
@@ -630,39 +635,42 @@ class StreamDownloaderService {
     final List<String> lines = body.split(RegExp(r"\r?\n"));
     final bool isMaster = lines.any((String line) => line.startsWith("#EXT-X-STREAM-INF"));
 
-    if (isMaster) {
-      final Map<int, String> variants = <int, String>{};
-      for (int i = 0; i < lines.length; i++) {
-        final String line = lines[i];
-        if (line.startsWith("#EXT-X-STREAM-INF")) {
-          final String? bandwidthValue = line.split(",").map((String entry) => entry.trim()).firstWhere(
-            (String entry) => entry.startsWith("BANDWIDTH"),
-            orElse: () => "",
-          );
-          final int bandwidth = int.tryParse(bandwidthValue.split("=").last) ?? 0;
-          if (i + 1 < lines.length) {
-            variants[bandwidth] = lines[i + 1];
+      if (isMaster) {
+        final Map<int, String> variants = <int, String>{};
+        for (int i = 0; i < lines.length; i++) {
+          final String line = lines[i];
+          if (line.startsWith("#EXT-X-STREAM-INF")) {
+            final String bandwidthValue = line
+                .split(",")
+                .map((String entry) => entry.trim())
+                .firstWhere(
+                  (String entry) => entry.startsWith("BANDWIDTH"),
+                  orElse: () => "",
+                );
+            final int bandwidth = int.tryParse(bandwidthValue.split("=").last) ?? 0;
+            if (i + 1 < lines.length) {
+              variants[bandwidth] = lines[i + 1];
+            }
           }
         }
-      }
 
-      final List<int> sortedBandwidths = variants.keys.toList()..sort();
-      final int selectedBandwidth = sortedBandwidths.isNotEmpty ? sortedBandwidths.last : 0;
-      final String? playlistPath = variants[selectedBandwidth];
-      if (playlistPath == null) {
-        throw Exception("Unable to resolve variant playlist");
+        final List<int> sortedBandwidths = variants.keys.toList()..sort();
+        final int selectedBandwidth = sortedBandwidths.isNotEmpty ? sortedBandwidths.last : 0;
+        final String? playlistPath = variants[selectedBandwidth];
+        if (playlistPath == null) {
+          throw Exception("Unable to resolve variant playlist");
+        }
+        final Uri resolved = Uri.parse(url).resolve(playlistPath.trim());
+        final DownloadMetadata variantMetadata = DownloadMetadata(
+          contentLength: metadata.contentLength,
+          contentType: metadata.contentType,
+          acceptRanges: metadata.acceptRanges,
+          eTag: metadata.eTag,
+          lastModified: metadata.lastModified,
+          qualityLabel: selectedBandwidth.toString(),
+        );
+        return _loadPlaylistSegments(resolved.toString(), variantMetadata);
       }
-      final Uri resolved = Uri.parse(url).resolve(playlistPath.trim());
-      final DownloadMetadata variantMetadata = DownloadMetadata(
-        contentLength: metadata.contentLength,
-        contentType: metadata.contentType,
-        acceptRanges: metadata.acceptRanges,
-        eTag: metadata.eTag,
-        lastModified: metadata.lastModified,
-        qualityLabel: selectedBandwidth.toString(),
-      );
-      return _loadPlaylistSegments(resolved.toString(), variantMetadata);
-    }
 
     final List<String> segments = <String>[];
     for (final String line in lines) {
@@ -780,10 +788,10 @@ class StreamDownloaderService {
       ),
       (String taskId) async {
         await _processQueue();
-        BackgroundFetch.finish(taskId);
+        await BackgroundFetch.finish(taskId);
       },
       (String taskId) async {
-        BackgroundFetch.finish(taskId);
+        await BackgroundFetch.finish(taskId);
       },
     );
   }
@@ -839,10 +847,11 @@ class StreamDownloaderService {
     );
 
     final NotificationDetails details = NotificationDetails(android: androidDetails);
+    final double kilobytesPerSecond = progress.speedBytesPerSecond / 1024;
     await _notifications.show(
       progress.id.hashCode,
       progress.title,
-      "${progress.percentage.toStringAsFixed(1)}% • ${(progress.speedBytesPerSecond / 1024).toStringAsFixed(1)} KB/s",
+      "${progress.percentage.toStringAsFixed(1)}% • ${kilobytesPerSecond.toStringAsFixed(1)} KB/s",
       details,
     );
   }
@@ -852,9 +861,12 @@ class StreamDownloaderService {
     final String? progressJson = _preferences?.getString(_progressKey);
 
     if (itemsJson != null) {
-      final List<dynamic> decoded = jsonDecode(itemsJson) as List<dynamic>;
-      for (final dynamic entry in decoded) {
-        final DownloadItem item = DownloadItem.fromJson((entry as Map<String, dynamic>));
+      final List<Object?> decoded = jsonDecode(itemsJson) as List<Object?>;
+      for (final Object? entry in decoded) {
+        if (entry is! Map<String, dynamic>) {
+          continue;
+        }
+        final DownloadItem item = DownloadItem.fromJson(entry);
         _downloads[item.id] = item;
         if (item.status == DownloadStatus.downloading) {
           _downloads[item.id] = item.copyWith(status: DownloadStatus.paused);
@@ -864,9 +876,12 @@ class StreamDownloaderService {
     }
 
     if (progressJson != null) {
-      final List<dynamic> decoded = jsonDecode(progressJson) as List<dynamic>;
-      for (final dynamic entry in decoded) {
-        final DownloadProgress progress = DownloadProgress.fromJson((entry as Map<String, dynamic>));
+      final List<Object?> decoded = jsonDecode(progressJson) as List<Object?>;
+      for (final Object? entry in decoded) {
+        if (entry is! Map<String, dynamic>) {
+          continue;
+        }
+        final DownloadProgress progress = DownloadProgress.fromJson(entry);
         if (_downloads.containsKey(progress.id)) {
           _progress[progress.id] = progress;
         }
@@ -888,11 +903,14 @@ class StreamDownloaderService {
     final List<Map<String, dynamic>> items = _downloads.values
         .map((DownloadItem item) => item.toJson())
         .toList()
-      ..sort((Map<String, dynamic> a, Map<String, dynamic> b) {
-        return (DateTime.parse(b["createdAt"] as String)).compareTo(DateTime.parse(a["createdAt"] as String));
-      });
+      ..sort(
+        (Map<String, dynamic> a, Map<String, dynamic> b) =>
+            DateTime.parse(b["createdAt"] as String)
+                .compareTo(DateTime.parse(a["createdAt"] as String)),
+      );
 
-    final List<Map<String, dynamic>> progress = _progress.values.map((DownloadProgress p) => p.toJson()).toList();
+    final List<Map<String, dynamic>> progress =
+        _progress.values.map((DownloadProgress element) => element.toJson()).toList();
 
     await _preferences!.setString(_storageKey, jsonEncode(items));
     await _preferences!.setString(_progressKey, jsonEncode(progress));
@@ -985,13 +1003,14 @@ class StreamDownloaderService {
     if (mimeType == null) {
       return ".mp4";
     }
-    final String extension = extensionFromMime(mimeType) ?? "";
-    return extension.isEmpty ? ".mp4" : ".${extension.toLowerCase()}";
+    final String? extension = extensionFromMime(mimeType);
+    if (extension == null || extension.isEmpty) {
+      return ".mp4";
+    }
+    return ".${extension.toLowerCase()}";
   }
 
-  int get _activeDownloads {
-    return _downloads.values.where((DownloadItem item) => item.status == DownloadStatus.downloading).length;
-  }
+  int get _activeDownloads => _activeDownloadCount;
 }
 
 class _ChunkResult {
