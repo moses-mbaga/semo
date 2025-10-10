@@ -35,6 +35,7 @@ class StreamingServerBaseUrlExtractor {
   DateTime? _cacheTimestamp;
 
   static final Map<String, String> _manualBaseUrls = <String, String>{
+    "semo_animeworld": "https://watchanimeworld.in",
     "semo_hollymovie": "https://hollymoviehd.cc",
     "semo_mappletv": "https://mappletv.uk",
     "semo_moviesjoy": "https://moviesjoy.is",
@@ -42,6 +43,7 @@ class StreamingServerBaseUrlExtractor {
     "semo_vidfast": "https://vidfast.pro",
     "semo_vidlink": "https://vidlink.pro",
     "semo_vidrock": "https://vidrock.net",
+    "semo_xprime": "https://xprime.tv",
   };
 
   final Logger _logger = Logger();

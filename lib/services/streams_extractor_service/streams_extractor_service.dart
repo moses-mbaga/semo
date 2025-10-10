@@ -8,6 +8,7 @@ import "package:semo/models/stream_extractor_options.dart";
 import "package:semo/models/streaming_server.dart";
 import "package:semo/models/media_stream.dart";
 import "package:semo/enums/media_type.dart";
+import "package:semo/services/streams_extractor_service/extractors/anime_world_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/auto_embed_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/base_stream_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/holly_movie_extractor.dart";
@@ -20,6 +21,7 @@ import "package:semo/services/streams_extractor_service/extractors/vid_fast_extr
 import "package:semo/services/streams_extractor_service/extractors/vid_link_extractor.dart";
 import "package:semo/services/streams_extractor_service/extractors/utils/closest_resolution.dart";
 import "package:semo/services/streams_extractor_service/extractors/vid_rock_extractor.dart";
+import "package:semo/services/streams_extractor_service/extractors/xprime_extractor.dart";
 import "package:semo/services/video_quality_service.dart";
 
 class StreamsExtractorService {
@@ -32,6 +34,7 @@ class StreamsExtractorService {
   final VideoQualityService _videoQualityService = const VideoQualityService();
   final List<StreamingServer> _streamingServers = <StreamingServer>[
     const StreamingServer(name: "Random", extractor: null),
+    StreamingServer(name: "AnimeWorld", extractor: AnimeWorldExtractor()),
     StreamingServer(name: "AutoEmbed", extractor: AutoEmbedExtractor()),
     if (!Platform.isIOS) StreamingServer(name: "HollyMovie", extractor: HollyMovieExtractor()),
     StreamingServer(name: "KissKh", extractor: KissKhExtractor()),
@@ -41,6 +44,7 @@ class StreamsExtractorService {
     StreamingServer(name: "VidFast", extractor: VidFastExtractor()),
     StreamingServer(name: "VidLink", extractor: VidLinkExtractor()),
     StreamingServer(name: "VidRock", extractor: VidRockExtractor()),
+    StreamingServer(name: "Xprime", extractor: XprimeExtractor()),
 
     // Broken
     // if (!Platform.isIOS) StreamingServer(name: "MappleTV", extractor: MappleTvExtractor()), // As of 19.09.2025, blocked by Cloudflare
@@ -97,6 +101,10 @@ class StreamsExtractorService {
         final int randomIndex = random.nextInt(randomServers.length);
         final StreamingServer server = randomServers.removeAt(randomIndex);
         final BaseStreamExtractor extractor = server.extractor!;
+
+        if (server is AnimeWorldExtractor) {
+          continue;
+        }
 
         final List<MediaStream> streams = await _extractStreamsForServer(extractor, options, server.name);
 
