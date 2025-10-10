@@ -64,9 +64,7 @@ class ZipToVttService {
     return null;
   }
 
-  bool _isExpired(DateTime timestamp) {
-    return DateTime.now().difference(timestamp) > _cacheTtl;
-  }
+  bool _isExpired(DateTime timestamp) => DateTime.now().difference(timestamp) > _cacheTtl;
 
   Future<Uint8List> _getZipBytes(String zipUrl) async {
     final Response<dynamic> zipResponse = await _dio.get<List<int>>(
