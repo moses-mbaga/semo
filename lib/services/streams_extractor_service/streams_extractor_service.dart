@@ -102,7 +102,7 @@ class StreamsExtractorService {
         final StreamingServer server = randomServers.removeAt(randomIndex);
         final BaseStreamExtractor extractor = server.extractor!;
 
-        if (server is AnimeWorldExtractor) {
+        if (extractor is AnimeWorldExtractor) {
           continue;
         }
 
