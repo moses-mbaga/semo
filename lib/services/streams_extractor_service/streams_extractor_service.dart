@@ -102,6 +102,10 @@ class StreamsExtractorService {
         final StreamingServer server = randomServers.removeAt(randomIndex);
         final BaseStreamExtractor extractor = server.extractor!;
 
+        if (server is AnimeWorldExtractor) {
+          continue;
+        }
+
         final List<MediaStream> streams = await _extractStreamsForServer(extractor, options, server.name);
 
         if (streams.isNotEmpty) {
