@@ -15,8 +15,7 @@ class AnimeWorldExtractor implements BaseStreamExtractor {
 
   final String _providerKey = "semo_animeworld";
   final StreamingServerBaseUrlExtractor _streamingServerBaseUrlExtractor = StreamingServerBaseUrlExtractor();
-  final ExtractStreamFromPageRequestsService _extractStreamFromPageRequestsService =
-      const ExtractStreamFromPageRequestsService();
+  final ExtractStreamFromPageRequestsService _extractStreamFromPageRequestsService = const ExtractStreamFromPageRequestsService();
   final Logger _logger = Logger();
 
   @override
@@ -49,9 +48,7 @@ class AnimeWorldExtractor implements BaseStreamExtractor {
 
       final bool isTv = options.season != null && options.episode != null;
       final Uri pageUri = Uri.parse(baseUrl).resolve(
-        isTv
-            ? "/episode/$slug-${options.season}x${options.episode}/"
-            : "/movies/$slug/",
+        isTv ? "/episode/$slug-${options.season}x${options.episode}/" : "/movies/$slug/",
       );
 
       final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(pageUri.toString());
