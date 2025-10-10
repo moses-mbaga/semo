@@ -39,8 +39,8 @@ class AnimeWorldExtractor implements BaseStreamExtractor {
       String slug = options.title.normalize().toLowerCase();
       slug = slug.replaceAll(RegExp(r"[^a-z0-9\s-]"), "");
       slug = slug.replaceAll(RegExp(r"\s+"), "-");
-      slug = slug.replaceAll(RegExp(r"-+"), "-");
-      slug = slug.replaceAll(RegExp(r"^-+"), "");
+      slug = slug.replaceAll(RegExp("-+"), "-");
+      slug = slug.replaceAll(RegExp("^-+"), "");
       slug = slug.replaceAll(RegExp(r"-+$"), "");
 
       if (slug.isEmpty) {
@@ -60,6 +60,7 @@ class AnimeWorldExtractor implements BaseStreamExtractor {
       final Map<dynamic, dynamic>? rawHeaders = stream?["headers"] as Map<dynamic, dynamic>?;
       if (rawHeaders != null) {
         headers = rawHeaders.map(
+          // ignore: avoid_annotating_with_dynamic
           (dynamic key, dynamic value) => MapEntry<String, String>(key.toString(), value.toString()),
         );
       }
