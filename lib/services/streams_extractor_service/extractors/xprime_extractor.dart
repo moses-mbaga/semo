@@ -53,6 +53,10 @@ class XprimeExtractor implements BaseStreamExtractor {
         throw Exception("No stream URL found for XprimeExtractor");
       }
 
+      if (!headers.containsKey("Origin")) {
+        headers["Origin"] = baseUrl;
+      }
+
       return <MediaStream>[
         MediaStream(
           type: StreamType.hls,
