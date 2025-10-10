@@ -27,11 +27,7 @@ class XprimeExtractor implements BaseStreamExtractor {
   Future<Map<String, Object?>?> getExternalLink(StreamExtractorOptions options) async => null;
 
   @override
-  Future<List<MediaStream>> getStreams(
-    StreamExtractorOptions options, {
-    String? externalLink,
-    Map<String, String>? externalLinkHeaders,
-  }) async {
+  Future<List<MediaStream>> getStreams(StreamExtractorOptions options, {String? externalLink, Map<String, String>? externalLinkHeaders}) async {
     try {
       final String? baseUrl = await _streamingServerBaseUrlExtractor.getBaseUrl(_providerKey);
       if (baseUrl == null || baseUrl.isEmpty) {
@@ -44,26 +40,20 @@ class XprimeExtractor implements BaseStreamExtractor {
 
       final Map<String, dynamic>? stream = await _extractStreamFromPageRequestsService.extract(pageUri.toString(), includePatterns: <String>["oca-worker.kendrickl-3amar.workers.dev"], filter: (String url) => url.startsWith("https://oca-worker.kendrickl-3amar.workers.dev/?v="), acceptAnyOnFilterMatch: true);
 
-      final String? url = stream?["url"] as String?;
-      Map<String, String> headers = <String, String>{};
-      final Object? rawHeaders = stream?["headers"];
-      if (rawHeaders is Map) {
-        headers = rawHeaders.map((Object? key, Object? value) => MapEntry<String, String>(key.toString(), value.toString()));
-      }
+      final String? url = stream?["url"];
+      final Map<String, String> headers = stream?["headers"] ?? <String, String>{};
 
       if (url == null || url.isEmpty) {
         throw Exception("No stream URL found for XprimeExtractor");
       }
 
-      StreamType streamType = StreamType.hls;
-      final String lowerUrl = url.toLowerCase();
-      if (lowerUrl.contains(".mp4")) {
-        streamType = StreamType.mp4;
-      } else if (lowerUrl.contains(".mkv")) {
-        streamType = StreamType.mkv;
-      }
-
-      return <MediaStream>[MediaStream(type: streamType, url: url, headers: headers)];
+      return <MediaStream>[
+        MediaStream(
+          type: StreamType.hls,
+          url: url,
+          headers: headers,
+        ),
+      ];
     } catch (e, s) {
       _logger.e("Error extracting stream in XprimeExtractor", error: e, stackTrace: s);
     }
