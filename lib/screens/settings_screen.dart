@@ -353,31 +353,36 @@ class _SettingsScreenState extends BaseScreenState<SettingsScreen> {
             height: MediaQuery.of(context).size.width * 0.2,
             child: CircleAvatar(
               backgroundColor: Theme.of(context).cardColor,
-              child: CachedNetworkImage(
-                imageUrl: photoUrl,
-                placeholder: (BuildContext context, String url) => const Align(
-                  alignment: Alignment.center,
-                  child: CircularProgressIndicator(),
-                ),
-                imageBuilder: (BuildContext context, ImageProvider image) => Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(
-                    borderRadius: BorderRadius.circular(1000),
-                    image: DecorationImage(
-                      image: image,
-                      fit: BoxFit.cover,
+              child: photoUrl.isEmpty
+                  ? Icon(
+                      Icons.account_circle,
+                      color: Theme.of(context).primaryColor,
+                    )
+                  : CachedNetworkImage(
+                      imageUrl: photoUrl,
+                      placeholder: (BuildContext context, String url) => const Align(
+                        alignment: Alignment.center,
+                        child: CircularProgressIndicator(),
+                      ),
+                      imageBuilder: (BuildContext context, ImageProvider image) => Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(1000),
+                          image: DecorationImage(
+                            image: image,
+                            fit: BoxFit.cover,
+                          ),
+                        ),
+                      ),
+                      errorWidget: (BuildContext context, String url, Object? error) => Container(
+                        width: double.infinity,
+                        decoration: BoxDecoration(borderRadius: BorderRadius.circular(1000)),
+                        child: Icon(
+                          Icons.account_circle,
+                          color: Theme.of(context).primaryColor,
+                        ),
+                      ),
                     ),
-                  ),
-                ),
-                errorWidget: (BuildContext context, String url, Object? error) => Container(
-                  width: double.infinity,
-                  decoration: BoxDecoration(borderRadius: BorderRadius.circular(1000)),
-                  child: Icon(
-                    Icons.account_circle,
-                    color: Theme.of(context).primaryColor,
-                  ),
-                ),
-              ),
             ),
           ),
           Expanded(
