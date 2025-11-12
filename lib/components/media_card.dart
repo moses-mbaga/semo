@@ -29,32 +29,18 @@ class MediaCard extends StatelessWidget {
           final double height = constraints.maxHeight.isFinite ? constraints.maxHeight : MediaQuery.of(context).size.height * 0.22; // sensible fallback
           final double width = height * AspectRatios.posterWidthOverHeight;
 
-          return SizedBox(
-            width: width,
-            height: height,
-        child: CachedNetworkImage(
-          imageUrl: "${Urls.getResponsiveImageUrlForWidth(width)}$posterPath",
-              placeholder: (BuildContext context, String url) => Container(
-                width: width,
-                height: height,
-                decoration: BoxDecoration(
-                  color: Theme.of(context).cardColor,
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: const Align(
-                  alignment: Alignment.center,
-                  child: CircularProgressIndicator(),
-                ),
-              ),
-              imageBuilder: (BuildContext context, ImageProvider image) => Container(
+          Widget buildPoster(ImageProvider<Object>? image) => Container(
                 width: width,
                 height: height,
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(12),
-                  image: DecorationImage(
-                    image: image,
-                    fit: BoxFit.cover,
-                  ),
+                  color: image == null ? Theme.of(context).cardColor : null,
+                  image: image != null
+                      ? DecorationImage(
+                          image: image,
+                          fit: BoxFit.cover,
+                        )
+                      : null,
                 ),
                 child: Stack(
                   children: <Widget>[
@@ -138,10 +124,36 @@ class MediaCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                    if (image == null)
+                      const IgnorePointer(
+                        child: Align(
+                          alignment: Alignment.center,
+                          child: Icon(
+                            Icons.image_not_supported,
+                            color: Colors.white54,
+                            size: 36,
+                          ),
+                        ),
+                      ),
                   ],
                 ),
-              ),
-              errorWidget: (BuildContext context, String url, Object error) => Container(
+              );
+
+          final String? imageUrl = Urls.buildImageUrl(path: posterPath, width: width);
+          if (imageUrl == null) {
+            return SizedBox(
+              width: width,
+              height: height,
+              child: buildPoster(null),
+            );
+          }
+
+          return SizedBox(
+            width: width,
+            height: height,
+            child: CachedNetworkImage(
+              imageUrl: imageUrl,
+              placeholder: (BuildContext context, String url) => Container(
                 width: width,
                 height: height,
                 decoration: BoxDecoration(
@@ -150,12 +162,11 @@ class MediaCard extends StatelessWidget {
                 ),
                 child: const Align(
                   alignment: Alignment.center,
-                  child: Icon(
-                    Icons.error,
-                    color: Colors.white54,
-                  ),
+                  child: CircularProgressIndicator(),
                 ),
               ),
+              imageBuilder: (BuildContext context, ImageProvider<Object> image) => buildPoster(image),
+              errorWidget: (BuildContext context, String url, Object error) => buildPoster(null),
             ),
           );
         },

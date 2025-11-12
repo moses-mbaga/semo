@@ -42,6 +42,78 @@ class EpisodeCard extends StatelessWidget {
     DateTime airDate = DateTime.parse(episode.airDate ?? DateTime.now().toString());
     bool isAired = DateTime.now().isAfter(airDate);
 
+    final double imageWidth = MediaQuery.of(context).size.width * 0.3;
+    final BorderRadius borderRadius = BorderRadius.circular(10);
+    final String? stillUrl = Urls.buildImageUrl(path: episode.stillPath, context: context);
+
+    Widget buildPlaceholder(Widget child) => SizedBox(
+          width: imageWidth,
+          child: ClipRRect(
+            borderRadius: borderRadius,
+            child: AspectRatio(
+              aspectRatio: 16 / 10,
+              child: Container(
+                color: Theme.of(context).cardColor,
+                child: child,
+              ),
+            ),
+          ),
+        );
+
+    Widget buildLoadedImage(ImageProvider<Object> image) => SizedBox(
+          width: imageWidth,
+          child: ClipRRect(
+            borderRadius: borderRadius,
+            child: AspectRatio(
+              aspectRatio: 16 / 10,
+              child: Container(
+                decoration: BoxDecoration(
+                  image: DecorationImage(
+                    image: image,
+                    fit: BoxFit.cover,
+                  ),
+                ),
+                child: isRecentlyWatched
+                    ? Column(
+                        children: <Widget>[
+                          const Spacer(),
+                          LinearProgressIndicator(
+                            value: watchedProgress / (episode.duration * 60),
+                            valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
+                            backgroundColor: Colors.transparent,
+                          ),
+                        ],
+                      )
+                    : const SizedBox.shrink(),
+              ),
+            ),
+          ),
+        );
+
+    Widget buildErrorIcon() => buildPlaceholder(
+          Align(
+            alignment: Alignment.center,
+            child: Icon(
+              isAired ? Icons.image_not_supported : Icons.alarm,
+              color: Colors.white54,
+            ),
+          ),
+        );
+
+    final Widget imageWidget = stillUrl == null
+        ? buildErrorIcon()
+        : CachedNetworkImage(
+            imageUrl: stillUrl,
+            placeholder: (BuildContext context, String url) => buildPlaceholder(
+              const Align(
+                alignment: Alignment.center,
+                child: CircularProgressIndicator(),
+              ),
+            ),
+            imageBuilder: (BuildContext context, ImageProvider<Object> image) => buildLoadedImage(image),
+            errorWidget: (BuildContext context, String url, Object error) => buildErrorIcon(),
+          );
+
     return Opacity(
       opacity: disabled ? 0.5 : 1.0,
       child: InkWell(
@@ -52,73 +124,7 @@ class EpisodeCard extends StatelessWidget {
             children: <Widget>[
               Row(
                 children: <Widget>[
-                  CachedNetworkImage(
-                    imageUrl: Urls.getResponsiveImageUrl(context) + episode.stillPath,
-                    placeholder: (BuildContext context, String url) => Container(
-                      width: MediaQuery.of(context).size.width * 0.3,
-                      child: AspectRatio(
-                        aspectRatio: 16 / 10,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Align(
-                            alignment: Alignment.center,
-                            child: CircularProgressIndicator(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    imageBuilder: (BuildContext context, ImageProvider<Object> image) => Container(
-                      width: MediaQuery.of(context).size.width * 0.3,
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(10),
-                        child: AspectRatio(
-                          aspectRatio: 16 / 10,
-                          child: Container(
-                            decoration: BoxDecoration(
-                              image: DecorationImage(
-                                image: image,
-                                fit: BoxFit.cover,
-                              ),
-                            ),
-                            child: isRecentlyWatched
-                                ? Column(
-                                    children: <Widget>[
-                                      const Spacer(),
-                                      LinearProgressIndicator(
-                                        value: watchedProgress / (episode.duration * 60),
-                                        valueColor: AlwaysStoppedAnimation<Color>(Theme.of(context).primaryColor),
-                                        backgroundColor: Colors.transparent,
-                                      ),
-                                    ],
-                                  )
-                                : Container(),
-                          ),
-                        ),
-                      ),
-                    ),
-                    errorWidget: (BuildContext context, String url, Object error) => Container(
-                      width: MediaQuery.of(context).size.width * 0.3,
-                      child: AspectRatio(
-                        aspectRatio: 16 / 10,
-                        child: Container(
-                          decoration: BoxDecoration(
-                            color: Theme.of(context).cardColor,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: Align(
-                            alignment: Alignment.center,
-                            child: Icon(
-                              isAired ? Icons.error : Icons.alarm,
-                              color: Colors.white54,
-                            ),
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
+                  imageWidget,
                   Expanded(
                     child: Container(
                       width: double.infinity,
@@ -200,16 +206,47 @@ class EpisodeCard extends StatelessWidget {
               if (episode.overview.isNotEmpty)
                 Container(
                   width: double.infinity,
-                  margin: const EdgeInsets.only(top: 18),
+                  margin: const EdgeInsets.only(top: 10),
                   child: AnimatedReadMoreText(
                     episode.overview,
-                    maxLines: 3,
-                    readMoreText: "Read more",
-                    readLessText: "Read less",
-                    textStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
-                          color: Colors.white54,
+                    style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: Colors.white70,
+                          fontSize: 12,
                         ),
-                    buttonTextStyle: TextStyle(color: Theme.of(context).primaryColor),
+                    maxLines: 3,
+                    trimExpandedText: " show less",
+                    trimCollapsedText: " show more",
+                    moreStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: Theme.of(context).primaryColor,
+                          fontSize: 12,
+                        ),
+                    lessStyle: Theme.of(context).textTheme.displaySmall?.copyWith(
+                          color: Theme.of(context).primaryColor,
+                          fontSize: 12,
+                        ),
+                  ),
+                ),
+              if (isAired)
+                Container(
+                  width: double.infinity,
+                  margin: const EdgeInsets.only(top: 10),
+                  child: Row(
+                    children: <Widget>[
+                      ElevatedButton.icon(
+                        onPressed: isLoading ? null : onMarkWatched,
+                        icon: const Icon(Icons.check),
+                        label: const Text("Mark watched"),
+                      ),
+                      if (isRecentlyWatched)
+                        Container(
+                          margin: const EdgeInsets.only(left: 10),
+                          child: ElevatedButton.icon(
+                            onPressed: isLoading ? null : onRemoveFromWatched,
+                            icon: const Icon(Icons.delete),
+                            label: const Text("Delete progress"),
+                          ),
+                        ),
+                    ],
                   ),
                 ),
             ],

@@ -52,6 +52,27 @@ class Urls {
   static String getMovieSimilar(int id) => "$tmdbApiBase/movie/$id/similar";
   static String getTvShowSimilar(int id) => "$tmdbApiBase/tv/$id/similar";
 
+  static String? buildImageUrl({
+    required String? path,
+    BuildContext? context,
+    double? width,
+  }) {
+    if (path == null || path.trim().isEmpty) {
+      return null;
+    }
+
+    String baseUrl;
+    if (width != null) {
+      baseUrl = getResponsiveImageUrlForWidth(width);
+    } else if (context != null) {
+      baseUrl = getResponsiveImageUrl(context);
+    } else {
+      baseUrl = imageOriginal;
+    }
+
+    return "$baseUrl${path.trim()}";
+  }
+
   static String getResponsiveImageUrl(BuildContext context) {
     double screenWidth = MediaQuery.of(context).size.width;
     return getResponsiveImageUrlForWidth(screenWidth);
